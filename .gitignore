@@ -1,41 +1,306 @@
-# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+# ============================================
+# DoveApp - Field Service Management Tool
+# .gitignore
+# ============================================
 
-# dependencies
-/node_modules
+# ============================================
+# Dependencies
+# ============================================
+node_modules/
 /.pnp
 .pnp.*
+.pnp.js
+
+# Yarn
 .yarn/*
+!.yarn/cache
 !.yarn/patches
 !.yarn/plugins
 !.yarn/releases
+!.yarn/sdks
 !.yarn/versions
 
-# testing
-/coverage
+# npm
+npm-debug.log*
+package-lock.json
 
-# next.js
+# pnpm
+pnpm-debug.log*
+
+# ============================================
+# Next.js
+# ============================================
 /.next/
 /out/
+.next/
+out/
+build/
+dist/
 
-# production
-/build
+# Next.js build output
+.vercel
+.vercel.json
 
-# misc
+# Next.js cache
+.swc/
+
+# ============================================
+# Testing
+# ============================================
+/coverage
+coverage/
+*.coverage
+.nyc_output
+.jest-cache/
+
+# Test results
+test-results/
+junit.xml
+
+# ============================================
+# Environment Variables & Secrets
+# ============================================
+# All environment files (IMPORTANT: Never commit credentials!)
+.env
+.env.local
+.env.development
+.env.development.local
+.env.test
+.env.test.local
+.env.production
+.env.production.local
+
+# Backup of environment files (just in case)
+.env*.backup
+.env*.bak
+
+# ============================================
+# IDE & Editor Files
+# ============================================
+# VSCode
+.vscode/
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+*.code-workspace
+
+# IntelliJ / WebStorm
+.idea/
+*.iml
+*.iws
+*.ipr
+
+# Sublime Text
+*.sublime-project
+*.sublime-workspace
+
+# Vim
+*.swp
+*.swo
+*~
+.*.sw[a-p]
+
+# Emacs
+*~
+\#*\#
+.\#*
+.emacs.desktop
+.emacs.desktop.lock
+
+# ============================================
+# Operating System Files
+# ============================================
+# macOS
 .DS_Store
-*.pem
+.AppleDouble
+.LSOverride
+Icon
+._*
+.Spotlight-V100
+.Trashes
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
+.DocumentRevisions-V100
+.fseventsd
+.TemporaryItems
+.apdisk
 
-# debug
+# Windows
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+Desktop.ini
+$RECYCLE.BIN/
+*.lnk
+
+# Linux
+.directory
+.Trash-*
+.nfs*
+
+# ============================================
+# TypeScript
+# ============================================
+*.tsbuildinfo
+next-env.d.ts
+.tsbuildinfo
+
+# ============================================
+# Logs
+# ============================================
+logs
+*.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+lerna-debug.log*
 .pnpm-debug.log*
 
-# env files (can opt-in for committing if needed)
-.env*
+# Diagnostic reports
+report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
 
-# vercel
-.vercel
+# ============================================
+# Supabase & Database
+# ============================================
+# Local Supabase instance files (if running locally)
+.supabase/
+supabase/.branches
+supabase/.temp
 
-# typescript
-*.tsbuildinfo
-next-env.d.ts
+# Database dumps and backups
+*.sql.backup
+*.dump
+*.db-backup
+db-backups/
+backups/
+
+# ============================================
+# Square API & Third-party Integrations
+# ============================================
+# Square tokens and credentials (CRITICAL: Never commit!)
+square-tokens.json
+square-credentials.json
+oauth-tokens/
+
+# ============================================
+# Application-specific Files
+# ============================================
+# CSV exports and imports
+*.csv
+exports/
+imports/
+export-*.csv
+import-*.csv
+
+# PDF invoices (generated at runtime)
+invoices/*.pdf
+generated-invoices/
+
+# Photo uploads (store in cloud/CDN, not in git)
+uploads/
+public/uploads/
+job-photos/
+temp-photos/
+
+# Local backup files
+*.backup
+*.bak
+*.tmp
+*.temp
+
+# Session files
+sessions/
+.sessions
+
+# Cache directories
+.cache/
+cache/
+.temp/
+temp/
+
+# ============================================
+# Build & Production
+# ============================================
+build/
+dist/
+.output/
+.nuxt/
+
+# Static site generation
+public/static/
+static/
+
+# ============================================
+# Miscellaneous
+# ============================================
+# SSL certificates (NEVER commit private keys!)
+*.pem
+*.key
+*.cert
+*.crt
+*.p12
+*.pfx
+ssl/
+certificates/
+
+# Compressed files (usually build artifacts)
+*.zip
+*.tar.gz
+*.rar
+*.7z
+
+# Temporary files
+*.tmp
+*.temp
+.tmp/
+.temp/
+
+# Lock files (optional - some teams commit these)
+# Uncomment if you want to ignore:
+# yarn.lock
+# pnpm-lock.yaml
+
+# ============================================
+# Documentation (Session Notes)
+# ============================================
+# Keep core docs, ignore session summaries and temporary guides
+*_SUMMARY.md
+*_STATUS.md
+QUICK_FIX_*.md
+SESSION_*.md
+IMPORT_STATUS.md
+TROUBLESHOOTING_*.md
+
+# But keep important permanent documentation
+!README.md
+!AGENTS.md
+!SETUP_GUIDE.md
+
+# ============================================
+# Scripts & Shell
+# ============================================
+# Temporary shell scripts (keep permanent ones)
+*.sh.backup
+temp-*.sh
+test-*.sh
+
+# ============================================
+# Optional: Local Development
+# ============================================
+# Local development database
+*.db
+*.sqlite
+*.sqlite3
+
+# Local development tools
+.eslintcache
+.stylelintcache
+
+# Storybook
+storybook-static/
+
+# ============================================
+# End of .gitignore
+# ============================================

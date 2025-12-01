@@ -24,14 +24,13 @@ export async function generateAlertsFromInsight(
   const alertData = getAlertDataForCategory(insight);
 
   if (alertData) {
-    const alert: Omit<IntelligenceAlert, 'id' | 'created_at' | 'updated_at'> = {
-      email_insight_id: insight.id,
+    const alert: Omit<IntelligenceAlert, 'id' | 'created_at'> = {
+      email_id: insight.email_id,
       type: alertData.type,
-      severity: alertData.severity,
+      priority: alertData.severity,
       title: alertData.title,
-      message: alertData.message,
-      due_at: alertData.due_at,
-      resolved: false,
+      message: alertData.message || '',
+      status: 'open',
     };
 
     const createdAlert = await createAlert(alert);
@@ -49,12 +48,13 @@ export function getAlertDataForCategory(insight: EmailInsight): {
   severity: AlertSeverity;
   title: string;
   message: string;
-  due_at?: string;
+  due_at?: string | null;
 } | null {
   const { category, priority, details, summary } = insight;
 
   switch (category) {
     case 'LEAD_NEW':
+      const leadData = details?.lead;
       return {
         type: 'lead',
         severity:
@@ -63,23 +63,25 @@ export function getAlertDataForCategory(insight: EmailInsight): {
             : priority === 'high'
               ? 'high'
               : 'medium',
-        title: `New Lead: ${details.contact_name || 'Unknown Contact'}`,
-        message: `${summary}. ${details.job_type ? `Service: ${details.job_type}.` : ''} ${details.urgency === 'emergency' ? 'URGENT: Emergency request!' : ''}`,
-        due_at: details.response_deadline,
+        title: `New Lead: ${leadData?.customer_name || 'Unknown Contact'}`,
+        message:
+          `${summary || 'New lead inquiry'}. ${leadData?.job_type ? `Service: ${leadData.job_type}.` : ''} ${leadData?.urgency === 'high' ? 'URGENT: High priority request!' : ''}`.trim(),
+        due_at: undefined,
       };
 
     case 'LEAD_FOLLOWUP':
       return {
         type: 'lead',
         severity: priority === 'urgent' ? 'urgent' : 'medium',
-        title: `Lead Follow-up: ${details.contact_name || 'Existing Lead'}`,
-        message: summary,
-        due_at: details.follow_up_date,
+        title: `Lead Follow-up: ${details?.lead?.customer_name || 'Existing Lead'}`,
+        message: String(summary || 'Lead requires follow-up'),
+        due_at: undefined,
       };
 
     case 'BILLING_INCOMING_INVOICE':
-      if (details.due_date) {
-        const dueDate = new Date(details.due_date);
+      const billingData = details?.billing;
+      if (billingData?.due_date) {
+        const dueDate = new Date(billingData.due_date);
         const daysUntilDue = Math.ceil(
           (dueDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24)
         );
@@ -93,15 +95,15 @@ export function getAlertDataForCategory(insight: EmailInsight): {
                 ? 'high'
                 : 'medium',
           title: `Invoice Due ${daysUntilDue <= 0 ? 'Overdue' : `in ${daysUntilDue} days`}`,
-          message: `$${details.amount} ${details.invoice_number ? `(${details.invoice_number})` : ''} from ${details.vendor_name || 'vendor'} is ${daysUntilDue <= 0 ? 'overdue' : 'due'}.`,
-          due_at: details.due_date,
+          message: `$${billingData.amount || 0} ${billingData.invoice_number ? `(${billingData.invoice_number})` : ''} from ${billingData.vendor_or_client_name || 'vendor'} is ${daysUntilDue <= 0 ? 'overdue' : 'due'}.`,
+          due_at: billingData.due_date,
         };
       }
       return {
         type: 'billing',
         severity: 'medium',
         title: 'New Vendor Invoice',
-        message: `$${details.amount} ${details.invoice_number ? `(${details.invoice_number})` : ''} received from ${details.vendor_name || 'vendor'}.`,
+        message: `$${billingData?.amount || 0} ${billingData?.invoice_number ? `(${billingData.invoice_number})` : ''} received from ${billingData?.vendor_or_client_name || 'vendor'}.`,
       };
 
     case 'BILLING_OUTGOING_INVOICE':
@@ -109,7 +111,7 @@ export function getAlertDataForCategory(insight: EmailInsight): {
         type: 'billing',
         severity: 'low',
         title: 'Customer Invoice Reply',
-        message: summary,
+        message: summary || 'Customer responded to invoice',
       };
 
     case 'BILLING_PAYMENT_RECEIVED':
@@ -117,7 +119,7 @@ export function getAlertDataForCategory(insight: EmailInsight): {
         type: 'billing',
         severity: 'low',
         title: 'Payment Received',
-        message: `$${details.amount} payment received. ${details.invoice_number ? `Applied to ${details.invoice_number}.` : ''}`,
+        message: `$${details?.billing?.amount || 0} payment received. ${details?.billing?.invoice_number ? `Applied to ${details.billing.invoice_number}.` : ''}`,
       };
 
     case 'BILLING_PAYMENT_ISSUE':
@@ -125,8 +127,8 @@ export function getAlertDataForCategory(insight: EmailInsight): {
         type: 'billing',
         severity: 'high',
         title: 'Payment Issue Detected',
-        message: summary,
-        due_at: details.due_date,
+        message: summary || 'Payment issue requires attention',
+        due_at: details?.billing?.due_date,
       };
 
     case 'SCHEDULING_REQUEST':
@@ -134,14 +136,15 @@ export function getAlertDataForCategory(insight: EmailInsight): {
         type: 'scheduling',
         severity: priority === 'urgent' ? 'urgent' : 'high',
         title: 'New Scheduling Request',
-        message: `${summary}. ${details.requested_dates ? `Requested dates: ${details.requested_dates.join(', ')}` : ''}`,
-        due_at: details.response_deadline,
+        message: `${summary || 'Scheduling request received'}. ${details?.scheduling?.requested_dates ? `Requested dates: ${details.scheduling.requested_dates.join(', ')}` : ''}`,
+        due_at: undefined,
       };
 
     case 'SCHEDULING_CHANGE':
-      const changeUrgency = details.confirmed_date
+      const confirmedDate = details?.scheduling?.confirmed_date;
+      const changeUrgency = confirmedDate
         ? Math.ceil(
-            (new Date(details.confirmed_date).getTime() - Date.now()) /
+            (new Date(confirmedDate).getTime() - Date.now()) /
               (1000 * 60 * 60 * 24)
           ) <= 2
         : false;
@@ -150,22 +153,17 @@ export function getAlertDataForCategory(insight: EmailInsight): {
         type: 'scheduling',
         severity: changeUrgency ? 'urgent' : 'high',
         title: 'Schedule Change Request',
-        message: summary,
-        due_at: details.confirmed_date,
+        message: summary || 'Schedule change requested',
+        due_at: confirmedDate,
       };
 
     case 'CUSTOMER_SUPPORT':
       return {
         type: 'support',
-        severity:
-          priority === 'urgent'
-            ? 'urgent'
-            : details.sentiment === 'negative'
-              ? 'high'
-              : 'medium',
+        severity: priority === 'urgent' ? 'urgent' : 'medium',
         title: 'Customer Support Request',
-        message: summary,
-        due_at: details.response_deadline,
+        message: summary || 'Customer support needed',
+        due_at: undefined,
       };
 
     case 'SYSTEM_SECURITY':
@@ -173,7 +171,7 @@ export function getAlertDataForCategory(insight: EmailInsight): {
         type: 'security',
         severity: 'urgent',
         title: 'Security Alert',
-        message: summary,
+        message: summary || 'Security event detected',
       };
 
     default:
@@ -185,7 +183,7 @@ export function getAlertDataForCategory(insight: EmailInsight): {
  * Create an alert in the database
  */
 export async function createAlert(
-  alert: Omit<IntelligenceAlert, 'id' | 'created_at' | 'updated_at'>
+  alert: Omit<IntelligenceAlert, 'id' | 'created_at'>
 ): Promise<IntelligenceAlert> {
   const { data, error } = await supabase
     .from('alerts')

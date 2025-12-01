@@ -18,8 +18,8 @@ export interface DailySummary {
       id: string;
       category: string;
       summary: string;
-      contact_name?: string;
-      contact_email?: string;
+      contact_name?: string | null;
+      contact_email?: string | null;
       priority: string;
       created_at: string;
     }>;
@@ -27,8 +27,8 @@ export interface DailySummary {
       id: string;
       category: string;
       summary: string;
-      amount?: number;
-      due_date?: string;
+      amount?: number | null;
+      due_date?: string | null;
       priority: string;
       created_at: string;
     }>;
@@ -36,7 +36,7 @@ export interface DailySummary {
       id: string;
       category: string;
       summary: string;
-      requested_dates?: string[];
+      requested_dates?: string[] | null;
       priority: string;
       created_at: string;
     }>;
@@ -61,7 +61,6 @@ export interface DailySummary {
       severity: string;
       title: string;
       message: string;
-      due_at?: string;
       created_at: string;
     }>;
   };
@@ -129,7 +128,7 @@ export async function GET(request: NextRequest) {
 
     // Get high priority alerts
     const highPriorityAlerts = alerts.filter(
-      (a) => a.severity === 'high' || a.severity === 'urgent'
+      (a) => a.priority === 'high' || a.priority === 'urgent'
     );
 
     const summary: DailySummary = {
@@ -141,61 +140,60 @@ export async function GET(request: NextRequest) {
         support_requests_count: supportRequests.length,
         security_alerts_count: securityAlerts.length,
         high_priority_alerts_count: highPriorityAlerts.filter(
-          (a) => a.severity === 'high'
+          (a) => a.priority === 'high'
         ).length,
         urgent_alerts_count: highPriorityAlerts.filter(
-          (a) => a.severity === 'urgent'
+          (a) => a.priority === 'urgent'
         ).length,
       },
       details: {
         new_leads: newLeads.slice(0, 10).map((insight) => ({
           id: insight.id,
           category: insight.category,
-          summary: insight.summary,
-          contact_name: insight.details.contact_name,
-          contact_email: insight.details.contact_email,
+          summary: insight.summary || 'New lead inquiry',
+          contact_name: insight.details?.lead?.customer_name,
+          contact_email: insight.details?.lead?.customer_email,
           priority: insight.priority,
           created_at: insight.created_at,
         })),
         billing_events: billingEvents.slice(0, 10).map((insight) => ({
           id: insight.id,
           category: insight.category,
-          summary: insight.summary,
-          amount: insight.details.amount,
-          due_date: insight.details.due_date,
+          summary: insight.summary || 'Billing event',
+          amount: insight.details?.billing?.amount,
+          due_date: insight.details?.billing?.due_date,
           priority: insight.priority,
           created_at: insight.created_at,
         })),
         scheduling_requests: schedulingRequests.slice(0, 10).map((insight) => ({
           id: insight.id,
           category: insight.category,
-          summary: insight.summary,
-          requested_dates: insight.details.requested_dates,
+          summary: insight.summary || 'Scheduling request received',
+          requested_dates: insight.details?.scheduling?.requested_dates,
           priority: insight.priority,
           created_at: insight.created_at,
         })),
         support_requests: supportRequests.slice(0, 10).map((insight) => ({
           id: insight.id,
           category: insight.category,
-          summary: insight.summary,
-          sentiment: insight.details.sentiment,
+          summary: insight.summary || 'Customer support needed',
+          sentiment: undefined, // Not available in new schema
           priority: insight.priority,
           created_at: insight.created_at,
         })),
         security_alerts: securityAlerts.slice(0, 10).map((insight) => ({
           id: insight.id,
           category: insight.category,
-          summary: insight.summary,
+          summary: insight.summary || 'Security event detected',
           priority: insight.priority,
           created_at: insight.created_at,
         })),
         high_priority_alerts: highPriorityAlerts.slice(0, 15).map((alert) => ({
           id: alert.id,
           type: alert.type,
-          severity: alert.severity,
+          severity: alert.priority,
           title: alert.title,
           message: alert.message,
-          due_at: alert.due_at,
           created_at: alert.created_at,
         })),
       },

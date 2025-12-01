@@ -115,13 +115,16 @@ export interface Alert {
 // Email Intelligence Engine Types
 export interface EmailRaw {
   id: string;
-  email_account_id: string;
   gmail_message_id: string;
-  gmail_thread_id: string;
-  raw_data: any; // Full Gmail API response
-  processed_at?: string;
-  processing_status: 'pending' | 'processing' | 'completed' | 'failed';
-  processing_error?: string;
+  thread_id?: string;
+  subject?: string;
+  from_address?: string;
+  to_addresses?: string;
+  cc_addresses?: string;
+  received_at?: string;
+  snippet?: string;
+  body_text?: string;
+  body_html?: string;
   created_at: string;
   updated_at: string;
 }
@@ -141,78 +144,111 @@ export type EmailCategory =
   | 'NEWSLETTER_PROMO'
   | 'SPAM_OTHER';
 
+export type ActionType =
+  | 'respond_to_lead'
+  | 'send_invoice'
+  | 'review_invoice'
+  | 'record_payment'
+  | 'confirm_schedule'
+  | 'reschedule'
+  | 'resolve_issue'
+  | 'file_for_records'
+  | 'none';
+
 export interface EmailInsight {
   id: string;
-  email_raw_id: string;
+  email_id: string;
   category: EmailCategory;
   priority: 'low' | 'medium' | 'high' | 'urgent';
   is_action_required: boolean;
-  summary: string;
-  details: EmailInsightDetails;
-  confidence_score?: number;
-  ai_model_version?: string;
-  processing_time_ms?: number;
+  action_type?: ActionType;
+  summary?: string;
+  notes?: string;
+  details?: EmailInsightDetails;
   created_at: string;
-  updated_at: string;
 }
 
 export interface EmailInsightDetails {
-  // Lead details
-  contact_name?: string;
-  contact_email?: string;
-  contact_phone?: string;
-  company_name?: string;
-  job_type?: string;
-  job_description?: string;
-  urgency?: 'low' | 'normal' | 'high' | 'emergency';
-  preferred_time_window?: string;
-  budget_range?: string;
+  // For LEAD_*:
+  lead?: {
+    customer_name?: string | null;
+    customer_email?: string | null;
+    customer_phone?: string | null;
+    customer_address?: string | null;
+    job_type?: string | null;
+    job_description?: string | null;
+    urgency?: 'low' | 'medium' | 'high' | null;
+    preferred_time_window?: string | null;
+    lead_source?: string | null;
+  };
 
-  // Billing details
-  direction?: 'incoming' | 'outgoing';
-  amount?: number;
-  currency?: string;
-  invoice_number?: string;
-  due_date?: string;
-  status?: 'open' | 'paid' | 'overdue' | 'cancelled';
+  // For BILLING_*:
+  billing?: {
+    direction?: 'incoming' | 'outgoing' | null;
+    amount?: number | null;
+    currency?: string | null;
+    invoice_number?: string | null;
+    vendor_or_client_name?: string | null;
+    due_date?: string | null; // ISO 8601 if possible
+    paid_date?: string | null; // ISO 8601 if applicable
+    status?: 'draft' | 'sent' | 'paid' | 'overdue' | 'disputed' | null;
+  };
 
-  // Scheduling details
-  requested_dates?: string[];
-  confirmed_date?: string;
-  location?: string;
-  job_reference?: string;
+  // For SCHEDULING_*:
+  scheduling?: {
+    job_reference?: string | null;
+    requested_dates?: string[] | null; // e.g. ["2025-12-03", "next Tuesday afternoon"]
+    confirmed_date?: string | null;
+    location_address?: string | null;
+  };
 
-  // Vendor receipt details
-  vendor_name?: string;
-  items?: Array<{
-    name: string;
-    quantity?: number;
-    price: number;
-    category: 'materials' | 'tools' | 'equipment' | 'services';
-  }>;
-  total_amount?: number;
-  tools_breakdown?: number;
-  materials_breakdown?: number;
+  // For VENDOR_RECEIPT:
+  vendor?: {
+    vendor_name?: string | null;
+    order_number?: string | null;
+    total_amount?: number | null;
+    currency?: string | null;
+    items?: Array<{
+      name: string;
+      quantity?: number | null;
+      unit_price?: number | null;
+      category?: 'tool' | 'material' | 'consumable' | 'other' | null;
+    }>;
+    is_primarily_tools?: boolean | null;
+    is_primarily_materials?: boolean | null;
+  };
 
-  // General details
-  key_topics?: string[];
-  sentiment?: 'positive' | 'neutral' | 'negative';
-  response_deadline?: string;
-  follow_up_date?: string;
+  // For SYSTEM_SECURITY:
+  security?: {
+    provider?: string | null;
+    event_type?: string | null;
+    severity?: 'low' | 'medium' | 'high' | 'critical' | null;
+  };
 }
 
 export interface IntelligenceAlert {
   id: string;
-  email_insight_id: string;
-  type: 'lead' | 'billing' | 'scheduling' | 'support' | 'security';
-  severity: 'low' | 'medium' | 'high' | 'urgent';
+  email_id: string;
+  type: string; // e.g. 'lead', 'billing', 'scheduling', 'security'
+  priority: 'low' | 'medium' | 'high' | 'urgent';
   title: string;
   message: string;
-  due_at?: string;
-  resolved: boolean;
-  resolved_at?: string;
-  resolved_by?: string;
-  resolution_notes?: string;
+  status: 'open' | 'acknowledged' | 'resolved';
   created_at: string;
-  updated_at: string;
+  resolved_at?: string;
+}
+
+export interface IntelligenceLead {
+  id: string;
+  email_id?: string;
+  customer_name?: string;
+  customer_email?: string;
+  customer_phone?: string;
+  customer_address?: string;
+  job_type?: string;
+  job_description?: string;
+  urgency?: string;
+  preferred_time_window?: string;
+  status: string;
+  created_at: string;
 }

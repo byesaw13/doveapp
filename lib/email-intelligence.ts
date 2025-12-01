@@ -3,6 +3,7 @@ import {
   EmailInsight,
   EmailCategory,
   EmailInsightDetails,
+  ActionType,
 } from '@/types/database';
 import { supabase } from '@/lib/supabase';
 
@@ -10,11 +11,10 @@ export interface OpenAIEmailAnalysisResult {
   category: EmailCategory;
   priority: 'low' | 'medium' | 'high' | 'urgent';
   is_action_required: boolean;
+  action_type: ActionType;
   summary: string;
+  notes: string;
   details: EmailInsightDetails;
-  confidence_score: number;
-  reasoning?: string;
-  processing_time_ms?: number;
 }
 
 /**
@@ -34,93 +34,114 @@ export async function analyzeEmailWithOpenAI(
   }
 
   // Extract basic email data from raw Gmail data
-  const emailData = extractEmailDataFromRaw(emailRaw.raw_data);
+  const emailData = extractEmailDataFromRaw(emailRaw);
 
-  const prompt = `You are an AI assistant analyzing emails for a field service company (painting, plumbing, electrical, HVAC, etc.). Extract structured business intelligence from this email.
+  const prompt = `You are the Dovetails Email Intelligence Engine.
 
-Email Subject: ${emailData.subject || 'No subject'}
-Email From: ${emailData.from || 'Unknown'}
-Email Body: ${emailData.body || 'No content'}
-Received: ${emailData.received_at || 'Unknown'}
+Your job is to read one email (subject + body + headers) and return a STRICT JSON object with:
+- One primary category
+- Actionability
+- Priority
+- A short summary
+- Structured details for my handyman/painting business
 
-TASK: Analyze this email and provide structured business intelligence with EXACTLY this JSON format:
+The business is a solo home services company (Dovetails Services LLC) doing handyman, home maintenance, and interior painting work.
+
+Valid categories are:
+- LEAD_NEW
+- LEAD_FOLLOWUP
+- BILLING_INCOMING_INVOICE
+- BILLING_OUTGOING_INVOICE
+- BILLING_PAYMENT_RECEIVED
+- BILLING_PAYMENT_ISSUE
+- SCHEDULING_REQUEST
+- SCHEDULING_CHANGE
+- CUSTOMER_SUPPORT
+- VENDOR_RECEIPT
+- SYSTEM_SECURITY
+- NEWSLETTER_PROMO
+- SPAM_OTHER
+
+Rules:
+- ALWAYS pick exactly one category.
+- ALWAYS return valid JSON. No comments, no extra text.
+- If you are unsure, pick the closest reasonable category and explain uncertainty in the "notes" field.
+- Be conservative with \`urgent\`. Save it for time-sensitive or high-risk items.
+
+Output schema (TypeScript style, but you must return JSON):
 
 {
-  "category": "ONE_CATEGORY_ONLY",
-  "priority": "low|medium|high|urgent",
-  "is_action_required": true|false,
-  "summary": "1-2 sentence plain-language summary",
+  "category": "LEAD_NEW" | "LEAD_FOLLOWUP" | "BILLING_INCOMING_INVOICE" | "BILLING_OUTGOING_INVOICE" | "BILLING_PAYMENT_RECEIVED" | "BILLING_PAYMENT_ISSUE" | "SCHEDULING_REQUEST" | "SCHEDULING_CHANGE" | "CUSTOMER_SUPPORT" | "VENDOR_RECEIPT" | "SYSTEM_SECURITY" | "NEWSLETTER_PROMO" | "SPAM_OTHER",
+  "priority": "low" | "medium" | "high" | "urgent",
+  "is_action_required": boolean,
+  "action_type": "respond_to_lead" | "send_invoice" | "review_invoice" | "record_payment" | "confirm_schedule" | "reschedule" | "resolve_issue" | "file_for_records" | "none",
+  "summary": string,
+  "notes": string,
   "details": {
-    // Include ONLY relevant fields based on category
-  },
-  "confidence_score": 0.0-1.0,
-  "reasoning": "brief explanation of analysis"
+    // For LEAD_*:
+    "lead": {
+      "customer_name": string | null,
+      "customer_email": string | null,
+      "customer_phone": string | null,
+      "customer_address": string | null,
+      "job_type": string | null,
+      "job_description": string | null,
+      "urgency": "low" | "medium" | "high" | null,
+      "preferred_time_window": string | null,
+      "lead_source": string | null
+    },
+
+    // For BILLING_*:
+    "billing": {
+      "direction": "incoming" | "outgoing" | null,
+      "amount": number | null,
+      "currency": string | null,
+      "invoice_number": string | null,
+      "vendor_or_client_name": string | null,
+      "due_date": string | null,          // ISO 8601 if possible
+      "paid_date": string | null,         // ISO 8601 if applicable
+      "status": "draft" | "sent" | "paid" | "overdue" | "disputed" | null
+    },
+
+    // For SCHEDULING_*:
+    "scheduling": {
+      "job_reference": string | null,
+      "requested_dates": string[] | null, // e.g. ["2025-12-03", "next Tuesday afternoon"]
+      "confirmed_date": string | null,
+      "location_address": string | null
+    },
+
+    // For VENDOR_RECEIPT:
+    "vendor": {
+      "vendor_name": string | null,
+      "order_number": string | null,
+      "total_amount": number | null,
+      "currency": string | null,
+      "items": [
+        {
+          "name": string,
+          "quantity": number | null,
+          "unit_price": number | null,
+          "category": "tool" | "material" | "consumable" | "other" | null
+        }
+      ],
+      "is_primarily_tools": boolean | null,
+      "is_primarily_materials": boolean | null
+    },
+
+    // For SYSTEM_SECURITY:
+    "security": {
+      "provider": string | null,
+      "event_type": string | null,
+      "severity": "low" | "medium" | "high" | "critical" | null
+    }
+  }
 }
 
-CATEGORIES (choose EXACTLY ONE):
-- LEAD_NEW: New potential customer/job inquiry
-- LEAD_FOLLOWUP: Follow-up/reply in existing lead thread
-- BILLING_INCOMING_INVOICE: Vendor/supplier invoice to pay
-- BILLING_OUTGOING_INVOICE: Invoice sent to customer or their reply
-- BILLING_PAYMENT_RECEIVED: Payment confirmation/receipt
-- BILLING_PAYMENT_ISSUE: Dispute, failed payment, overdue notice
-- SCHEDULING_REQUEST: New request for dates/times
-- SCHEDULING_CHANGE: Reschedule/cancel/confirm existing appointment
-- CUSTOMER_SUPPORT: Questions, concerns, complaints, general support
-- VENDOR_RECEIPT: Order confirmations, receipts, purchase summaries
-- SYSTEM_SECURITY: Login alerts, password reset, suspicious activity
-- NEWSLETTER_PROMO: Marketing, promos, newsletters, ads
-- SPAM_OTHER: Irrelevant/junk emails
-
-DETAILS FIELDS by CATEGORY:
-
-For LEAD_NEW/LEAD_FOLLOWUP:
-{
-  "contact_name": "string",
-  "contact_email": "string",
-  "contact_phone": "string",
-  "company_name": "string",
-  "job_type": "painting|plumbing|electrical|hvac|general",
-  "job_description": "string",
-  "urgency": "low|normal|high|emergency",
-  "preferred_time_window": "string",
-  "budget_range": "string"
-}
-
-For BILLING_*:
-{
-  "direction": "incoming|outgoing",
-  "amount": number,
-  "currency": "USD",
-  "invoice_number": "string",
-  "due_date": "YYYY-MM-DD",
-  "status": "open|paid|overdue|cancelled"
-}
-
-For SCHEDULING_*:
-{
-  "requested_dates": ["YYYY-MM-DD"],
-  "confirmed_date": "YYYY-MM-DD",
-  "location": "string",
-  "job_reference": "string"
-}
-
-For VENDOR_RECEIPT:
-{
-  "vendor_name": "string",
-  "items": [{"name": "string", "quantity": number, "price": number, "category": "materials|tools|equipment|services"}],
-  "total_amount": number,
-  "tools_breakdown": number,
-  "materials_breakdown": number
-}
-
-For all categories, optionally include:
-{
-  "key_topics": ["topic1", "topic2"],
-  "sentiment": "positive|neutral|negative",
-  "response_deadline": "YYYY-MM-DD HH:mm",
-  "follow_up_date": "YYYY-MM-DD"
-}`;
+EMAIL TO ANALYZE:
+Subject: ${emailData.subject || 'No subject'}
+From: ${emailData.from || 'Unknown'}
+Body: ${emailData.body || 'No content'}`;
 
   const startTime = Date.now();
 
@@ -146,10 +167,7 @@ For all categories, optionally include:
     throw new Error('Invalid analysis result structure from OpenAI');
   }
 
-  return {
-    ...result,
-    processing_time_ms: processingTime,
-  };
+  return result;
 }
 
 /**
@@ -161,39 +179,12 @@ function extractEmailDataFromRaw(rawData: any): {
   body?: string;
   received_at?: string;
 } {
-  const headers = rawData.payload?.headers || [];
-  const getHeader = (name: string) => {
-    const header = headers.find(
-      (h: any) => h.name.toLowerCase() === name.toLowerCase()
-    );
-    return header?.value;
-  };
-
-  const subject = getHeader('Subject');
-  const from = getHeader('From');
-  const receivedAt = getHeader('Date');
-
-  // Extract body text
-  let body = '';
-  const extractBody = (part: any) => {
-    if (part.mimeType === 'text/plain' && part.body?.data) {
-      body = Buffer.from(part.body.data, 'base64').toString();
-    } else if (part.parts) {
-      part.parts.forEach(extractBody);
-    }
-  };
-
-  if (rawData.payload?.parts) {
-    rawData.payload.parts.forEach(extractBody);
-  } else if (rawData.payload?.body?.data) {
-    body = Buffer.from(rawData.payload.body.data, 'base64').toString();
-  }
-
+  // Since we're now storing structured data directly, just return what's available
   return {
-    subject,
-    from,
-    body: body.substring(0, 5000), // Limit body size
-    received_at: receivedAt,
+    subject: rawData.subject,
+    from: rawData.from_address,
+    body: rawData.body_text,
+    received_at: rawData.received_at,
   };
 }
 
@@ -221,6 +212,18 @@ function isValidAnalysisResult(
 
   const validPriorities = ['low', 'medium', 'high', 'urgent'];
 
+  const validActionTypes: ActionType[] = [
+    'respond_to_lead',
+    'send_invoice',
+    'review_invoice',
+    'record_payment',
+    'confirm_schedule',
+    'reschedule',
+    'resolve_issue',
+    'file_for_records',
+    'none',
+  ];
+
   return (
     result &&
     typeof result.category === 'string' &&
@@ -228,11 +231,11 @@ function isValidAnalysisResult(
     typeof result.priority === 'string' &&
     validPriorities.includes(result.priority) &&
     typeof result.is_action_required === 'boolean' &&
+    typeof result.action_type === 'string' &&
+    validActionTypes.includes(result.action_type) &&
     typeof result.summary === 'string' &&
-    typeof result.details === 'object' &&
-    typeof result.confidence_score === 'number' &&
-    result.confidence_score >= 0 &&
-    result.confidence_score <= 1
+    typeof result.notes === 'string' &&
+    typeof result.details === 'object'
   );
 }
 
@@ -241,22 +244,20 @@ function isValidAnalysisResult(
  */
 export async function storeEmailInsight(
   emailRawId: string,
-  analysis: OpenAIEmailAnalysisResult,
-  processingTimeMs: number
+  analysis: OpenAIEmailAnalysisResult
 ): Promise<EmailInsight> {
   const { data, error } = await supabase
     .from('email_insights')
     .insert([
       {
-        email_raw_id: emailRawId,
+        email_id: emailRawId,
         category: analysis.category,
         priority: analysis.priority,
         is_action_required: analysis.is_action_required,
+        action_type: analysis.action_type,
         summary: analysis.summary,
+        notes: analysis.notes,
         details: analysis.details,
-        confidence_score: analysis.confidence_score,
-        ai_model_version: 'gpt-4o-mini',
-        processing_time_ms: processingTimeMs,
       },
     ])
     .select()

@@ -42,11 +42,7 @@ export async function processEmailIntelligence(
 
     // Step 2: Store insight
     console.log(`💾 Storing insight for email ${emailRawId}`);
-    const insight = await storeEmailInsight(
-      emailRawId,
-      analysis,
-      analysis.processing_time_ms || 0
-    );
+    const insight = await storeEmailInsight(emailRawId, analysis);
 
     // Step 3: Generate alerts if needed
     console.log(`🚨 Generating alerts for email ${emailRawId}`);

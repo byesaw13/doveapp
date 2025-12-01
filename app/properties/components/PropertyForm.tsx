@@ -27,7 +27,7 @@ import {
   propertySchema,
   type PropertyFormData,
 } from '@/lib/validations/property';
-import type { PropertyWithClient } from '@/types/property';
+import type { PropertyWithClient, PropertyType } from '@/types/property';
 import type { Client } from '@/types/client';
 
 interface PropertyFormProps {
@@ -83,7 +83,7 @@ export function PropertyForm({
           city: property.city || '',
           state: property.state || '',
           zip_code: property.zip_code || '',
-          property_type: property.property_type as any,
+          property_type: (property.property_type as PropertyType) || undefined,
           notes: property.notes || '',
         });
       } else {
@@ -190,7 +190,7 @@ export function PropertyForm({
               <Select
                 value={watch('property_type') || ''}
                 onValueChange={(value) =>
-                  setValue('property_type', value as any)
+                  setValue('property_type', value as PropertyType)
                 }
               >
                 <SelectTrigger>

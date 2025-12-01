@@ -15,10 +15,8 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
-import {
-  materialSchema,
-  type MaterialFormData,
-} from '@/lib/validations/materials';
+import { materialSchema } from '@/lib/validations/materials';
+import type { z } from 'zod';
 import type { Material } from '@/types/materials';
 
 interface MaterialFormProps {
@@ -78,7 +76,7 @@ export function MaterialForm({ material, onSuccess }: MaterialFormProps) {
     setValue,
     watch,
     formState: { errors },
-  } = useForm<MaterialFormData>({
+  } = useForm<z.infer<typeof materialSchema>>({
     resolver: zodResolver(materialSchema),
     defaultValues: material
       ? {
@@ -108,7 +106,7 @@ export function MaterialForm({ material, onSuccess }: MaterialFormProps) {
       : {
           name: '',
           description: '',
-          category: 'General',
+          category: '',
           unit_cost: 0,
           current_stock: 0,
           min_stock: 0,
@@ -132,7 +130,7 @@ export function MaterialForm({ material, onSuccess }: MaterialFormProps) {
 
   const isActive = watch('is_active');
 
-  const onSubmit = async (data: MaterialFormData) => {
+  const onSubmit = async (data: z.infer<typeof materialSchema>) => {
     setLoading(true);
     setError(null);
 
@@ -154,8 +152,8 @@ export function MaterialForm({ material, onSuccess }: MaterialFormProps) {
       }
 
       onSuccess();
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'An error occurred');
     } finally {
       setLoading(false);
     }

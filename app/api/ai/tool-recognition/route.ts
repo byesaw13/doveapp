@@ -82,19 +82,20 @@ export async function POST(request: NextRequest) {
       default:
         return NextResponse.json({ error: 'Invalid action' }, { status: 400 });
     }
-  } catch (error: any) {
+  } catch (error) {
     console.error('Error in AI tool recognition POST:', error);
 
-    if (error.name === 'ZodError') {
+    if (error instanceof Error && error.name === 'ZodError') {
       return NextResponse.json(
-        { error: 'Validation failed', details: error.errors },
+        { error: 'Validation failed', details: (error as any).errors },
         { status: 400 }
       );
     }
 
-    return NextResponse.json(
-      { error: error.message || 'Failed to process AI recognition request' },
-      { status: 500 }
-    );
+    const errorMessage =
+      error instanceof Error
+        ? error.message
+        : 'Failed to process AI recognition request';
+    return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
 }

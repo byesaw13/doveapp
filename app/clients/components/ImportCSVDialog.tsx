@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useToast } from '@/components/ui/toast';
 import {
   Dialog,
   DialogContent,
@@ -23,8 +24,9 @@ export function ImportCSVDialog({
   onOpenChange,
   onSuccess,
 }: ImportCSVDialogProps) {
-  const [importing, setImporting] = useState(false);
+  const { toast } = useToast();
   const [file, setFile] = useState<File | null>(null);
+  const [importing, setImporting] = useState(false);
   const [result, setResult] = useState<{
     success: boolean;
     message: string;
@@ -53,21 +55,21 @@ export function ImportCSVDialog({
       const formData = new FormData();
       formData.append('file', file);
 
-      console.log('Starting CSV import...', file.name);
+      toast({
+        title: 'Import Started',
+        description: `Starting import of ${file.name}`,
+      });
 
       const response = await fetch('/api/square/import-csv', {
         method: 'POST',
         body: formData,
       });
 
-      console.log('Response status:', response.status);
-
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
       const data = await response.json();
-      console.log('Import result:', data);
       setResult(data);
 
       if (data.success || data.imported > 0) {
@@ -86,7 +88,7 @@ export function ImportCSVDialog({
         imported: 0,
         errors: [
           error instanceof Error ? error.message : 'Unknown error',
-          'Check browser console for details'
+          'Check browser console for details',
         ],
       });
     } finally {

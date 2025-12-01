@@ -7,16 +7,14 @@ import {
 } from '@/lib/db/materials';
 import { materialUpdateSchema } from '@/lib/validations/materials';
 
-interface RouteParams {
-  params: {
-    id: string;
-  };
-}
-
 // GET /api/materials/[id] - Get a specific material
-export async function GET(request: NextRequest, { params }: RouteParams) {
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
   try {
-    const material = await getMaterialById(params.id);
+    const { id } = await params;
+    const material = await getMaterialById(id);
 
     if (!material) {
       return NextResponse.json(
@@ -26,7 +24,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     }
 
     // Get recent transactions
-    const transactions = await getMaterialTransactions(params.id, 10);
+    const transactions = await getMaterialTransactions(id, 10);
 
     return NextResponse.json({
       material,
@@ -42,42 +40,49 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 }
 
 // PUT /api/materials/[id] - Update a material
-export async function PUT(request: NextRequest, { params }: RouteParams) {
+export async function PUT(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
   try {
+    const { id } = await params;
     const body = await request.json();
 
     // Validate input
     const validatedData = materialUpdateSchema.parse({
       ...body,
-      id: params.id,
+      id,
     });
 
     // Update material
-    const material = await updateMaterial(params.id, validatedData);
+    const material = await updateMaterial(id, validatedData);
 
     return NextResponse.json(material);
-  } catch (error: any) {
+  } catch (error) {
     console.error('Error updating material:', error);
 
-    if (error.name === 'ZodError') {
+    if (error instanceof Error && error.name === 'ZodError') {
       return NextResponse.json(
-        { error: 'Validation failed', details: error.errors },
+        { error: 'Validation failed', details: (error as any).errors },
         { status: 400 }
       );
     }
 
-    return NextResponse.json(
-      { error: error.message || 'Failed to update material' },
-      { status: 500 }
-    );
+    const errorMessage =
+      error instanceof Error ? error.message : 'Failed to update material';
+    return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
 }
 
 // DELETE /api/materials/[id] - Delete a material
-export async function DELETE(request: NextRequest, { params }: RouteParams) {
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
   try {
+    const { id } = await params;
     // Check if material exists
-    const material = await getMaterialById(params.id);
+    const material = await getMaterialById(id);
     if (!material) {
       return NextResponse.json(
         { error: 'Material not found' },
@@ -86,14 +91,13 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
     }
 
     // Soft delete
-    await deleteMaterial(params.id);
+    await deleteMaterial(id);
 
     return NextResponse.json({ success: true });
-  } catch (error: any) {
+  } catch (error) {
     console.error('Error deleting material:', error);
-    return NextResponse.json(
-      { error: error.message || 'Failed to delete material' },
-      { status: 500 }
-    );
+    const errorMessage =
+      error instanceof Error ? error.message : 'Failed to delete material';
+    return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
 }

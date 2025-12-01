@@ -319,3 +319,236 @@ export async function getJobsByClient(
 
   return data || [];
 }
+
+// ===== JOB TEMPLATES =====
+
+export interface JobTemplate {
+  id: string;
+  name: string;
+  description?: string;
+  category?: string;
+  estimated_duration_hours?: number;
+  estimated_cost?: number;
+  default_priority: string;
+  is_active: boolean;
+  title_template: string;
+  description_template?: string;
+  service_date_offset_days: number;
+  default_line_items: any[];
+  created_at: string;
+  updated_at: string;
+}
+
+export interface JobTemplateInsert {
+  name: string;
+  description?: string;
+  category?: string;
+  estimated_duration_hours?: number;
+  estimated_cost?: number;
+  default_priority?: string;
+  title_template: string;
+  description_template?: string;
+  service_date_offset_days?: number;
+  default_line_items?: any[];
+}
+
+export interface LineItemData {
+  item_type: 'labor' | 'material';
+  description: string;
+  quantity: number;
+  unit_price: number;
+}
+
+/**
+ * Get all active job templates
+ */
+export async function getJobTemplates(): Promise<JobTemplate[]> {
+  const { data, error } = await supabase
+    .from('job_templates')
+    .select('*')
+    .eq('is_active', true)
+    .order('name');
+
+  if (error) {
+    console.error('Error fetching job templates:', error);
+    throw new Error('Failed to fetch job templates');
+  }
+
+  return data || [];
+}
+
+/**
+ * Get job template by ID
+ */
+export async function getJobTemplateById(
+  id: string
+): Promise<JobTemplate | null> {
+  const { data, error } = await supabase
+    .from('job_templates')
+    .select('*')
+    .eq('id', id)
+    .single();
+
+  if (error) {
+    if (error.code === 'PGRST116') return null;
+    console.error('Error fetching job template:', error);
+    throw new Error('Failed to fetch job template');
+  }
+
+  return data;
+}
+
+/**
+ * Create a new job template
+ */
+export async function createJobTemplate(
+  template: JobTemplateInsert
+): Promise<JobTemplate> {
+  const { data, error } = await supabase
+    .from('job_templates')
+    .insert([template])
+    .select()
+    .single();
+
+  if (error) {
+    console.error('Error creating job template:', error);
+    throw new Error('Failed to create job template');
+  }
+
+  return data;
+}
+
+/**
+ * Update job template
+ */
+export async function updateJobTemplate(
+  id: string,
+  updates: Partial<JobTemplateInsert>
+): Promise<JobTemplate> {
+  const { data, error } = await supabase
+    .from('job_templates')
+    .update({
+      ...updates,
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', id)
+    .select()
+    .single();
+
+  if (error) {
+    console.error('Error updating job template:', error);
+    throw new Error('Failed to update job template');
+  }
+
+  return data;
+}
+
+/**
+ * Delete job template (soft delete by setting is_active to false)
+ */
+export async function deleteJobTemplate(id: string): Promise<void> {
+  const { error } = await supabase
+    .from('job_templates')
+    .update({
+      is_active: false,
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', id);
+
+  if (error) {
+    console.error('Error deleting job template:', error);
+    throw new Error('Failed to delete job template');
+  }
+}
+
+/**
+ * Record template usage
+ */
+export async function recordTemplateUsage(
+  templateId: string,
+  jobId: string,
+  userId?: string
+): Promise<void> {
+  const { error } = await supabase.from('job_template_usage').insert([
+    {
+      template_id: templateId,
+      job_id: jobId,
+      used_by: userId,
+    },
+  ]);
+
+  if (error) {
+    console.error('Error recording template usage:', error);
+    // Don't throw error for usage tracking failures
+  }
+}
+
+/**
+ * Create job from template
+ */
+export async function createJobFromTemplate(
+  templateId: string,
+  overrides: {
+    client_id: string;
+    property_id?: string;
+    service_date?: string;
+    scheduled_time?: string;
+    notes?: string;
+  },
+  userId?: string
+): Promise<Job> {
+  // Get template
+  const template = await getJobTemplateById(templateId);
+  if (!template) {
+    throw new Error('Job template not found');
+  }
+
+  // Generate title and description from template
+  const title = template.title_template
+    .replace('{client_name}', 'Client') // Will be updated after client lookup
+    .replace('{date}', new Date().toLocaleDateString());
+
+  const description = template.description_template || template.description;
+
+  // Calculate service date
+  const serviceDate = overrides.service_date
+    ? new Date(overrides.service_date)
+    : new Date(
+        Date.now() + template.service_date_offset_days * 24 * 60 * 60 * 1000
+      );
+
+  // Prepare line items from template
+  const lineItems: LineItemData[] =
+    template.default_line_items?.map((item) => ({
+      item_type: item.item_type,
+      description: item.description,
+      quantity: item.quantity,
+      unit_price: item.unit_price,
+    })) || [];
+
+  // Create job
+  const jobData: JobInsert = {
+    client_id: overrides.client_id,
+    property_id: overrides.property_id,
+    title,
+    description,
+    status: 'scheduled',
+    service_date: serviceDate.toISOString().split('T')[0],
+    scheduled_time: overrides.scheduled_time,
+    notes: overrides.notes,
+    subtotal: 0,
+    tax: 0,
+    total: 0,
+  };
+
+  const job = await createJob(jobData, lineItems as any);
+
+  if (!job) {
+    throw new Error('Failed to create job from template');
+  }
+
+  // Record template usage
+  await recordTemplateUsage(templateId, job.id, userId);
+
+  return job;
+}

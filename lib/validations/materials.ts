@@ -36,9 +36,9 @@ export const materialSchema = z
     location: z.string().optional(),
     sku: z.string().optional(),
     barcode: z.string().optional(),
-    is_active: z.boolean().default(true),
+    is_active: z.boolean(),
     // Tool-specific fields
-    is_tool: z.boolean().default(false),
+    is_tool: z.boolean(),
     serial_number: z.string().optional(),
     tool_condition: z
       .enum(['excellent', 'good', 'fair', 'poor', 'needs_repair', 'retired'])

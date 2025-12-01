@@ -10,12 +10,20 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 interface JobTableProps {
   jobs: JobWithClient[];
   onEdit: (job: JobWithClient) => void;
   onDelete: (job: JobWithClient) => void;
   onViewDetails: (job: JobWithClient) => void;
+  onStatusChange: (jobId: string, newStatus: JobWithClient['status']) => void;
 }
 
 const statusColors = {
@@ -36,7 +44,13 @@ const statusLabels = {
   cancelled: 'Cancelled',
 };
 
-export function JobTable({ jobs, onEdit, onDelete, onViewDetails }: JobTableProps) {
+export function JobTable({
+  jobs,
+  onEdit,
+  onDelete,
+  onViewDetails,
+  onStatusChange,
+}: JobTableProps) {
   if (jobs.length === 0) {
     return (
       <div className="text-center py-12 text-gray-500">
@@ -71,11 +85,30 @@ export function JobTable({ jobs, onEdit, onDelete, onViewDetails }: JobTableProp
                 {job.client.first_name} {job.client.last_name}
               </TableCell>
               <TableCell>
-                <span
-                  className={`px-2 py-1 rounded-full text-xs font-medium ${statusColors[job.status]}`}
+                <Select
+                  value={job.status}
+                  onValueChange={(newStatus) =>
+                    onStatusChange(job.id, newStatus as JobWithClient['status'])
+                  }
                 >
-                  {statusLabels[job.status]}
-                </span>
+                  <SelectTrigger className="w-32">
+                    <SelectValue>
+                      <span
+                        className={`px-2 py-1 rounded-full text-xs font-medium ${statusColors[job.status]}`}
+                      >
+                        {statusLabels[job.status]}
+                      </span>
+                    </SelectValue>
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="quote">Quote</SelectItem>
+                    <SelectItem value="scheduled">Scheduled</SelectItem>
+                    <SelectItem value="in_progress">In Progress</SelectItem>
+                    <SelectItem value="completed">Completed</SelectItem>
+                    <SelectItem value="invoiced">Invoiced</SelectItem>
+                    <SelectItem value="cancelled">Cancelled</SelectItem>
+                  </SelectContent>
+                </Select>
               </TableCell>
               <TableCell>
                 <span
@@ -108,11 +141,7 @@ export function JobTable({ jobs, onEdit, onDelete, onViewDetails }: JobTableProp
                 >
                   View
                 </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => onEdit(job)}
-                >
+                <Button variant="outline" size="sm" onClick={() => onEdit(job)}>
                   Edit
                 </Button>
                 <Button

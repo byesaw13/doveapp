@@ -29,3 +29,24 @@ export const jobSchema = z.object({
 
 export type JobFormData = z.infer<typeof jobSchema>;
 export type LineItemFormData = z.infer<typeof lineItemSchema>;
+
+// Job Template Schema
+export const jobTemplateSchema = z.object({
+  name: z
+    .string()
+    .min(1, 'Template name is required')
+    .max(100, 'Name is too long'),
+  description: z.string().optional(),
+  category: z.string().optional(),
+  estimated_duration_hours: z.coerce.number().min(0).optional(),
+  estimated_cost: z.coerce.number().min(0).optional(),
+  default_priority: z
+    .enum(['low', 'medium', 'high', 'urgent'])
+    .default('medium'),
+  title_template: z.string().min(1, 'Title template is required'),
+  description_template: z.string().optional(),
+  service_date_offset_days: z.coerce.number().min(0).default(0),
+  default_line_items: z.array(lineItemSchema).default([]),
+});
+
+export type JobTemplateFormData = z.infer<typeof jobTemplateSchema>;

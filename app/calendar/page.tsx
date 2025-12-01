@@ -1,16 +1,24 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
-import { Calendar, momentLocalizer, View, Views } from 'react-big-calendar';
+import { useToast } from '@/components/ui/toast';
+import {
+  Calendar,
+  momentLocalizer,
+  View,
+  Views,
+  EventProps,
+  ToolbarProps,
+} from 'react-big-calendar';
 import withDragAndDrop from 'react-big-calendar/lib/addons/dragAndDrop';
 import moment from 'moment';
-import { format, parseISO, startOfDay, endOfDay } from 'date-fns';
+import { format, parseISO, endOfDay } from 'date-fns';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
 
 import { getJobs, updateJob } from '@/lib/db/jobs';
 import { JobWithClient } from '@/types/job';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import {
   Dialog,
@@ -19,14 +27,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import {
-  CalendarDays,
-  Clock,
-  User,
-  MapPin,
-  Plus,
-  CheckCircle,
-} from 'lucide-react';
+import { CalendarDays, Clock, User, Plus, CheckCircle } from 'lucide-react';
 import Link from 'next/link';
 
 // Setup the localizer for react-big-calendar
@@ -36,7 +37,11 @@ const localizer = momentLocalizer(moment);
 const DnDCalendar = withDragAndDrop(Calendar);
 
 // Custom event component for the calendar
-const EventComponent = ({ event }: { event: any }) => {
+const EventComponent: React.ComponentType<EventProps<object>> = ({ event }) => {
+  const typedEvent = event as {
+    title: string;
+    resource: { status: string; client: string };
+  };
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'scheduled':
@@ -53,15 +58,24 @@ const EventComponent = ({ event }: { event: any }) => {
   };
 
   return (
-    <div className="text-white text-xs p-1 rounded truncate">
-      <div className="font-medium">{event.title}</div>
-      <div className="opacity-90">{event.clientName}</div>
+    <div
+      className={`text-white text-xs p-1 rounded truncate ${getStatusColor(
+        typedEvent.resource?.status
+      )}`}
+    >
+      <div className="font-medium">{typedEvent.title}</div>
+      <div className="opacity-90">{typedEvent.resource?.client}</div>
     </div>
   );
 };
 
 // Custom toolbar component
-const CustomToolbar = ({ label, onNavigate, onView, view }: any) => {
+const CustomToolbar: React.ComponentType<ToolbarProps<object, object>> = ({
+  label,
+  onNavigate,
+  onView,
+  view,
+}) => {
   return (
     <div className="flex items-center justify-between mb-4 p-4 bg-white border-b">
       <div className="flex items-center gap-4">
@@ -112,6 +126,7 @@ const CustomToolbar = ({ label, onNavigate, onView, view }: any) => {
 };
 
 export default function CalendarPage() {
+  const { toast } = useToast();
   const [jobs, setJobs] = useState<JobWithClient[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedEvent, setSelectedEvent] = useState<any>(null);
@@ -157,23 +172,27 @@ export default function CalendarPage() {
       });
   }, [jobs]);
 
-  const handleSelectEvent = (event: any) => {
-    setSelectedEvent(event);
+  const handleSelectEvent = (event: object) => {
+    setSelectedEvent(event as { id: string });
   };
 
   const handleSelectSlot = ({ start, end }: { start: Date; end: Date }) => {
     // Could open a quick job creation dialog here
-    console.log('Selected time slot:', { start, end });
+    toast({
+      title: 'Time Slot Selected',
+      description: `Selected from ${format(start, 'PPp')} to ${format(end, 'PPp')}`,
+    });
   };
 
-  const handleEventDrop = async ({ event, start, end }: any) => {
+  const handleEventDrop = async ({ event, start }: any) => {
     try {
+      const typedEvent = event as { id: string; title: string };
       // Update the job's service date and time
       const newServiceDate = format(start, 'yyyy-MM-dd');
       const newScheduledTime = format(start, 'HH:mm:ss');
 
       // Update the job in the database
-      await updateJob(event.id, {
+      await updateJob(typedEvent.id, {
         service_date: newServiceDate,
         scheduled_time: newScheduledTime,
       });
@@ -204,13 +223,14 @@ export default function CalendarPage() {
     }
   };
 
-  const handleEventResize = async ({ event, start, end }: any) => {
+  const handleEventResize = async ({ event, start }: any) => {
     // For now, we'll just update the end time (duration)
     // In a more advanced implementation, you could update job duration
     try {
+      const typedEvent = event as { id: string };
       const newScheduledTime = format(start, 'HH:mm:ss');
 
-      await updateJob(event.id, {
+      await updateJob(typedEvent.id, {
         scheduled_time: newScheduledTime,
       });
 
@@ -222,7 +242,10 @@ export default function CalendarPage() {
         )
       );
 
-      console.log('Job duration updated');
+      toast({
+        title: 'Job Updated',
+        description: 'Job duration has been updated successfully.',
+      });
     } catch (error) {
       console.error('Failed to update job duration:', error);
       alert('Failed to update job duration. Please try again.');
@@ -322,8 +345,12 @@ export default function CalendarPage() {
             <DnDCalendar
               localizer={localizer}
               events={events}
-              startAccessor={(event: any) => new Date(event.start)}
-              endAccessor={(event: any) => new Date(event.end)}
+              startAccessor={(event: object) =>
+                new Date((event as { start: string }).start)
+              }
+              endAccessor={(event: object) =>
+                new Date((event as { end: string }).end)
+              }
               style={{ height: '100%' }}
               onSelectEvent={handleSelectEvent}
               onSelectSlot={handleSelectSlot}
@@ -339,7 +366,8 @@ export default function CalendarPage() {
               onEventDrop={handleEventDrop}
               onEventResize={handleEventResize}
               resizable
-              eventPropGetter={(event: any) => {
+              eventPropGetter={(event: object) => {
+                const typedEvent = event as { resource: { status: string } };
                 const statusColors = {
                   scheduled: { backgroundColor: '#3b82f6' },
                   in_progress: { backgroundColor: '#eab308' },
@@ -349,7 +377,7 @@ export default function CalendarPage() {
                 };
                 return {
                   style: statusColors[
-                    event.status as keyof typeof statusColors
+                    typedEvent.resource.status as keyof typeof statusColors
                   ] || { backgroundColor: '#6b7280' },
                 };
               }}

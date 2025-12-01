@@ -22,8 +22,6 @@ import {
   timeApprovalSchema,
   technicianRateSchema,
   technicianLocationSchema,
-  timeTrackingQuerySchema,
-  timeAnalyticsQuerySchema,
 } from '@/lib/validations/time-tracking';
 
 // GET /api/time-tracking - Get time tracking data
@@ -63,9 +61,19 @@ export async function GET(request: NextRequest) {
         const queryParams = {
           technician_name: searchParams.get('technician_name') || undefined,
           job_id: searchParams.get('job_id') || undefined,
-          status: (searchParams.get('status') as any) || undefined,
+          status:
+            (searchParams.get('status') as
+              | 'active'
+              | 'completed'
+              | 'approved'
+              | 'rejected'
+              | 'paid') || undefined,
           approval_status:
-            (searchParams.get('approval_status') as any) || undefined,
+            (searchParams.get('approval_status') as
+              | 'pending'
+              | 'approved'
+              | 'rejected'
+              | 'needs_revision') || undefined,
           start_date: searchParams.get('start_date') || undefined,
           end_date: searchParams.get('end_date') || undefined,
           page: searchParams.get('page')
@@ -74,8 +82,15 @@ export async function GET(request: NextRequest) {
           limit: searchParams.get('limit')
             ? parseInt(searchParams.get('limit')!)
             : 20,
-          sort_by: (searchParams.get('sort_by') as any) || 'start_time',
-          sort_order: (searchParams.get('sort_order') as any) || 'desc',
+          sort_by:
+            (searchParams.get('sort_by') as
+              | 'start_time'
+              | 'end_time'
+              | 'total_hours'
+              | 'total_amount'
+              | 'technician_name') || 'start_time',
+          sort_order:
+            (searchParams.get('sort_order') as 'asc' | 'desc') || 'desc',
         };
         const summary = await getTimeTrackingSummary(queryParams);
         return NextResponse.json(summary);
@@ -83,7 +98,13 @@ export async function GET(request: NextRequest) {
       case 'analytics':
         const analyticsParams = {
           technician_name: searchParams.get('technician_name') || undefined,
-          date_range: (searchParams.get('date_range') as any) || 'month',
+          date_range:
+            (searchParams.get('date_range') as
+              | 'today'
+              | 'week'
+              | 'month'
+              | 'quarter'
+              | 'year') || 'month',
           include_location_data:
             searchParams.get('include_location_data') === 'true',
         };
@@ -95,9 +116,19 @@ export async function GET(request: NextRequest) {
         const entriesParams = {
           technician_name: searchParams.get('technician_name') || undefined,
           job_id: searchParams.get('job_id') || undefined,
-          status: (searchParams.get('status') as any) || undefined,
+          status:
+            (searchParams.get('status') as
+              | 'active'
+              | 'completed'
+              | 'approved'
+              | 'rejected'
+              | 'paid') || undefined,
           approval_status:
-            (searchParams.get('approval_status') as any) || undefined,
+            (searchParams.get('approval_status') as
+              | 'pending'
+              | 'approved'
+              | 'rejected'
+              | 'needs_revision') || undefined,
           start_date: searchParams.get('start_date') || undefined,
           end_date: searchParams.get('end_date') || undefined,
           page: searchParams.get('page')
@@ -106,8 +137,15 @@ export async function GET(request: NextRequest) {
           limit: searchParams.get('limit')
             ? parseInt(searchParams.get('limit')!)
             : 20,
-          sort_by: (searchParams.get('sort_by') as any) || 'start_time',
-          sort_order: (searchParams.get('sort_order') as any) || 'desc',
+          sort_by:
+            (searchParams.get('sort_by') as
+              | 'start_time'
+              | 'end_time'
+              | 'total_hours'
+              | 'total_amount'
+              | 'technician_name') || 'start_time',
+          sort_order:
+            (searchParams.get('sort_order') as 'asc' | 'desc') || 'desc',
         };
         const entries = await getTimeEntries(entriesParams);
         return NextResponse.json(entries);
@@ -168,19 +206,20 @@ export async function POST(request: NextRequest) {
       default:
         return NextResponse.json({ error: 'Invalid action' }, { status: 400 });
     }
-  } catch (error: any) {
+  } catch (error) {
     console.error('Error in time tracking POST:', error);
 
-    if (error.name === 'ZodError') {
+    if (error instanceof Error && error.name === 'ZodError') {
       return NextResponse.json(
-        { error: 'Validation failed', details: error.errors },
+        { error: 'Validation failed', details: (error as any).errors },
         { status: 400 }
       );
     }
 
-    return NextResponse.json(
-      { error: error.message || 'Failed to process time tracking request' },
-      { status: 500 }
-    );
+    const errorMessage =
+      error instanceof Error
+        ? error.message
+        : 'Failed to process time tracking request';
+    return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
 }

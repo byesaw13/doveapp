@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Dialog,
   DialogContent,
@@ -21,13 +22,12 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import {
-  Camera,
   Image as ImageIcon,
-  CheckCircle,
   Trash2,
   Eye,
-  Calendar,
   X,
+  GitCompare,
+  ArrowLeftRight,
 } from 'lucide-react';
 import { deleteJobPhoto } from '@/lib/db/job-photos';
 import type { JobPhoto } from '@/types/job-photo';
@@ -41,6 +41,29 @@ export function PhotoGallery({ photos, onPhotoDeleted }: PhotoGalleryProps) {
   const [selectedPhoto, setSelectedPhoto] = useState<JobPhoto | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [photoToDelete, setPhotoToDelete] = useState<JobPhoto | null>(null);
+  const [compareMode, setCompareMode] = useState(false);
+  const [comparePhotos, setComparePhotos] = useState<
+    [JobPhoto | null, JobPhoto | null]
+  >([null, null]);
+  const [activeTab, setActiveTab] = useState('all');
+
+  // Group photos by type
+  const groupedPhotos = photos.reduce(
+    (acc, photo) => {
+      const type = photo.photo_type || 'other';
+      if (!acc[type]) acc[type] = [];
+      acc[type].push(photo);
+      return acc;
+    },
+    {} as Record<string, JobPhoto[]>
+  );
+
+  const photoTypes = [
+    { key: 'before', label: 'Before', icon: '📷' },
+    { key: 'during', label: 'Progress', icon: '🔄' },
+    { key: 'after', label: 'After', icon: '✅' },
+    { key: 'other', label: 'Other', icon: '📎' },
+  ];
 
   const handleDeletePhoto = async () => {
     if (!photoToDelete) return;
@@ -52,54 +75,39 @@ export function PhotoGallery({ photos, onPhotoDeleted }: PhotoGalleryProps) {
       setPhotoToDelete(null);
     } catch (error) {
       console.error('Failed to delete photo:', error);
-      alert('Failed to delete photo');
     }
   };
 
-  const getPhotoTypeIcon = (type: string) => {
-    switch (type) {
-      case 'before':
-        return <Camera className="w-4 h-4" />;
-      case 'during':
-        return <ImageIcon className="w-4 h-4" />;
-      case 'after':
-        return <CheckCircle className="w-4 h-4" />;
-      default:
-        return <ImageIcon className="w-4 h-4" />;
-    }
+  const handleComparePhotos = (photo: JobPhoto) => {
+    if (!compareMode) return;
+
+    setComparePhotos((prev) => {
+      if (!prev[0]) {
+        return [photo, null];
+      } else if (!prev[1]) {
+        return [prev[0], photo];
+      } else {
+        return [photo, null];
+      }
+    });
   };
 
-  const getPhotoTypeColor = (type: string) => {
-    switch (type) {
-      case 'before':
-        return 'bg-blue-100 text-blue-800';
-      case 'during':
-        return 'bg-yellow-100 text-yellow-800';
-      case 'after':
-        return 'bg-green-100 text-green-800';
-      default:
-        return 'bg-gray-100 text-gray-800';
-    }
+  const clearComparison = () => {
+    setComparePhotos([null, null]);
   };
 
-  const formatFileSize = (bytes: number) => {
+  const filteredPhotos =
+    activeTab === 'all'
+      ? photos
+      : photos.filter((photo) => (photo.photo_type || 'other') === activeTab);
+
+  const formatFileSize = (bytes: number): string => {
     if (bytes === 0) return '0 Bytes';
     const k = 1024;
     const sizes = ['Bytes', 'KB', 'MB', 'GB'];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
-
-  const groupedPhotos = photos.reduce(
-    (acc, photo) => {
-      if (!acc[photo.photo_type]) {
-        acc[photo.photo_type] = [];
-      }
-      acc[photo.photo_type].push(photo);
-      return acc;
-    },
-    {} as Record<string, JobPhoto[]>
-  );
 
   if (photos.length === 0) {
     return (
@@ -118,125 +126,227 @@ export function PhotoGallery({ photos, onPhotoDeleted }: PhotoGalleryProps) {
   return (
     <>
       <div className="space-y-6">
-        {Object.entries(groupedPhotos).map(([type, typePhotos]) => (
-          <Card key={type}>
+        {/* Controls */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <h3 className="text-lg font-medium">Photo Gallery</h3>
+            <Badge variant="secondary">{photos.length} photos</Badge>
+          </div>
+          <div className="flex items-center gap-2">
+            <Button
+              variant={compareMode ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => {
+                setCompareMode(!compareMode);
+                if (compareMode) clearComparison();
+              }}
+            >
+              <GitCompare className="w-4 h-4 mr-2" />
+              Compare
+            </Button>
+          </div>
+        </div>
+
+        {/* Comparison View */}
+        {compareMode && (comparePhotos[0] || comparePhotos[1]) && (
+          <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2 capitalize">
-                {getPhotoTypeIcon(type)}
-                {type} Photos ({typePhotos.length})
+              <CardTitle className="flex items-center gap-2">
+                <ArrowLeftRight className="w-5 h-5" />
+                Photo Comparison
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={clearComparison}
+                  className="ml-auto"
+                >
+                  <X className="w-4 h-4" />
+                </Button>
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                {typePhotos.map((photo) => (
-                  <div key={photo.id} className="relative group">
-                    <div className="aspect-square rounded-lg overflow-hidden border bg-gray-100">
-                      <img
-                        src={photo.file_path}
-                        alt={photo.caption || photo.original_filename}
-                        className="w-full h-full object-cover cursor-pointer hover:scale-105 transition-transform"
-                        onClick={() => setSelectedPhoto(photo)}
-                      />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {[0, 1].map((index) => (
+                  <div key={index} className="space-y-2">
+                    <div className="text-sm font-medium">
+                      {index === 0 ? 'Photo 1' : 'Photo 2'}
+                      {comparePhotos[index] && (
+                        <Badge variant="outline" className="ml-2">
+                          {comparePhotos[index]?.photo_type || 'other'}
+                        </Badge>
+                      )}
                     </div>
-
-                    {/* Overlay with actions */}
-                    <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg flex items-center justify-center gap-2">
-                      <Button
-                        size="sm"
-                        variant="secondary"
-                        onClick={() => setSelectedPhoto(photo)}
-                      >
-                        <Eye className="w-4 h-4" />
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="destructive"
-                        onClick={() => {
-                          setPhotoToDelete(photo);
-                          setDeleteDialogOpen(true);
-                        }}
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
+                    <div className="aspect-video bg-gray-100 rounded-lg overflow-hidden border-2 border-dashed border-gray-300">
+                      {comparePhotos[index] ? (
+                        <img
+                          src={comparePhotos[index]!.file_path}
+                          alt={
+                            comparePhotos[index]!.caption || 'Comparison photo'
+                          }
+                          className="w-full h-full object-cover cursor-pointer"
+                          onClick={() => setSelectedPhoto(comparePhotos[index])}
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-muted-foreground">
+                          Click a photo below to add to comparison
+                        </div>
+                      )}
                     </div>
-
-                    {/* Photo type badge */}
-                    <div className="absolute top-2 left-2">
-                      <Badge className={getPhotoTypeColor(type)}>{type}</Badge>
-                    </div>
-
-                    {/* Caption overlay */}
-                    {photo.caption && (
-                      <div className="absolute bottom-0 left-0 right-0 bg-black/70 text-white p-2">
-                        <p className="text-xs truncate">{photo.caption}</p>
-                      </div>
-                    )}
                   </div>
                 ))}
               </div>
             </CardContent>
           </Card>
-        ))}
+        )}
+
+        {/* Photo Tabs */}
+        <Tabs value={activeTab} onValueChange={setActiveTab}>
+          <TabsList className="grid w-full grid-cols-5">
+            <TabsTrigger value="all">All ({photos.length})</TabsTrigger>
+            {photoTypes.map((type) => (
+              <TabsTrigger key={type.key} value={type.key}>
+                {type.icon} {type.label} ({groupedPhotos[type.key]?.length || 0}
+                )
+              </TabsTrigger>
+            ))}
+          </TabsList>
+
+          <TabsContent value={activeTab} className="mt-6">
+            {filteredPhotos.length === 0 ? (
+              <Card>
+                <CardContent className="p-8 text-center">
+                  <ImageIcon className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                  <h4 className="font-medium mb-2">
+                    No photos in this category
+                  </h4>
+                  <p className="text-sm text-muted-foreground">
+                    {activeTab === 'all'
+                      ? 'Upload photos to document your work progress.'
+                      : `No ${activeTab} photos yet.`}
+                  </p>
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
+                {filteredPhotos.map((photo) => (
+                  <div
+                    key={photo.id}
+                    className={`relative group cursor-pointer rounded-lg overflow-hidden border-2 transition-all ${
+                      compareMode
+                        ? comparePhotos.includes(photo)
+                          ? 'border-primary ring-2 ring-primary/20'
+                          : 'border-gray-200 hover:border-primary/50'
+                        : 'border-gray-200 hover:border-primary'
+                    }`}
+                    onClick={() => {
+                      if (compareMode) {
+                        handleComparePhotos(photo);
+                      } else {
+                        setSelectedPhoto(photo);
+                      }
+                    }}
+                  >
+                    <div className="aspect-square bg-gray-100">
+                      <img
+                        src={photo.file_path}
+                        alt={photo.caption || 'Job photo'}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+
+                    {/* Photo Type Badge */}
+                    <div className="absolute top-2 left-2">
+                      <Badge
+                        variant="secondary"
+                        className="text-xs bg-black/70 text-white border-0"
+                      >
+                        {photo.photo_type || 'other'}
+                      </Badge>
+                    </div>
+
+                    {/* Hover Overlay */}
+                    <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 transition-all duration-200 flex items-center justify-center">
+                      {compareMode ? (
+                        <div className="text-white text-center">
+                          <GitCompare className="w-6 h-6 mx-auto mb-1" />
+                          <div className="text-xs">Click to compare</div>
+                        </div>
+                      ) : (
+                        <Eye className="text-white w-6 h-6" />
+                      )}
+                    </div>
+
+                    {/* Delete Button */}
+                    <div className="absolute top-2 right-2">
+                      <Button
+                        size="sm"
+                        variant="destructive"
+                        className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setPhotoToDelete(photo);
+                          setDeleteDialogOpen(true);
+                        }}
+                      >
+                        <Trash2 className="h-3 w-3" />
+                      </Button>
+                    </div>
+
+                    {/* Caption */}
+                    {photo.caption && (
+                      <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-70 text-white text-xs p-2">
+                        {photo.caption}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </TabsContent>
+        </Tabs>
       </div>
 
-      {/* Photo Detail Modal */}
+      {/* Photo Detail Dialog */}
       <Dialog
         open={!!selectedPhoto}
         onOpenChange={() => setSelectedPhoto(null)}
       >
         <DialogContent className="max-w-4xl">
           <DialogHeader>
-            <DialogTitle className="flex items-center justify-between">
-              <span>
-                {selectedPhoto?.caption || selectedPhoto?.original_filename}
-              </span>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setSelectedPhoto(null)}
-              >
-                <X className="w-4 h-4" />
-              </Button>
-            </DialogTitle>
+            <DialogTitle>Photo Details</DialogTitle>
           </DialogHeader>
-
           {selectedPhoto && (
             <div className="space-y-4">
-              {/* Large Image */}
-              <div className="flex justify-center">
+              <div className="relative">
                 <img
                   src={selectedPhoto.file_path}
-                  alt={selectedPhoto.caption || selectedPhoto.original_filename}
-                  className="max-w-full max-h-96 object-contain rounded-lg"
+                  alt={selectedPhoto.caption || 'Job photo'}
+                  className="w-full max-h-96 object-contain rounded-lg"
                 />
               </div>
 
-              {/* Photo Details */}
               <div className="grid grid-cols-2 gap-4 text-sm">
                 <div>
                   <span className="font-medium">Type:</span>
-                  <Badge
-                    className={`ml-2 ${getPhotoTypeColor(selectedPhoto.photo_type)}`}
-                  >
-                    {selectedPhoto.photo_type}
+                  <Badge variant="outline" className="ml-2">
+                    {selectedPhoto.photo_type || 'other'}
                   </Badge>
                 </div>
                 <div>
-                  <span className="font-medium">File Size:</span>
+                  <span className="font-medium">Size:</span>
                   <span className="ml-2">
                     {formatFileSize(selectedPhoto.file_size)}
                   </span>
                 </div>
                 <div>
                   <span className="font-medium">Uploaded:</span>
-                  <span className="ml-2 flex items-center">
-                    <Calendar className="w-4 h-4 mr-1" />
+                  <span className="ml-2">
                     {new Date(selectedPhoto.created_at).toLocaleDateString()}
                   </span>
                 </div>
                 <div>
-                  <span className="font-medium">Original Name:</span>
-                  <span className="ml-2">
+                  <span className="font-medium">File:</span>
+                  <span className="ml-2 text-xs text-muted-foreground">
                     {selectedPhoto.original_filename}
                   </span>
                 </div>
@@ -271,7 +381,7 @@ export function PhotoGallery({ photos, onPhotoDeleted }: PhotoGalleryProps) {
               onClick={handleDeletePhoto}
               className="bg-red-600 hover:bg-red-700"
             >
-              Delete Photo
+              Delete
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

@@ -33,8 +33,8 @@ export function DeletePropertyDialog({
         <AlertDialogHeader>
           <AlertDialogTitle>Delete Property</AlertDialogTitle>
           <AlertDialogDescription>
-            Are you sure you want to delete the property "{property.name}"? This
-            action cannot be undone.
+            Are you sure you want to delete the property &quot;{property.name}
+            &quot;? This action cannot be undone.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>

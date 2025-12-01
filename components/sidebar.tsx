@@ -11,6 +11,7 @@ import {
   Calendar,
   Package,
   Clock,
+  Mail,
   Menu,
   X,
 } from 'lucide-react';
@@ -21,6 +22,7 @@ const navigation = [
   { name: 'Dashboard', href: '/', icon: LayoutDashboard },
   { name: 'Calendar', href: '/calendar', icon: Calendar },
   { name: 'Time Tracking', href: '/time-tracking', icon: Clock },
+  { name: 'Email', href: '/emails', icon: Mail },
   { name: 'Clients', href: '/clients', icon: Users },
   { name: 'Properties', href: '/properties', icon: MapPin },
   { name: 'Jobs', href: '/jobs', icon: Briefcase },

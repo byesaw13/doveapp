@@ -1,15 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import {
-  getMaterials,
-  createMaterial,
-  getMaterialById,
-  updateMaterial,
-  deleteMaterial,
-  getMaterialCategories,
-} from '@/lib/db/materials';
+import { getMaterials, createMaterial } from '@/lib/db/materials';
 import {
   materialSchema,
-  materialUpdateSchema,
   materialQuerySchema,
 } from '@/lib/validations/materials';
 
@@ -28,8 +20,14 @@ export async function GET(request: NextRequest) {
       limit: searchParams.get('limit')
         ? parseInt(searchParams.get('limit')!)
         : 20,
-      sort_by: (searchParams.get('sort_by') as any) || 'name',
-      sort_order: (searchParams.get('sort_order') as any) || 'asc',
+      sort_by:
+        (searchParams.get('sort_by') as
+          | 'name'
+          | 'category'
+          | 'current_stock'
+          | 'unit_cost'
+          | 'updated_at') || 'name',
+      sort_order: (searchParams.get('sort_order') as 'asc' | 'desc') || 'asc',
     };
 
     // Validate query parameters
@@ -76,19 +74,18 @@ export async function POST(request: NextRequest) {
     const material = await createMaterial(validatedData);
 
     return NextResponse.json(material, { status: 201 });
-  } catch (error: any) {
+  } catch (error) {
     console.error('Error creating material:', error);
 
-    if (error.name === 'ZodError') {
+    if (error instanceof Error && error.name === 'ZodError') {
       return NextResponse.json(
-        { error: 'Validation failed', details: error.errors },
+        { error: 'Validation failed', details: (error as any).errors },
         { status: 400 }
       );
     }
 
-    return NextResponse.json(
-      { error: error.message || 'Failed to create material' },
-      { status: 500 }
-    );
+    const errorMessage =
+      error instanceof Error ? error.message : 'Failed to create material';
+    return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
 }

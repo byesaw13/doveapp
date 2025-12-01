@@ -243,9 +243,9 @@ export function MaterialTable({
           <AlertDialogHeader>
             <AlertDialogTitle>Delete Material</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete "{deletingMaterial?.name}"? This
-              action cannot be undone. The material will be marked as inactive
-              but can be restored if needed.
+              Are you sure you want to delete &quot;{deletingMaterial?.name}
+              &quot;? This action cannot be undone. The material will be marked
+              as inactive but can be restored if needed.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

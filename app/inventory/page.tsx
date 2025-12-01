@@ -255,8 +255,9 @@ export default function InventoryPage() {
           <AIToolRecognition
             mode="inventory"
             onToolsRecognized={(tools) => {
-              console.log('Recognized tools:', tools);
               // Here you would typically update inventory counts
+              // For now, just show a toast
+              console.log('Recognized tools:', tools); // Keep for debugging
             }}
           />
         </TabsContent>

@@ -1,16 +1,21 @@
 -- Email Intelligence Engine v1 - Schema Migration
 -- Migration: 018_upgrade_to_email_intelligence_engine.sql
--- This migration transitions from the old email system to the new intelligence engine
+-- This migration provides a clean transition from old email system to new intelligence engine
+-- It drops ALL existing email-related tables and recreates them with the new schema
+-- WARNING: This will delete all existing email data - backup if needed
 
--- Drop old tables that conflict with new schema
+-- Drop ALL email-related tables to ensure clean slate
 DROP TABLE IF EXISTS alerts CASCADE;
 DROP TABLE IF EXISTS email_enrichments CASCADE;
 DROP TABLE IF EXISTS leads CASCADE;
+DROP TABLE IF EXISTS billing_events CASCADE;
 DROP TABLE IF EXISTS billing_entries CASCADE;
 DROP TABLE IF EXISTS spending_entries CASCADE;
 DROP TABLE IF EXISTS email_attachments CASCADE;
 DROP TABLE IF EXISTS email_messages CASCADE;
 DROP TABLE IF EXISTS email_accounts CASCADE;
+DROP TABLE IF EXISTS emails_raw CASCADE;
+DROP TABLE IF EXISTS email_insights CASCADE;
 
 -- Create new intelligence engine tables
 

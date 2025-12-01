@@ -41,6 +41,7 @@ export default function EmailClientPage() {
   const [emailAccounts, setEmailAccounts] = useState<EmailAccount[]>([]);
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState(false);
+  const [reprocessing, setReprocessing] = useState(false);
   const [selectedEmail, setSelectedEmail] = useState<EmailMessage | null>(null);
   const [currentView, setCurrentView] = useState<EmailView>('inbox');
   const [activeFolder, setActiveFolder] = useState('inbox');
@@ -145,6 +146,41 @@ export default function EmailClientPage() {
       });
     } finally {
       setSyncing(false);
+    }
+  };
+
+  const reprocessAllEmails = async (force = false) => {
+    setReprocessing(true);
+    try {
+      const response = await fetch('/api/email-intelligence/reprocess-all', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ force }),
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        toast({
+          title: 'Reprocessing Complete',
+          description: `${result.summary.processed} emails processed, ${result.summary.alerts_generated} alerts generated`,
+        });
+        loadEmails(); // Refresh the email list
+      } else {
+        const error = await response.json();
+        toast({
+          title: 'Error',
+          description: error.error || 'Failed to reprocess emails',
+          variant: 'destructive',
+        });
+      }
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: 'Failed to reprocess emails',
+        variant: 'destructive',
+      });
+    } finally {
+      setReprocessing(false);
     }
   };
 
@@ -326,16 +362,31 @@ export default function EmailClientPage() {
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <span className="text-sm font-medium">Gmail</span>
-                <Button
-                  onClick={() => syncEmails()}
-                  disabled={syncing}
-                  size="sm"
-                  variant="ghost"
-                >
-                  <RefreshCw
-                    className={`w-4 h-4 ${syncing ? 'animate-spin' : ''}`}
-                  />
-                </Button>
+                <div className="flex gap-1">
+                  <Button
+                    onClick={() => syncEmails()}
+                    disabled={syncing}
+                    size="sm"
+                    variant="ghost"
+                    title="Sync new emails from Gmail"
+                  >
+                    <RefreshCw
+                      className={`w-4 h-4 ${syncing ? 'animate-spin' : ''}`}
+                    />
+                  </Button>
+                  <Button
+                    onClick={() => reprocessAllEmails(false)}
+                    disabled={reprocessing}
+                    size="sm"
+                    variant="ghost"
+                    title="Re-run AI analysis on all emails"
+                  >
+                    <RefreshCw
+                      className={`w-4 h-4 ${reprocessing ? 'animate-spin' : ''}`}
+                    />
+                    AI
+                  </Button>
+                </div>
               </div>
               <div className="text-xs text-gray-600">
                 {emailAccounts[0].email_address}

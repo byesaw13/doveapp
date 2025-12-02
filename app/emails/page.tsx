@@ -173,9 +173,15 @@ export default function EmailIntelligencePage() {
 
       if (response.ok) {
         const result = await response.json();
+        const skippedCount =
+          result.summary.total -
+          result.summary.processed -
+          result.summary.failed;
         toast({
-          title: 'Reprocessing Complete',
-          description: `${result.summary.processed} emails processed, ${result.summary.alerts_generated} alerts generated`,
+          title: 'Processing Complete',
+          description: force
+            ? `Reprocessed all ${result.summary.processed} emails, ${result.summary.alerts_generated} alerts generated`
+            : `Processed ${result.summary.processed} new emails (${skippedCount} already analyzed), ${result.summary.alerts_generated} alerts generated`,
         });
         loadEmails();
         loadAlerts();
@@ -183,14 +189,14 @@ export default function EmailIntelligencePage() {
         const error = await response.json();
         toast({
           title: 'Error',
-          description: error.error || 'Failed to reprocess emails',
+          description: error.error || 'Failed to process emails',
           variant: 'destructive',
         });
       }
     } catch (error) {
       toast({
         title: 'Error',
-        description: 'Failed to reprocess emails',
+        description: 'Failed to process emails',
         variant: 'destructive',
       });
     } finally {
@@ -600,12 +606,12 @@ export default function EmailIntelligencePage() {
               disabled={reprocessing}
               size="sm"
               variant="ghost"
-              title="Re-run AI analysis on all emails"
+              title="Process new unreviewed emails only"
             >
               <Brain
                 className={`w-4 h-4 ${reprocessing ? 'animate-spin' : ''}`}
               />
-              AI
+              Process New
             </Button>
           </div>
         </div>
@@ -933,28 +939,68 @@ export default function EmailIntelligencePage() {
           </TabsContent>
         </Tabs>
 
-        {/* Email Detail View */}
+        {/* Email Detail View - Improved */}
         {selectedEmail && (
-          <div className="border-t border-gray-200 bg-white p-6 max-h-96 overflow-y-auto">
-            <div className="flex justify-between items-start mb-4">
-              <div className="flex-1">
-                <h3 className="text-lg font-semibold">
-                  {selectedEmail.raw.subject || 'No subject'}
-                </h3>
-                <p className="text-sm text-gray-600">
-                  From: {selectedEmail.raw.from_address || 'Unknown'}
-                </p>
-                <p className="text-xs text-gray-500">
-                  {selectedEmail.raw.received_at
-                    ? new Date(selectedEmail.raw.received_at).toLocaleString()
-                    : 'Unknown date'}
-                </p>
-              </div>
-              <div className="flex items-center gap-2">
+          <div
+            className="border-t border-gray-200 bg-white flex flex-col"
+            style={{ maxHeight: '50vh' }}
+          >
+            {/* Header with Actions */}
+            <div className="p-4 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-indigo-50">
+              <div className="flex justify-between items-start gap-4">
+                <div className="flex-1 min-w-0">
+                  <h3 className="text-xl font-bold text-gray-900 mb-2">
+                    {selectedEmail.raw.subject || 'No subject'}
+                  </h3>
+                  <div className="flex items-center gap-3 text-sm">
+                    <div className="flex items-center gap-2">
+                      <Mail className="w-4 h-4 text-gray-500" />
+                      <span className="font-medium text-gray-700">
+                        {selectedEmail.raw.from_address || 'Unknown'}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2 text-gray-500">
+                      <Clock className="w-4 h-4" />
+                      <span>
+                        {selectedEmail.raw.received_at
+                          ? new Date(
+                              selectedEmail.raw.received_at
+                            ).toLocaleString('en-US', {
+                              month: 'short',
+                              day: 'numeric',
+                              year: 'numeric',
+                              hour: 'numeric',
+                              minute: '2-digit',
+                            })
+                          : 'Unknown date'}
+                      </span>
+                    </div>
+                  </div>
+                  {selectedEmail.raw.to_addresses && (
+                    <p className="text-xs text-gray-500 mt-1">
+                      To: {selectedEmail.raw.to_addresses}
+                    </p>
+                  )}
+                </div>
                 <Button
-                  variant="outline"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setSelectedEmail(null)}
+                  className="flex-shrink-0"
+                >
+                  ✕
+                </Button>
+              </div>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="px-4 py-3 border-b border-gray-200 bg-white">
+              <div className="flex items-center gap-2 flex-wrap">
+                <Button
+                  variant="default"
                   size="sm"
                   onClick={() => handleReply(selectedEmail)}
+                  className="bg-blue-600 hover:bg-blue-700"
                 >
                   <Reply className="w-4 h-4 mr-2" />
                   Reply
@@ -975,8 +1021,9 @@ export default function EmailIntelligencePage() {
                   <Forward className="w-4 h-4 mr-2" />
                   Forward
                 </Button>
+                <div className="flex-1"></div>
                 <Button
-                  variant="outline"
+                  variant="ghost"
                   size="sm"
                   onClick={() => handleArchive(selectedEmail.raw.id)}
                 >
@@ -984,75 +1031,90 @@ export default function EmailIntelligencePage() {
                   Archive
                 </Button>
                 <Button
-                  variant="outline"
+                  variant="ghost"
                   size="sm"
                   onClick={() => handleDelete(selectedEmail.raw.id)}
+                  className="text-red-600 hover:text-red-700 hover:bg-red-50"
                 >
                   <Trash2 className="w-4 h-4 mr-2" />
                   Delete
                 </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setSelectedEmail(null)}
-                >
-                  ✕
-                </Button>
               </div>
             </div>
 
+            {/* AI Analysis Section */}
             {selectedEmail.insight && (
-              <div className="mb-4 p-3 bg-purple-50 rounded-lg">
-                <div className="flex items-center gap-2 mb-2">
-                  <Brain className="w-4 h-4 text-purple-600" />
-                  <span className="font-medium text-purple-800">
-                    AI Analysis
-                  </span>
-                </div>
-                <div className="space-y-2 text-sm">
-                  <div>
-                    <span className="font-medium">Category:</span>{' '}
-                    <Badge
-                      className={getCategoryColor(
-                        selectedEmail.insight.category
-                      )}
-                      variant="secondary"
-                    >
-                      {selectedEmail.insight.category?.replace('_', ' ') ||
-                        'Unknown'}
-                    </Badge>
+              <div className="px-4 py-3 bg-gradient-to-r from-purple-50 to-pink-50 border-b border-purple-100">
+                <div className="flex items-start gap-3">
+                  <div className="p-2 bg-purple-100 rounded-lg">
+                    <Brain className="w-5 h-5 text-purple-600" />
                   </div>
-                  <div>
-                    <span className="font-medium">Priority:</span>{' '}
-                    <Badge
-                      variant="outline"
-                      className={getPriorityColor(
-                        selectedEmail.insight.priority
-                      )}
-                    >
-                      {selectedEmail.insight.priority || 'low'}
-                    </Badge>
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="font-semibold text-purple-900">
+                        AI Analysis
+                      </span>
+                      <Badge
+                        className={getCategoryColor(
+                          selectedEmail.insight.category
+                        )}
+                        variant="secondary"
+                      >
+                        {selectedEmail.insight.category?.replace('_', ' ') ||
+                          'Unknown'}
+                      </Badge>
+                      <Badge
+                        variant="outline"
+                        className={getPriorityColor(
+                          selectedEmail.insight.priority
+                        )}
+                      >
+                        {selectedEmail.insight.priority || 'low'}
+                      </Badge>
+                    </div>
+
+                    {selectedEmail.insight.summary && (
+                      <p className="text-sm text-gray-700 mb-2">
+                        <span className="font-medium text-gray-900">
+                          Summary:
+                        </span>{' '}
+                        {selectedEmail.insight.summary}
+                      </p>
+                    )}
+
+                    {selectedEmail.insight.is_action_required && (
+                      <div className="mt-2 p-2 bg-orange-100 border border-orange-200 rounded">
+                        <div className="flex items-center gap-2 text-orange-800">
+                          <AlertTriangle className="w-4 h-4" />
+                          <span className="font-medium text-sm">
+                            Action Required:{' '}
+                            {selectedEmail.insight.action_type ||
+                              'Review needed'}
+                          </span>
+                        </div>
+                      </div>
+                    )}
                   </div>
-                  {selectedEmail.insight.summary && (
-                    <div>
-                      <span className="font-medium">Summary:</span>{' '}
-                      {selectedEmail.insight.summary}
-                    </div>
-                  )}
-                  {selectedEmail.insight.is_action_required && (
-                    <div className="text-orange-700">
-                      <span className="font-medium">Action Required:</span>{' '}
-                      {selectedEmail.insight.action_type || 'Review needed'}
-                    </div>
-                  )}
                 </div>
               </div>
             )}
 
-            <div className="prose prose-sm max-w-none">
-              <pre className="whitespace-pre-wrap text-sm bg-gray-50 p-3 rounded">
-                {selectedEmail.raw.body_text || 'No content available'}
-              </pre>
+            {/* Email Content */}
+            <div className="flex-1 overflow-y-auto p-6 bg-white">
+              {selectedEmail.raw.body_html ? (
+                <div
+                  className="prose prose-sm max-w-none"
+                  dangerouslySetInnerHTML={{
+                    __html: selectedEmail.raw.body_html,
+                  }}
+                />
+              ) : (
+                <div className="prose prose-sm max-w-none">
+                  <div className="whitespace-pre-wrap text-sm text-gray-800 leading-relaxed">
+                    {selectedEmail.raw.body_text || 'No content available'}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         )}

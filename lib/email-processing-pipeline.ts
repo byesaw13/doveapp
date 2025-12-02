@@ -24,12 +24,32 @@ export interface ProcessingResult {
  * Process a single email through the intelligence pipeline
  */
 export async function processEmailIntelligence(
-  emailRaw: EmailRaw
+  emailRaw: EmailRaw,
+  force: boolean = false
 ): Promise<ProcessingResult> {
   const startTime = Date.now();
   const emailRawId = emailRaw.id;
 
   try {
+    // Check if already processed (unless force=true)
+    if (!force) {
+      const { data: existingInsight } = await supabase
+        .from('email_insights')
+        .select('id')
+        .eq('email_raw_id', emailRawId)
+        .single();
+
+      if (existingInsight) {
+        console.log(`⏭️ Email ${emailRawId} already analyzed, skipping`);
+        return {
+          emailRawId,
+          success: true,
+          alertsGenerated: 0,
+          processingTimeMs: Date.now() - startTime,
+        };
+      }
+    }
+
     console.log(`🤖 Starting intelligence processing for email ${emailRawId}`);
 
     // Step 1: Analyze with OpenAI

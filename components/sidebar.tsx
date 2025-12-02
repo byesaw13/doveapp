@@ -14,13 +14,19 @@ import {
   Mail,
   Menu,
   X,
+  BarChart3,
+  Target,
+  FileText,
 } from 'lucide-react';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 
 const navigation = [
   { name: 'Dashboard', href: '/', icon: LayoutDashboard },
+  { name: 'KPI', href: '/kpi', icon: BarChart3 },
   { name: 'Calendar', href: '/calendar', icon: Calendar },
+  { name: 'Leads', href: '/leads', icon: Target },
+  { name: 'Estimates', href: '/estimates', icon: FileText },
   { name: 'Time Tracking', href: '/time-tracking', icon: Clock },
   { name: 'Email', href: '/emails', icon: Mail },
   { name: 'Clients', href: '/clients', icon: Users },

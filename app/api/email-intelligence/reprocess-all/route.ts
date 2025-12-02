@@ -11,13 +11,45 @@ export async function POST(request: NextRequest) {
   try {
     const { force = false } = await request.json();
 
-    console.log(`🔄 Starting reprocessing of all emails (force: ${force})`);
+    console.log(`🔄 Starting reprocessing of emails (force: ${force})`);
 
-    // Get all emails_raw records
-    const { data: allEmails, error: fetchError } = await supabase
+    // Get emails that need processing
+    // If force=false, only get emails without insights (new/unreviewed)
+    // If force=true, get all emails
+    let query = supabase
       .from('emails_raw')
-      .select('id, gmail_message_id, subject')
-      .order('created_at', { ascending: true });
+      .select('id, gmail_message_id, subject, email_insights(id)');
+
+    if (!force) {
+      // Only process emails that don't have insights yet
+      const { data: emailsWithInsights, error: insightsError } = await supabase
+        .from('email_insights')
+        .select('email_raw_id');
+
+      if (insightsError) {
+        console.error('Error fetching insights:', insightsError);
+        return NextResponse.json(
+          { error: 'Failed to fetch existing insights' },
+          { status: 500 }
+        );
+      }
+
+      const processedIds = emailsWithInsights?.map((i) => i.email_raw_id) || [];
+
+      query = query.not(
+        'id',
+        'in',
+        `(${processedIds.length > 0 ? processedIds.join(',') : 'null'})`
+      );
+      console.log(
+        `📭 Filtering out ${processedIds.length} already-processed emails`
+      );
+    }
+
+    const { data: allEmails, error: fetchError } = await query.order(
+      'created_at',
+      { ascending: true }
+    );
 
     if (fetchError) {
       console.error('Error fetching emails:', fetchError);

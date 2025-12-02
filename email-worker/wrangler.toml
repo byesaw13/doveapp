@@ -1,0 +1,22 @@
+name = "doveapp-email-monitor"
+main = "src/index.ts"
+compatibility_date = "2024-12-02"
+compatibility_flags = ["nodejs_compat"]
+
+# Cron trigger - runs every 10 minutes
+[triggers]
+crons = ["*/10 * * * *"]
+
+# Environment variables (set via wrangler secret put)
+# GMAIL_CLIENT_ID
+# GMAIL_CLIENT_SECRET
+# GMAIL_REFRESH_TOKEN
+# OPENAI_API_KEY
+# WEBHOOK_URL (your app's webhook endpoint)
+# WEBHOOK_SECRET (for authenticating webhook requests)
+
+# KV namespace for tracking processed emails
+[[kv_namespaces]]
+binding = "EMAIL_TRACKER"
+id = "cc5565ca40484099b29b651ead8a9508"
+preview_id = "a315ddb62d37447487f91b22db571a69"

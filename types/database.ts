@@ -252,3 +252,14 @@ export interface IntelligenceLead {
   status: string;
   created_at: string;
 }
+
+export interface GmailConnection {
+  id: string;
+  email_address: string;
+  access_token: string;
+  refresh_token: string;
+  token_expires_at: string;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}

@@ -1,58 +1,95 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import {
   Mail,
-  Send,
-  Inbox,
-  FileText,
   Users,
   DollarSign,
-  Search,
-  Plus,
   RefreshCw,
-  Star,
-  StarOff,
+  Brain,
   Eye,
   EyeOff,
-  ChevronLeft,
+  Search,
+  AlertTriangle,
+  TrendingUp,
+  Clock,
+  CheckCircle,
+  ArrowUpDown,
+  Filter,
+  Bell,
+  Zap,
+  Reply,
+  ReplyAll,
+  Forward,
+  Trash2,
+  Archive,
+  MoreHorizontal,
+  PenSquare,
 } from 'lucide-react';
 import { useToast } from '@/components/ui/toast';
-import { EmailMessage, updateEmailMessage } from '@/lib/db/email';
-import { EmailComposer } from './components/EmailComposer';
-import { EmailViewer } from './components/EmailViewer';
+import {
+  EmailRaw,
+  EmailInsight,
+  EmailCategory,
+  IntelligenceAlert,
+  GmailConnection,
+} from '@/types/database';
+import { supabase } from '@/lib/supabase';
+import EmailComposeModal from './components/EmailComposeModal';
 
-interface EmailAccount {
-  id: string;
-  email_address: string;
-  is_active: boolean;
-  last_sync_at?: string;
+interface EmailWithInsight {
+  raw: EmailRaw;
+  insight?: EmailInsight;
 }
 
-type EmailView = 'inbox' | 'compose' | 'view' | 'insights';
-
-export default function EmailClientPage() {
+export default function EmailIntelligencePage() {
   const { toast } = useToast();
-  const [emails, setEmails] = useState<EmailMessage[]>([]);
-  const [emailAccounts, setEmailAccounts] = useState<EmailAccount[]>([]);
+  const [emails, setEmails] = useState<EmailWithInsight[]>([]);
+  const [alerts, setAlerts] = useState<IntelligenceAlert[]>([]);
+  const [gmailConnection, setGmailConnection] =
+    useState<GmailConnection | null>(null);
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState(false);
   const [reprocessing, setReprocessing] = useState(false);
-  const [selectedEmail, setSelectedEmail] = useState<EmailMessage | null>(null);
-  const [currentView, setCurrentView] = useState<EmailView>('inbox');
-  const [activeFolder, setActiveFolder] = useState('inbox');
+  const [selectedEmail, setSelectedEmail] = useState<EmailWithInsight | null>(
+    null
+  );
   const [searchTerm, setSearchTerm] = useState('');
-  const [showUnreadOnly, setShowUnreadOnly] = useState(false);
-  const [composeData, setComposeData] = useState<any>(null);
+  const [sortBy, setSortBy] = useState<
+    'received_at' | 'priority' | 'category' | 'from_address'
+  >('received_at');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+  const [filterCategory, setFilterCategory] = useState<EmailCategory | 'all'>(
+    'all'
+  );
+  const [filterPriority, setFilterPriority] = useState<
+    'all' | 'urgent' | 'high' | 'medium' | 'low'
+  >('all');
+  const [activeTab, setActiveTab] = useState('emails');
+  const [composeModalOpen, setComposeModalOpen] = useState(false);
+  const [composeReplyData, setComposeReplyData] = useState<{
+    type: 'reply' | 'reply-all' | 'forward';
+    originalEmail: EmailWithInsight['raw'];
+  } | null>(null);
 
   useEffect(() => {
-    loadEmailAccounts();
     loadEmails();
-  }, [activeFolder]);
+    loadAlerts();
+    loadGmailConnection();
+  }, []);
 
   // Handle OAuth callback parameters
   useEffect(() => {
@@ -66,7 +103,6 @@ export default function EmailClientPage() {
         description: 'Your Gmail account has been successfully connected.',
       });
       window.history.replaceState({}, '', window.location.pathname);
-      loadEmailAccounts();
       loadEmails();
     } else if (error) {
       let errorMessage = 'Failed to connect Gmail account.';
@@ -91,40 +127,16 @@ export default function EmailClientPage() {
     }
   }, [toast]);
 
-  const loadEmailAccounts = async () => {
-    try {
-      const response = await fetch('/api/email?action=accounts');
-      if (response.ok) {
-        const data = await response.json();
-        setEmailAccounts(data.accounts || []);
-      }
-    } catch (error) {
-      console.error('Failed to load email accounts:', error);
-    }
-  };
-
   const connectGmail = () => {
     window.location.href = '/api/auth/google';
   };
 
-  const syncEmails = async (accountId?: string) => {
-    if (!accountId && emailAccounts.length === 0) {
-      toast({
-        title: 'No Email Account',
-        description: 'Please connect a Gmail account first.',
-        variant: 'destructive',
-      });
-      return;
-    }
-
+  const syncEmails = async () => {
     try {
       setSyncing(true);
-      const accountToSync = accountId || emailAccounts[0].id;
-
       const response = await fetch('/api/gmail/sync', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ accountId: accountToSync }),
       });
 
       if (response.ok) {
@@ -134,6 +146,7 @@ export default function EmailClientPage() {
           description: `Processed ${result.processed} emails from Gmail.`,
         });
         await loadEmails();
+        await loadAlerts();
       } else {
         throw new Error('Sync failed');
       }
@@ -164,7 +177,8 @@ export default function EmailClientPage() {
           title: 'Reprocessing Complete',
           description: `${result.summary.processed} emails processed, ${result.summary.alerts_generated} alerts generated`,
         });
-        loadEmails(); // Refresh the email list
+        loadEmails();
+        loadAlerts();
       } else {
         const error = await response.json();
         toast({
@@ -187,19 +201,41 @@ export default function EmailClientPage() {
   const loadEmails = async () => {
     try {
       setLoading(true);
-      const category = activeFolder === 'inbox' ? undefined : activeFolder;
-      const response = await fetch(
-        `/api/email?category=${category || 'all'}&limit=100`
-      );
-      if (response.ok) {
-        const data = await response.json();
-        setEmails(data.messages);
+
+      const { data: emailsData, error } = await supabase
+        .from('emails_raw')
+        .select(
+          `
+          *,
+          email_insights (*)
+        `
+        )
+        .order('received_at', { ascending: false })
+        .limit(100);
+
+      if (error) {
+        console.error('Error loading emails:', error);
+        toast({
+          title: 'Error',
+          description: 'Failed to load emails',
+          variant: 'destructive',
+        });
+        return;
       }
+
+      const emailsWithInsights: EmailWithInsight[] = (emailsData || []).map(
+        (email) => ({
+          raw: email,
+          insight: email.email_insights?.[0],
+        })
+      );
+
+      setEmails(emailsWithInsights);
     } catch (error) {
       console.error('Failed to load emails:', error);
       toast({
         title: 'Error',
-        description: 'Failed to load emails.',
+        description: 'Failed to load emails',
         variant: 'destructive',
       });
     } finally {
@@ -207,233 +243,498 @@ export default function EmailClientPage() {
     }
   };
 
-  const handleComposeEmail = (replyData?: {
-    type: 'reply' | 'reply-all' | 'forward';
-    originalEmail: EmailMessage;
-  }) => {
-    setComposeData(replyData);
-    setCurrentView('compose');
-  };
-
-  const handleViewEmail = (email: EmailMessage) => {
-    setSelectedEmail(email);
-    setCurrentView('view');
-    // Mark as read if it was unread
-    if (!email.is_read) {
-      updateEmailMessage(email.id, { is_read: true });
-      // Update local state
-      setEmails((prev) =>
-        prev.map((e) => (e.id === email.id ? { ...e, is_read: true } : e))
-      );
-    }
-  };
-
-  const handleEmailSent = () => {
-    setCurrentView('inbox');
-    setComposeData(null);
-    loadEmails(); // Refresh to show sent email if applicable
-  };
-
-  const toggleStar = async (emailId: string, currentlyStarred: boolean) => {
+  const loadAlerts = async () => {
     try {
-      await updateEmailMessage(emailId, { is_starred: !currentlyStarred });
-      setEmails((prev) =>
-        prev.map((e) =>
-          e.id === emailId ? { ...e, is_starred: !currentlyStarred } : e
-        )
-      );
+      const { data, error } = await supabase
+        .from('alerts')
+        .select('*')
+        .eq('status', 'open')
+        .order('created_at', { ascending: false })
+        .limit(20);
+
+      if (error) {
+        console.error('Error loading alerts:', error);
+        return;
+      }
+
+      setAlerts(data || []);
     } catch (error) {
-      console.error('Failed to toggle star:', error);
+      console.error('Failed to load alerts:', error);
     }
   };
 
-  const getFolderIcon = (folder: string) => {
-    switch (folder) {
-      case 'inbox':
-        return <Inbox className="w-4 h-4" />;
-      case 'sent':
-        return <Send className="w-4 h-4" />;
-      case 'drafts':
-        return <FileText className="w-4 h-4" />;
-      case 'leads':
-        return <Users className="w-4 h-4" />;
-      case 'billing':
-        return <DollarSign className="w-4 h-4" />;
-      case 'junk':
-        return <Mail className="w-4 h-4 text-red-500" />;
-      default:
-        return <Mail className="w-4 h-4" />;
+  const loadGmailConnection = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('gmail_connections')
+        .select('*')
+        .eq('is_active', true)
+        .single();
+
+      if (error && error.code !== 'PGRST116') {
+        // PGRST116 is "not found"
+        console.error('Error loading Gmail connection:', error);
+        return;
+      }
+
+      setGmailConnection(data);
+    } catch (error) {
+      console.error('Failed to load Gmail connection:', error);
     }
   };
 
-  const getCategoryColor = (category: string) => {
+  const getCategoryColor = (category?: EmailCategory) => {
+    if (!category) return 'bg-gray-100 text-gray-800';
+
     switch (category) {
-      case 'leads':
+      case 'LEAD_NEW':
+      case 'LEAD_FOLLOWUP':
         return 'bg-green-100 text-green-800';
-      case 'billing':
+      case 'BILLING_INCOMING_INVOICE':
+      case 'BILLING_OUTGOING_INVOICE':
+      case 'BILLING_PAYMENT_RECEIVED':
+      case 'BILLING_PAYMENT_ISSUE':
         return 'bg-blue-100 text-blue-800';
-      case 'spending':
+      case 'SCHEDULING_REQUEST':
+      case 'SCHEDULING_CHANGE':
+        return 'bg-purple-100 text-purple-800';
+      case 'CUSTOMER_SUPPORT':
+        return 'bg-orange-100 text-orange-800';
+      case 'VENDOR_RECEIPT':
+        return 'bg-yellow-100 text-yellow-800';
+      case 'SYSTEM_SECURITY':
         return 'bg-red-100 text-red-800';
-      case 'junk':
-        return 'bg-red-100 text-red-800';
+      case 'NEWSLETTER_PROMO':
+        return 'bg-indigo-100 text-indigo-800';
+      case 'SPAM_OTHER':
+        return 'bg-gray-100 text-gray-800';
       default:
         return 'bg-gray-100 text-gray-800';
     }
   };
 
-  const filteredEmails = emails.filter((email) => {
-    const matchesSearch =
-      !searchTerm ||
-      email.subject?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      email.sender?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      email.body_text?.toLowerCase().includes(searchTerm.toLowerCase());
+  const getPriorityColor = (priority?: string) => {
+    switch (priority) {
+      case 'urgent':
+        return 'border-red-500 text-red-700 bg-red-50';
+      case 'high':
+        return 'border-orange-500 text-orange-700 bg-orange-50';
+      case 'medium':
+        return 'border-yellow-500 text-yellow-700 bg-yellow-50';
+      case 'low':
+        return 'border-gray-500 text-gray-700 bg-gray-50';
+      default:
+        return 'border-gray-500 text-gray-700 bg-gray-50';
+    }
+  };
 
-    const matchesUnread = !showUnreadOnly || !email.is_read;
+  const filteredAndSortedEmails = emails
+    .filter((email) => {
+      const matchesSearch =
+        !searchTerm ||
+        email.raw.subject?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        email.raw.from_address
+          ?.toLowerCase()
+          .includes(searchTerm.toLowerCase()) ||
+        email.raw.body_text?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        email.insight?.summary
+          ?.toLowerCase()
+          .includes(searchTerm.toLowerCase());
 
-    return matchesSearch && matchesUnread;
-  });
+      const matchesCategory =
+        filterCategory === 'all' || email.insight?.category === filterCategory;
+      const matchesPriority =
+        filterPriority === 'all' || email.insight?.priority === filterPriority;
 
-  const folders = [
-    {
-      id: 'inbox',
-      name: 'Inbox',
-      count: emails.filter((e) => !e.is_read).length,
-    },
-    {
-      id: 'leads',
-      name: 'Leads',
-      count: emails.filter((e) => e.category === 'leads').length,
-    },
-    {
-      id: 'billing',
-      name: 'Billing',
-      count: emails.filter((e) => e.category === 'billing').length,
-    },
-    {
-      id: 'spending',
-      name: 'Spending',
-      count: emails.filter((e) => e.category === 'spending').length,
-    },
-    {
-      id: 'junk',
-      name: 'Junk',
-      count: emails.filter((e) => e.category === 'junk').length,
-    },
-    { id: 'sent', name: 'Sent', count: 0 }, // TODO: Implement sent emails
-    { id: 'drafts', name: 'Drafts', count: 0 }, // TODO: Implement drafts
-  ];
+      return matchesSearch && matchesCategory && matchesPriority;
+    })
+    .sort((a, b) => {
+      let aValue: any, bValue: any;
+
+      switch (sortBy) {
+        case 'received_at':
+          aValue = new Date(a.raw.received_at || 0).getTime();
+          bValue = new Date(b.raw.received_at || 0).getTime();
+          break;
+        case 'priority':
+          const priorityOrder = { urgent: 4, high: 3, medium: 2, low: 1 };
+          aValue =
+            priorityOrder[a.insight?.priority as keyof typeof priorityOrder] ||
+            0;
+          bValue =
+            priorityOrder[b.insight?.priority as keyof typeof priorityOrder] ||
+            0;
+          break;
+        case 'category':
+          aValue = a.insight?.category || '';
+          bValue = b.insight?.category || '';
+          break;
+        case 'from_address':
+          aValue = a.raw.from_address || '';
+          bValue = b.raw.from_address || '';
+          break;
+        default:
+          return 0;
+      }
+
+      if (sortOrder === 'asc') {
+        return aValue > bValue ? 1 : -1;
+      } else {
+        return aValue < bValue ? 1 : -1;
+      }
+    });
+
+  const markAlertAsResolved = async (alertId: string) => {
+    try {
+      const { error } = await supabase
+        .from('alerts')
+        .update({
+          status: 'resolved',
+          resolved_at: new Date().toISOString(),
+        })
+        .eq('id', alertId);
+
+      if (error) throw error;
+
+      setAlerts((prev) => prev.filter((alert) => alert.id !== alertId));
+      toast({
+        title: 'Alert Resolved',
+        description: 'Alert has been marked as resolved.',
+      });
+    } catch (error) {
+      console.error('Failed to resolve alert:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to resolve alert.',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handleComposeNew = () => {
+    setComposeReplyData(null);
+    setComposeModalOpen(true);
+  };
+
+  const handleReply = (email: EmailWithInsight) => {
+    setComposeReplyData({
+      type: 'reply',
+      originalEmail: email.raw,
+    });
+    setComposeModalOpen(true);
+  };
+
+  const handleReplyAll = (email: EmailWithInsight) => {
+    setComposeReplyData({
+      type: 'reply-all',
+      originalEmail: email.raw,
+    });
+    setComposeModalOpen(true);
+  };
+
+  const handleForward = (email: EmailWithInsight) => {
+    setComposeReplyData({
+      type: 'forward',
+      originalEmail: email.raw,
+    });
+    setComposeModalOpen(true);
+  };
+
+  const handleDelete = async (emailId: string) => {
+    try {
+      const response = await fetch('/api/gmail/manage', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'delete',
+          messageId: emailId,
+        }),
+      });
+
+      if (response.ok) {
+        toast({
+          title: 'Email Deleted',
+          description: 'Email has been moved to trash.',
+        });
+        // Remove from local state
+        setEmails((prev) => prev.filter((email) => email.raw.id !== emailId));
+        if (selectedEmail?.raw.id === emailId) {
+          setSelectedEmail(null);
+        }
+      } else {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to delete email');
+      }
+    } catch (error) {
+      console.error('Failed to delete email:', error);
+      toast({
+        title: 'Error',
+        description:
+          error instanceof Error ? error.message : 'Failed to delete email.',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handleDisconnectGmail = async () => {
+    try {
+      if (gmailConnection) {
+        const { error } = await supabase
+          .from('gmail_connections')
+          .update({ is_active: false })
+          .eq('id', gmailConnection.id);
+
+        if (error) throw error;
+
+        setGmailConnection(null);
+        toast({
+          title: 'Gmail Disconnected',
+          description: 'Gmail connection has been removed.',
+        });
+      }
+    } catch (error) {
+      console.error('Failed to disconnect Gmail:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to disconnect Gmail.',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handleArchive = async (emailId: string) => {
+    try {
+      const response = await fetch('/api/gmail/manage', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'archive',
+          messageId: emailId,
+        }),
+      });
+
+      if (response.ok) {
+        toast({
+          title: 'Email Archived',
+          description: 'Email has been archived.',
+        });
+        // Remove from local state
+        setEmails((prev) => prev.filter((email) => email.raw.id !== emailId));
+        if (selectedEmail?.raw.id === emailId) {
+          setSelectedEmail(null);
+        }
+      } else {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to archive email');
+      }
+    } catch (error) {
+      console.error('Failed to archive email:', error);
+      toast({
+        title: 'Error',
+        description:
+          error instanceof Error ? error.message : 'Failed to archive email.',
+        variant: 'destructive',
+      });
+    }
+  };
 
   return (
     <div className="flex h-screen bg-gray-50">
       {/* Sidebar */}
-      <div className="w-64 bg-white border-r border-gray-200 flex flex-col">
-        {/* Compose Button */}
-        <div className="p-4 border-b border-gray-200 space-y-2">
-          <Button
-            onClick={() => handleComposeEmail()}
-            className="w-full"
-            size="sm"
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            Compose
-          </Button>
-          <Button
-            onClick={() => setCurrentView('insights')}
-            variant="outline"
-            className="w-full"
-            size="sm"
-          >
-            <div className="w-4 h-4 mr-2 bg-purple-500 rounded-full"></div>
-            AI Insights
-          </Button>
+      <div className="w-80 bg-white border-r border-gray-200 flex flex-col">
+        {/* Header */}
+        <div className="p-4 border-b border-gray-200">
+          <h1 className="text-lg font-semibold">Email Intelligence</h1>
+          <p className="text-sm text-gray-600">AI-powered email analysis</p>
         </div>
 
-        {/* Gmail Account Status */}
-        <div className="p-4 border-b border-gray-200">
-          {emailAccounts.length === 0 ? (
-            <div className="text-center">
-              <Mail className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-              <p className="text-sm text-gray-600 mb-2">Connect Gmail</p>
-              <Button onClick={connectGmail} size="sm" variant="outline">
-                Connect
-              </Button>
+        {/* Controls */}
+        <div className="p-4 border-b border-gray-200 space-y-3">
+          {gmailConnection ? (
+            <div className="w-full p-3 bg-green-50 border border-green-200 rounded-lg">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                  <span className="text-sm font-medium text-green-800">
+                    Connected to {gmailConnection.email_address}
+                  </span>
+                </div>
+                <Button
+                  onClick={() => handleDisconnectGmail()}
+                  variant="ghost"
+                  size="sm"
+                  className="text-green-600 hover:text-green-800"
+                >
+                  Disconnect
+                </Button>
+              </div>
             </div>
           ) : (
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium">Gmail</span>
-                <div className="flex gap-1">
-                  <Button
-                    onClick={() => syncEmails()}
-                    disabled={syncing}
-                    size="sm"
-                    variant="ghost"
-                    title="Sync new emails from Gmail"
-                  >
-                    <RefreshCw
-                      className={`w-4 h-4 ${syncing ? 'animate-spin' : ''}`}
-                    />
-                  </Button>
-                  <Button
-                    onClick={() => reprocessAllEmails(false)}
-                    disabled={reprocessing}
-                    size="sm"
-                    variant="ghost"
-                    title="Re-run AI analysis on all emails"
-                  >
-                    <RefreshCw
-                      className={`w-4 h-4 ${reprocessing ? 'animate-spin' : ''}`}
-                    />
-                    AI
-                  </Button>
-                </div>
-              </div>
-              <div className="text-xs text-gray-600">
-                {emailAccounts[0].email_address}
-              </div>
-            </div>
+            <Button onClick={connectGmail} className="w-full" variant="outline">
+              Connect Gmail
+            </Button>
           )}
+          <Button
+            onClick={handleComposeNew}
+            className="w-full"
+            variant="default"
+          >
+            <PenSquare className="w-4 h-4 mr-2" />
+            Compose New
+          </Button>
+          <div className="flex gap-2">
+            <Button
+              onClick={syncEmails}
+              disabled={syncing}
+              size="sm"
+              variant="ghost"
+              title="Sync new emails from Gmail"
+            >
+              <RefreshCw
+                className={`w-4 h-4 ${syncing ? 'animate-spin' : ''}`}
+              />
+              Sync
+            </Button>
+            <Button
+              onClick={() => reprocessAllEmails(false)}
+              disabled={reprocessing}
+              size="sm"
+              variant="ghost"
+              title="Re-run AI analysis on all emails"
+            >
+              <Brain
+                className={`w-4 h-4 ${reprocessing ? 'animate-spin' : ''}`}
+              />
+              AI
+            </Button>
+          </div>
         </div>
 
-        {/* Folders */}
-        <div className="flex-1 overflow-y-auto">
-          <div className="p-2">
-            {folders.map((folder) => (
-              <button
-                key={folder.id}
-                onClick={() => {
-                  setActiveFolder(folder.id);
-                  setCurrentView('inbox');
-                }}
-                className={`w-full flex items-center justify-between px-3 py-2 text-left rounded-lg hover:bg-gray-100 ${
-                  activeFolder === folder.id
-                    ? 'bg-blue-50 text-blue-700'
-                    : 'text-gray-700'
-                }`}
-              >
-                <div className="flex items-center gap-2">
-                  {getFolderIcon(folder.id)}
-                  <span className="text-sm">{folder.name}</span>
-                </div>
-                {folder.count > 0 && (
-                  <Badge variant="secondary" className="text-xs">
-                    {folder.count}
-                  </Badge>
-                )}
-              </button>
-            ))}
+        {/* Dashboard Stats */}
+        <div className="p-4 border-b border-gray-200">
+          <h3 className="font-medium mb-3">Dashboard Overview</h3>
+          <div className="space-y-3">
+            <div className="flex justify-between items-center">
+              <div className="flex items-center gap-2">
+                <Mail className="w-4 h-4 text-gray-500" />
+                <span className="text-sm">Total Emails</span>
+              </div>
+              <span className="font-medium">{emails.length}</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <div className="flex items-center gap-2">
+                <Brain className="w-4 h-4 text-blue-500" />
+                <span className="text-sm">AI Analyzed</span>
+              </div>
+              <span className="font-medium text-blue-600">
+                {emails.filter((e) => e.insight).length}
+              </span>
+            </div>
+            <div className="flex justify-between items-center">
+              <div className="flex items-center gap-2">
+                <AlertTriangle className="w-4 h-4 text-red-500" />
+                <span className="text-sm">High Priority</span>
+              </div>
+              <span className="font-medium text-red-600">
+                {
+                  emails.filter(
+                    (e) =>
+                      e.insight?.priority === 'urgent' ||
+                      e.insight?.priority === 'high'
+                  ).length
+                }
+              </span>
+            </div>
+            <div className="flex justify-between items-center">
+              <div className="flex items-center gap-2">
+                <Bell className="w-4 h-4 text-orange-500" />
+                <span className="text-sm">Open Alerts</span>
+              </div>
+              <span className="font-medium text-orange-600">
+                {alerts.length}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* Quick Filters */}
+        <div className="p-4 flex-1">
+          <h3 className="font-medium mb-3">Quick Filters</h3>
+          <div className="space-y-2">
+            <Button
+              variant={filterPriority === 'urgent' ? 'default' : 'ghost'}
+              size="sm"
+              className="w-full justify-start"
+              onClick={() =>
+                setFilterPriority(
+                  filterPriority === 'urgent' ? 'all' : 'urgent'
+                )
+              }
+            >
+              <Zap className="w-4 h-4 mr-2" />
+              Urgent Only
+            </Button>
+            <Button
+              variant={filterCategory === 'LEAD_NEW' ? 'default' : 'ghost'}
+              size="sm"
+              className="w-full justify-start"
+              onClick={() =>
+                setFilterCategory(
+                  filterCategory === 'LEAD_NEW' ? 'all' : 'LEAD_NEW'
+                )
+              }
+            >
+              <Users className="w-4 h-4 mr-2" />
+              New Leads
+            </Button>
+            <Button
+              variant={
+                filterCategory === 'BILLING_INCOMING_INVOICE'
+                  ? 'default'
+                  : 'ghost'
+              }
+              size="sm"
+              className="w-full justify-start"
+              onClick={() =>
+                setFilterCategory(
+                  filterCategory === 'BILLING_INCOMING_INVOICE'
+                    ? 'all'
+                    : 'BILLING_INCOMING_INVOICE'
+                )
+              }
+            >
+              <DollarSign className="w-4 h-4 mr-2" />
+              Invoices
+            </Button>
           </div>
         </div>
       </div>
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col">
-        {currentView === 'inbox' && (
-          <>
+        <Tabs
+          value={activeTab}
+          onValueChange={setActiveTab}
+          className="flex-1 flex flex-col"
+        >
+          <div className="bg-white border-b border-gray-200 px-4">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="emails" className="flex items-center gap-2">
+                <Mail className="w-4 h-4" />
+                Emails ({filteredAndSortedEmails.length})
+              </TabsTrigger>
+              <TabsTrigger value="alerts" className="flex items-center gap-2">
+                <Bell className="w-4 h-4" />
+                Alerts ({alerts.length})
+              </TabsTrigger>
+            </TabsList>
+          </div>
+
+          <TabsContent value="emails" className="flex-1 flex flex-col m-0">
             {/* Toolbar */}
             <div className="bg-white border-b border-gray-200 p-4">
-              <div className="flex items-center gap-4">
-                <div className="flex-1">
+              <div className="flex items-center gap-4 flex-wrap">
+                <div className="flex-1 min-w-64">
                   <div className="relative">
                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                     <Input
@@ -444,17 +745,52 @@ export default function EmailClientPage() {
                     />
                   </div>
                 </div>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setShowUnreadOnly(!showUnreadOnly)}
+
+                <Select
+                  value={sortBy}
+                  onValueChange={(value: any) => setSortBy(value)}
                 >
-                  {showUnreadOnly ? (
-                    <EyeOff className="w-4 h-4" />
-                  ) : (
-                    <Eye className="w-4 h-4" />
-                  )}
+                  <SelectTrigger className="w-40">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="received_at">Date Received</SelectItem>
+                    <SelectItem value="priority">Priority</SelectItem>
+                    <SelectItem value="category">Category</SelectItem>
+                    <SelectItem value="from_address">Sender</SelectItem>
+                  </SelectContent>
+                </Select>
+
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() =>
+                    setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')
+                  }
+                >
+                  <ArrowUpDown className="w-4 h-4 mr-2" />
+                  {sortOrder === 'asc' ? 'Ascending' : 'Descending'}
                 </Button>
+
+                <Select
+                  value={filterCategory}
+                  onValueChange={(value: any) => setFilterCategory(value)}
+                >
+                  <SelectTrigger className="w-40">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Categories</SelectItem>
+                    <SelectItem value="LEAD_NEW">New Leads</SelectItem>
+                    <SelectItem value="BILLING_INCOMING_INVOICE">
+                      Invoices
+                    </SelectItem>
+                    <SelectItem value="CUSTOMER_SUPPORT">Support</SelectItem>
+                    <SelectItem value="SCHEDULING_REQUEST">
+                      Scheduling
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
             </div>
 
@@ -468,89 +804,75 @@ export default function EmailClientPage() {
                     </div>
                   ))}
                 </div>
-              ) : filteredEmails.length === 0 ? (
+              ) : filteredAndSortedEmails.length === 0 ? (
                 <div className="flex items-center justify-center h-full text-gray-500">
                   <div className="text-center">
                     <Mail className="w-12 h-12 mx-auto mb-4 text-gray-300" />
                     <p>No emails found</p>
+                    {searchTerm && (
+                      <p className="text-sm">Try adjusting your search terms</p>
+                    )}
                   </div>
                 </div>
               ) : (
                 <div className="divide-y divide-gray-200">
-                  {filteredEmails.map((email) => (
+                  {filteredAndSortedEmails.map((email) => (
                     <div
-                      key={email.id}
-                      onClick={() => handleViewEmail(email)}
-                      className={`p-4 hover:bg-gray-50 cursor-pointer ${
-                        !email.is_read ? 'bg-blue-50' : ''
-                      }`}
+                      key={email.raw.id}
+                      onClick={() => setSelectedEmail(email)}
+                      className={`p-4 hover:bg-gray-50 cursor-pointer transition-colors ${
+                        selectedEmail?.raw.id === email.raw.id
+                          ? 'bg-blue-50 border-l-4 border-blue-500'
+                          : ''
+                      } ${email.insight?.priority === 'urgent' ? 'bg-red-50' : ''}`}
                     >
                       <div className="flex items-start gap-3">
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            toggleStar(email.id, email.is_starred);
-                          }}
-                          className="mt-1"
-                        >
-                          {email.is_starred ? (
-                            <Star className="w-4 h-4 text-yellow-500 fill-current" />
-                          ) : (
-                            <StarOff className="w-4 h-4 text-gray-400" />
-                          )}
-                        </button>
-
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 mb-1">
-                            <span
-                              className={`font-medium truncate ${!email.is_read ? 'font-semibold' : ''}`}
-                            >
-                              {email.sender || 'Unknown'}
+                            <span className="font-medium truncate">
+                              {email.raw.from_address || 'Unknown sender'}
                             </span>
-                            {email.category !== 'unreviewed' && (
+                            {email.insight?.category && (
                               <Badge
-                                className={getCategoryColor(email.category)}
+                                className={getCategoryColor(
+                                  email.insight.category
+                                )}
                                 variant="secondary"
                               >
-                                {email.category}
+                                {email.insight.category.replace('_', ' ')}
                               </Badge>
                             )}
-                            {email.extracted_data?.ai_summary && (
+                            {email.insight?.priority &&
+                              email.insight.priority !== 'low' && (
+                                <Badge
+                                  variant="outline"
+                                  className={`text-xs ${getPriorityColor(email.insight.priority)}`}
+                                >
+                                  {email.insight.priority}
+                                </Badge>
+                              )}
+                            {email.insight && (
                               <div
                                 className="w-2 h-2 bg-purple-500 rounded-full"
                                 title="AI Analyzed"
                               ></div>
                             )}
-                            {email.priority && email.priority !== 'normal' && (
-                              <Badge
-                                variant="outline"
-                                className={`text-xs ${
-                                  email.priority === 'urgent'
-                                    ? 'border-red-500 text-red-700'
-                                    : email.priority === 'high'
-                                      ? 'border-orange-500 text-orange-700'
-                                      : 'border-gray-500 text-gray-700'
-                                }`}
-                              >
-                                {email.priority}
-                              </Badge>
-                            )}
                           </div>
-                          <div
-                            className={`text-sm truncate mb-1 ${!email.is_read ? 'font-medium' : 'text-gray-600'}`}
-                          >
-                            {email.subject || 'No subject'}
+                          <div className="text-sm truncate mb-1 font-medium">
+                            {email.raw.subject || 'No subject'}
                           </div>
                           <div className="text-xs text-gray-500 truncate">
-                            {email.extracted_data?.ai_summary ||
-                              email.body_text?.substring(0, 100) + '...'}
+                            {email.insight?.summary ||
+                              email.raw.snippet ||
+                              email.raw.body_text?.substring(0, 100) + '...'}
                           </div>
                         </div>
-
                         <div className="text-xs text-gray-500 whitespace-nowrap">
-                          {email.received_at
-                            ? new Date(email.received_at).toLocaleDateString()
-                            : 'Unknown'}
+                          {email.raw.received_at
+                            ? new Date(
+                                email.raw.received_at
+                              ).toLocaleDateString()
+                            : 'Unknown date'}
                         </div>
                       </div>
                     </div>
@@ -558,332 +880,192 @@ export default function EmailClientPage() {
                 </div>
               )}
             </div>
-          </>
-        )}
+          </TabsContent>
 
-        {currentView === 'compose' && (
-          <EmailComposer
-            initialData={composeData}
-            onClose={() => {
-              setCurrentView('inbox');
-              setComposeData(null);
-            }}
-            onSent={handleEmailSent}
-          />
-        )}
+          <TabsContent value="alerts" className="flex-1 flex flex-col m-0">
+            <div className="flex-1 overflow-y-auto p-4">
+              {alerts.length === 0 ? (
+                <div className="flex items-center justify-center h-full text-gray-500">
+                  <div className="text-center">
+                    <CheckCircle className="w-12 h-12 mx-auto mb-4 text-green-300" />
+                    <p className="text-lg font-medium">All Clear!</p>
+                    <p className="text-sm">No open alerts at this time.</p>
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {alerts.map((alert) => (
+                    <Alert
+                      key={alert.id}
+                      className="border-l-4 border-orange-500"
+                    >
+                      <AlertTriangle className="h-4 w-4" />
+                      <div className="flex-1">
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1">
+                            <AlertDescription className="font-medium">
+                              {alert.title}
+                            </AlertDescription>
+                            <p className="text-sm text-gray-600 mt-1">
+                              {alert.message}
+                            </p>
+                            <p className="text-xs text-gray-500 mt-2">
+                              {new Date(alert.created_at).toLocaleString()}
+                            </p>
+                          </div>
+                          <div className="flex gap-2 ml-4">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => markAlertAsResolved(alert.id)}
+                            >
+                              <CheckCircle className="w-4 h-4 mr-2" />
+                              Resolve
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    </Alert>
+                  ))}
+                </div>
+              )}
+            </div>
+          </TabsContent>
+        </Tabs>
 
-        {currentView === 'view' && selectedEmail && (
-          <EmailViewer
-            email={selectedEmail}
-            onClose={() => setCurrentView('inbox')}
-            onReply={(type) =>
-              handleComposeEmail({
-                type,
-                originalEmail: selectedEmail,
-              })
-            }
-          />
-        )}
-
-        {currentView === 'insights' && (
-          <div className="flex flex-col h-full bg-white">
-            {/* Header */}
-            <div className="flex items-center justify-between p-4 border-b border-gray-200">
-              <h2 className="text-lg font-semibold">AI Email Insights</h2>
-              <div className="flex gap-2">
+        {/* Email Detail View */}
+        {selectedEmail && (
+          <div className="border-t border-gray-200 bg-white p-6 max-h-96 overflow-y-auto">
+            <div className="flex justify-between items-start mb-4">
+              <div className="flex-1">
+                <h3 className="text-lg font-semibold">
+                  {selectedEmail.raw.subject || 'No subject'}
+                </h3>
+                <p className="text-sm text-gray-600">
+                  From: {selectedEmail.raw.from_address || 'Unknown'}
+                </p>
+                <p className="text-xs text-gray-500">
+                  {selectedEmail.raw.received_at
+                    ? new Date(selectedEmail.raw.received_at).toLocaleString()
+                    : 'Unknown date'}
+                </p>
+              </div>
+              <div className="flex items-center gap-2">
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={async () => {
-                    const unanalyzedEmails = emails.filter(
-                      (e) => !e.extracted_data?.ai_summary
-                    );
-                    if (unanalyzedEmails.length === 0) {
-                      toast({
-                        title: 'All Analyzed',
-                        description:
-                          'All emails have already been analyzed by AI.',
-                      });
-                      return;
-                    }
-
-                    try {
-                      const response = await fetch('/api/emails/analyze', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                          emailIds: unanalyzedEmails
-                            .slice(0, 10)
-                            .map((e) => e.id),
-                        }),
-                      });
-
-                      if (response.ok) {
-                        const result = await response.json();
-                        toast({
-                          title: 'AI Analysis Complete',
-                          description: `Analyzed ${result.successful} emails with AI.`,
-                        });
-                        loadEmails(); // Refresh to show new analysis
-                      } else {
-                        throw new Error('Analysis failed');
-                      }
-                    } catch (error) {
-                      toast({
-                        title: 'Analysis Failed',
-                        description: 'Failed to analyze emails with AI.',
-                        variant: 'destructive',
-                      });
-                    }
-                  }}
+                  onClick={() => handleReply(selectedEmail)}
                 >
-                  Analyze Unanalyzed Emails
+                  <Reply className="w-4 h-4 mr-2" />
+                  Reply
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleReplyAll(selectedEmail)}
+                >
+                  <ReplyAll className="w-4 h-4 mr-2" />
+                  Reply All
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleForward(selectedEmail)}
+                >
+                  <Forward className="w-4 h-4 mr-2" />
+                  Forward
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleArchive(selectedEmail.raw.id)}
+                >
+                  <Archive className="w-4 h-4 mr-2" />
+                  Archive
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleDelete(selectedEmail.raw.id)}
+                >
+                  <Trash2 className="w-4 h-4 mr-2" />
+                  Delete
                 </Button>
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={() => setCurrentView('inbox')}
+                  onClick={() => setSelectedEmail(null)}
                 >
-                  <ChevronLeft className="w-4 h-4" />
+                  ✕
                 </Button>
               </div>
             </div>
 
-            {/* Insights Content */}
-            <div className="flex-1 overflow-y-auto p-6 space-y-6">
-              {/* Summary Stats */}
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <Card>
-                  <CardContent className="p-4">
-                    <div className="flex items-center gap-2">
-                      <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
-                      <span className="text-sm font-medium">AI Analyzed</span>
+            {selectedEmail.insight && (
+              <div className="mb-4 p-3 bg-purple-50 rounded-lg">
+                <div className="flex items-center gap-2 mb-2">
+                  <Brain className="w-4 h-4 text-purple-600" />
+                  <span className="font-medium text-purple-800">
+                    AI Analysis
+                  </span>
+                </div>
+                <div className="space-y-2 text-sm">
+                  <div>
+                    <span className="font-medium">Category:</span>{' '}
+                    <Badge
+                      className={getCategoryColor(
+                        selectedEmail.insight.category
+                      )}
+                      variant="secondary"
+                    >
+                      {selectedEmail.insight.category?.replace('_', ' ') ||
+                        'Unknown'}
+                    </Badge>
+                  </div>
+                  <div>
+                    <span className="font-medium">Priority:</span>{' '}
+                    <Badge
+                      variant="outline"
+                      className={getPriorityColor(
+                        selectedEmail.insight.priority
+                      )}
+                    >
+                      {selectedEmail.insight.priority || 'low'}
+                    </Badge>
+                  </div>
+                  {selectedEmail.insight.summary && (
+                    <div>
+                      <span className="font-medium">Summary:</span>{' '}
+                      {selectedEmail.insight.summary}
                     </div>
-                    <div className="text-2xl font-bold mt-2">
-                      {
-                        emails.filter((e) => e.extracted_data?.ai_summary)
-                          .length
-                      }
+                  )}
+                  {selectedEmail.insight.is_action_required && (
+                    <div className="text-orange-700">
+                      <span className="font-medium">Action Required:</span>{' '}
+                      {selectedEmail.insight.action_type || 'Review needed'}
                     </div>
-                    <div className="text-xs text-gray-500">
-                      of {emails.length} emails
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardContent className="p-4">
-                    <div className="flex items-center gap-2">
-                      <div className="w-2 h-2 bg-red-500 rounded-full"></div>
-                      <span className="text-sm font-medium">Urgent</span>
-                    </div>
-                    <div className="text-2xl font-bold mt-2">
-                      {emails.filter((e) => e.priority === 'urgent').length}
-                    </div>
-                    <div className="text-xs text-gray-500">
-                      require attention
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardContent className="p-4">
-                    <div className="flex items-center gap-2">
-                      <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                      <span className="text-sm font-medium">
-                        Leads Detected
-                      </span>
-                    </div>
-                    <div className="text-2xl font-bold mt-2">
-                      {emails.filter((e) => e.category === 'leads').length}
-                    </div>
-                    <div className="text-xs text-gray-500">
-                      potential customers
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardContent className="p-4">
-                    <div className="flex items-center gap-2">
-                      <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                      <span className="text-sm font-medium">
-                        Response Needed
-                      </span>
-                    </div>
-                    <div className="text-2xl font-bold mt-2">
-                      {emails.filter((e) => e.requires_reply).length}
-                    </div>
-                    <div className="text-xs text-gray-500">awaiting reply</div>
-                  </CardContent>
-                </Card>
+                  )}
+                </div>
               </div>
+            )}
 
-              {/* Priority Emails */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <div className="w-2 h-2 bg-red-500 rounded-full"></div>
-                    High Priority Emails
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-3">
-                    {emails
-                      .filter(
-                        (e) => e.priority === 'urgent' || e.priority === 'high'
-                      )
-                      .slice(0, 5)
-                      .map((email) => (
-                        <div
-                          key={email.id}
-                          onClick={() => {
-                            setSelectedEmail(email);
-                            setCurrentView('view');
-                          }}
-                          className="p-3 border rounded-lg hover:bg-gray-50 cursor-pointer"
-                        >
-                          <div className="flex items-start justify-between">
-                            <div className="flex-1">
-                              <div className="font-medium text-sm">
-                                {email.subject}
-                              </div>
-                              <div className="text-xs text-gray-600 mt-1">
-                                {email.extracted_data?.ai_summary ||
-                                  email.body_text?.substring(0, 80) + '...'}
-                              </div>
-                              <div className="flex items-center gap-2 mt-2">
-                                <Badge variant="outline" className="text-xs">
-                                  {email.priority}
-                                </Badge>
-                                {email.extracted_data?.ai_sentiment && (
-                                  <Badge
-                                    variant="secondary"
-                                    className="text-xs"
-                                  >
-                                    {email.extracted_data.ai_sentiment}
-                                  </Badge>
-                                )}
-                              </div>
-                            </div>
-                            <div className="text-xs text-gray-500">
-                              {email.received_at
-                                ? new Date(
-                                    email.received_at
-                                  ).toLocaleDateString()
-                                : ''}
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    {emails.filter(
-                      (e) => e.priority === 'urgent' || e.priority === 'high'
-                    ).length === 0 && (
-                      <div className="text-center py-8 text-gray-500">
-                        No high priority emails found
-                      </div>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Action Items Summary */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                    AI-Recommended Actions
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    {emails
-                      .filter(
-                        (e) =>
-                          e.extracted_data?.ai_action_items &&
-                          e.extracted_data.ai_action_items.length > 0
-                      )
-                      .slice(0, 10)
-                      .map((email) => (
-                        <div
-                          key={email.id}
-                          className="border-l-4 border-blue-500 pl-4"
-                        >
-                          <div className="font-medium text-sm mb-1">
-                            {email.subject}
-                          </div>
-                          <ul className="text-xs text-gray-600 space-y-1">
-                            {email.extracted_data.ai_action_items
-                              .slice(0, 3)
-                              .map((action: string, idx: number) => (
-                                <li
-                                  key={idx}
-                                  className="flex items-start gap-2"
-                                >
-                                  <span className="text-blue-500 mt-1">•</span>
-                                  <span>{action}</span>
-                                </li>
-                              ))}
-                          </ul>
-                        </div>
-                      ))}
-                    {emails.filter(
-                      (e) => e.extracted_data?.ai_action_items?.length > 0
-                    ).length === 0 && (
-                      <div className="text-center py-8 text-gray-500">
-                        No AI action items available
-                      </div>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Sentiment Analysis */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                    Sentiment Overview
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-3 gap-4">
-                    <div className="text-center">
-                      <div className="text-2xl font-bold text-green-600">
-                        {
-                          emails.filter(
-                            (e) => e.extracted_data?.ai_sentiment === 'positive'
-                          ).length
-                        }
-                      </div>
-                      <div className="text-sm text-gray-600">Positive</div>
-                    </div>
-                    <div className="text-center">
-                      <div className="text-2xl font-bold text-gray-600">
-                        {
-                          emails.filter(
-                            (e) => e.extracted_data?.ai_sentiment === 'neutral'
-                          ).length
-                        }
-                      </div>
-                      <div className="text-sm text-gray-600">Neutral</div>
-                    </div>
-                    <div className="text-center">
-                      <div className="text-2xl font-bold text-red-600">
-                        {
-                          emails.filter(
-                            (e) => e.extracted_data?.ai_sentiment === 'negative'
-                          ).length
-                        }
-                      </div>
-                      <div className="text-sm text-gray-600">Negative</div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+            <div className="prose prose-sm max-w-none">
+              <pre className="whitespace-pre-wrap text-sm bg-gray-50 p-3 rounded">
+                {selectedEmail.raw.body_text || 'No content available'}
+              </pre>
             </div>
           </div>
         )}
+
+        {/* Email Compose Modal */}
+        <EmailComposeModal
+          isOpen={composeModalOpen}
+          onClose={() => {
+            setComposeModalOpen(false);
+            setComposeReplyData(null);
+          }}
+          replyData={composeReplyData || undefined}
+        />
       </div>
     </div>
   );

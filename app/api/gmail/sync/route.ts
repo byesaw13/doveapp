@@ -1,48 +1,50 @@
 import { NextRequest, NextResponse } from 'next/server';
-import {
-  getEmailAccounts,
-  createEmailMessage,
-  getEmailMessageByGmailId,
-  processEmailWithAI,
-} from '@/lib/db/email';
 import { storeEmailRaw } from '@/lib/email-processing-pipeline';
+import { supabase } from '@/lib/supabase';
 
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID!;
 const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET!;
 
-// POST /api/gmail/sync - Sync emails from Gmail
+// POST /api/gmail/sync - Sync emails from Gmail for Email Intelligence Engine
 export async function POST(request: NextRequest) {
   try {
-    const { accountId, maxResults = 50 } = await request.json();
+    // Parse request body safely - ignore any malformed data
+    let requestData = {};
+    try {
+      const body = await request.text();
+      if (body) {
+        requestData = JSON.parse(body);
+      }
+    } catch (parseError) {
+      // Ignore parse errors - use defaults
+      console.log('Ignoring malformed request body, using defaults');
+    }
 
-    // Get email account
-    const accounts = await getEmailAccounts();
-    const account = accounts.find((acc) => acc.id === accountId);
+    const { maxResults = 50 } = requestData as any;
 
-    if (!account) {
+    // Get active Gmail connection from database
+    const { data: connection, error: connectionError } = await supabase
+      .from('gmail_connections')
+      .select('*')
+      .eq('is_active', true)
+      .single();
+
+    if (connectionError || !connection) {
       return NextResponse.json(
-        { error: 'Email account not found' },
-        { status: 404 }
+        {
+          error:
+            'Gmail not connected. Please connect your Gmail account first.',
+        },
+        { status: 401 }
       );
     }
 
-    // Refresh access token if needed
-    let accessToken = account.gmail_access_token;
-    if (
-      account.token_expires_at &&
-      new Date(account.token_expires_at) <= new Date()
-    ) {
-      if (!account.gmail_refresh_token) {
-        return NextResponse.json(
-          {
-            error:
-              'Refresh token not available. Please reconnect Gmail account.',
-          },
-          { status: 401 }
-        );
-      }
+    let accessToken = connection.access_token;
 
-      // Refresh the token
+    // Check if token is expired and refresh if needed
+    if (new Date(connection.token_expires_at) <= new Date()) {
+      console.log('Access token expired, refreshing...');
+
       const refreshResponse = await fetch(
         'https://oauth2.googleapis.com/token',
         {
@@ -53,7 +55,7 @@ export async function POST(request: NextRequest) {
           body: new URLSearchParams({
             client_id: GOOGLE_CLIENT_ID,
             client_secret: GOOGLE_CLIENT_SECRET,
-            refresh_token: account.gmail_refresh_token,
+            refresh_token: connection.refresh_token,
             grant_type: 'refresh_token',
           }),
         }
@@ -61,7 +63,7 @@ export async function POST(request: NextRequest) {
 
       if (!refreshResponse.ok) {
         return NextResponse.json(
-          { error: 'Failed to refresh access token' },
+          { error: 'Failed to refresh access token. Please reconnect Gmail.' },
           { status: 401 }
         );
       }
@@ -69,8 +71,20 @@ export async function POST(request: NextRequest) {
       const refreshData = await refreshResponse.json();
       accessToken = refreshData.access_token;
 
-      // Update the account with new token
-      // Note: In a real app, you'd update this in the database
+      // Update the connection with new token
+      const newExpiresAt = new Date(
+        Date.now() + refreshData.expires_in * 1000
+      ).toISOString();
+      await supabase
+        .from('gmail_connections')
+        .update({
+          access_token: accessToken,
+          token_expires_at: newExpiresAt,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', connection.id);
+
+      console.log('Access token refreshed and saved successfully');
     }
 
     // Fetch emails from Gmail
@@ -98,17 +112,12 @@ export async function POST(request: NextRequest) {
     // Process each message
     for (const message of messages) {
       try {
-        // Check if we already have this message
-        const existingMessage = await getEmailMessageByGmailId(message.id);
-        if (existingMessage) {
-          console.log(`Skipping already processed message ${message.id}`);
-          processedCount++;
-          continue;
-        }
+        // Check if we already have this message in emails_raw
+        // TODO: Add a check for existing emails_raw records
 
         // Fetch full message details
         const messageResponse = await fetch(
-          `https://gmail.googleapis.com/gmail/v1/users/me/messages/${message.id}`,
+          `https://gmail.googleapis.com/gmail/v1/users/me/messages/${message.id}?format=full`,
           {
             headers: {
               Authorization: `Bearer ${accessToken}`,
@@ -120,70 +129,11 @@ export async function POST(request: NextRequest) {
 
         const messageData = await messageResponse.json();
 
-        // Extract email data
-        const headers = messageData.payload.headers;
-        const getHeader = (name: string) => {
-          const header = headers.find(
-            (h: { name: string; value: string }) =>
-              h.name.toLowerCase() === name.toLowerCase()
-          );
-          return header ? header.value : null;
-        };
-
-        const subject = getHeader('Subject');
-        const sender = getHeader('From');
-        const recipient = getHeader('To');
-        const receivedAt = getHeader('Date');
-
-        // Extract body
-        let bodyText = '';
-        let bodyHtml = '';
-
-        const extractBody = (part: {
-          mimeType: string;
-          body?: { data: string };
-          parts?: Array<{
-            mimeType: string;
-            body?: { data: string };
-            parts?: any[];
-          }>;
-        }) => {
-          if (part.mimeType === 'text/plain' && part.body?.data) {
-            bodyText = Buffer.from(part.body.data, 'base64').toString();
-          } else if (part.mimeType === 'text/html' && part.body?.data) {
-            bodyHtml = Buffer.from(part.body.data, 'base64').toString();
-          } else if (part.parts) {
-            part.parts.forEach(extractBody);
-          }
-        };
-
-        if (messageData.payload.parts) {
-          messageData.payload.parts.forEach(extractBody);
-        } else if (messageData.payload.body?.data) {
-          bodyText = Buffer.from(
-            messageData.payload.body.data,
-            'base64'
-          ).toString();
-        }
-
-        // Check for attachments
-        const hasAttachments =
-          messageData.payload.parts?.some(
-            (part: any) => part.filename && part.filename.length > 0
-          ) || false;
-
-        // Determine labels
-        const labels = messageData.labelIds || [];
-
-        // Store in new intelligence pipeline (emails_raw)
+        // Store in intelligence pipeline (emails_raw)
         try {
-          await storeEmailRaw(
-            account.id,
-            message.id,
-            message.threadId,
-            messageData
-          );
+          await storeEmailRaw(message.id, message.threadId, messageData);
           console.log(`📥 Stored email ${message.id} in intelligence pipeline`);
+          processedCount++;
         } catch (storeError) {
           console.error(
             `Failed to store email ${message.id} in intelligence pipeline:`,
@@ -191,40 +141,6 @@ export async function POST(request: NextRequest) {
           );
           // Continue - don't fail the sync
         }
-
-        // Create email message record (backward compatibility)
-        const emailMessage = await createEmailMessage({
-          email_account_id: account.id,
-          gmail_message_id: message.id,
-          gmail_thread_id: message.threadId,
-          subject,
-          sender,
-          recipient,
-          received_at: receivedAt
-            ? new Date(receivedAt).toISOString()
-            : undefined,
-          body_text: bodyText,
-          body_html: bodyHtml,
-          has_attachments: hasAttachments,
-          labels,
-          category: 'unreviewed',
-          priority: 'normal',
-          is_read: labels.includes('UNREAD') ? false : true,
-          is_starred: labels.includes('STARRED'),
-        });
-
-        // Process for enrichment with AI (legacy system)
-        try {
-          await processEmailWithAI(emailMessage);
-        } catch (processError) {
-          console.error(
-            `Failed to process email ${message.id} with legacy AI:`,
-            processError
-          );
-          // Continue with other messages - don't fail the sync
-        }
-
-        processedCount++;
       } catch (error) {
         console.error(`Failed to process message ${message.id}:`, error);
         // Continue with other messages

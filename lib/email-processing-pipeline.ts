@@ -3,7 +3,6 @@ import { supabase } from '@/lib/supabase';
 import {
   analyzeEmailWithOpenAI,
   storeEmailInsight,
-  updateEmailRawStatus,
 } from '@/lib/email-intelligence';
 import { generateAlertsFromInsight } from '@/lib/email-alerts';
 
@@ -33,9 +32,6 @@ export async function processEmailIntelligence(
   try {
     console.log(`🤖 Starting intelligence processing for email ${emailRawId}`);
 
-    // Mark as processing
-    await updateEmailRawStatus(emailRawId, 'processing');
-
     // Step 1: Analyze with OpenAI
     console.log(`📊 Analyzing email ${emailRawId} with OpenAI`);
     const analysis = await analyzeEmailWithOpenAI(emailRaw);
@@ -47,9 +43,6 @@ export async function processEmailIntelligence(
     // Step 3: Generate alerts if needed
     console.log(`🚨 Generating alerts for email ${emailRawId}`);
     const alerts = await generateAlertsFromInsight(insight);
-
-    // Step 4: Mark as completed
-    await updateEmailRawStatus(emailRawId, 'completed');
 
     const processingTime = Date.now() - startTime;
 
@@ -73,9 +66,6 @@ export async function processEmailIntelligence(
       error instanceof Error ? error.message : 'Unknown error';
 
     console.error(`❌ Failed to process email ${emailRawId}:`, error);
-
-    // Mark as failed
-    await updateEmailRawStatus(emailRawId, 'failed', errorMessage);
 
     return {
       emailRawId,
@@ -157,7 +147,6 @@ export async function processPendingEmails(
  * Store raw email data from Gmail API
  */
 export async function storeEmailRaw(
-  emailAccountId: string,
   gmailMessageId: string,
   gmailThreadId: string,
   rawData: any
@@ -169,15 +158,56 @@ export async function storeEmailRaw(
     return existing;
   }
 
+  // Extract email data from Gmail API response
+  const headers = rawData.payload.headers;
+  const getHeader = (name: string) => {
+    const header = headers.find(
+      (h: { name: string; value: string }) =>
+        h.name.toLowerCase() === name.toLowerCase()
+    );
+    return header ? header.value : null;
+  };
+
+  const subject = getHeader('Subject');
+  const fromAddress = getHeader('From');
+  const toAddresses = getHeader('To');
+  const ccAddresses = getHeader('Cc');
+  const receivedAt = getHeader('Date');
+
+  // Extract body text
+  let bodyText = '';
+  let bodyHtml = '';
+
+  const extractBody = (part: any) => {
+    if (part.mimeType === 'text/plain' && part.body?.data) {
+      bodyText = Buffer.from(part.body.data, 'base64').toString();
+    } else if (part.mimeType === 'text/html' && part.body?.data) {
+      bodyHtml = Buffer.from(part.body.data, 'base64').toString();
+    } else if (part.parts) {
+      part.parts.forEach(extractBody);
+    }
+  };
+
+  if (rawData.payload.parts) {
+    rawData.payload.parts.forEach(extractBody);
+  } else if (rawData.payload.body?.data) {
+    bodyText = Buffer.from(rawData.payload.body.data, 'base64').toString();
+  }
+
   const { data, error } = await supabase
     .from('emails_raw')
     .insert([
       {
-        email_account_id: emailAccountId,
         gmail_message_id: gmailMessageId,
-        gmail_thread_id: gmailThreadId,
-        raw_data: rawData,
-        processing_status: 'pending',
+        thread_id: gmailThreadId,
+        subject,
+        from_address: fromAddress,
+        to_addresses: toAddresses,
+        cc_addresses: ccAddresses,
+        received_at: receivedAt ? new Date(receivedAt).toISOString() : null,
+        snippet: rawData.snippet,
+        body_text: bodyText,
+        body_html: bodyHtml,
       },
     ])
     .select()

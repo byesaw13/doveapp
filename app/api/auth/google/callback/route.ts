@@ -1,15 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
-import {
-  createEmailAccount,
-  getEmailAccounts,
-  updateEmailAccount,
-} from '@/lib/db/email';
+import { supabase } from '@/lib/supabase';
 
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID!;
 const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET!;
 const GOOGLE_REDIRECT_URI = process.env.GOOGLE_REDIRECT_URI!;
 
-// POST /api/auth/google/callback - Handle OAuth callback
+// GET /api/auth/google/callback - Handle OAuth callback for Email Intelligence Engine
 export async function GET(request: NextRequest) {
   try {
     console.log('OAuth callback received');
@@ -23,14 +19,14 @@ export async function GET(request: NextRequest) {
     if (error) {
       console.error('OAuth error:', error);
       return NextResponse.redirect(
-        new URL('/email-review?error=oauth_failed', request.url)
+        new URL('/emails?error=oauth_failed', request.url)
       );
     }
 
     if (!code) {
       console.error('No authorization code received');
       return NextResponse.redirect(
-        new URL('/email-review?error=no_code', request.url)
+        new URL('/emails?error=no_code', request.url)
       );
     }
 
@@ -52,7 +48,7 @@ export async function GET(request: NextRequest) {
     if (!tokenResponse.ok) {
       console.error('Token exchange failed:', await tokenResponse.text());
       return NextResponse.redirect(
-        new URL('/email-review?error=token_exchange_failed', request.url)
+        new URL('/emails?error=token_exchange_failed', request.url)
       );
     }
 
@@ -71,57 +67,70 @@ export async function GET(request: NextRequest) {
     if (!profileResponse.ok) {
       console.error('Profile fetch failed:', await profileResponse.text());
       return NextResponse.redirect(
-        new URL('/email-review?error=profile_fetch_failed', request.url)
+        new URL('/emails?error=profile_fetch_failed', request.url)
       );
     }
 
     const profile = await profileResponse.json();
 
-    // Create or update email account in database
-    console.log('Creating/updating email account for:', profile.email);
+    // Store Gmail connection in database for persistence
+    console.log('Gmail OAuth successful for:', profile.email);
 
-    // Check if account already exists
-    const existingAccounts = await getEmailAccounts();
-    const existingAccount = existingAccounts.find(
-      (acc: any) => acc.email_address === profile.email
-    );
+    const connectionData = {
+      email_address: profile.email,
+      access_token: tokenData.access_token,
+      refresh_token: tokenData.refresh_token,
+      token_expires_at: new Date(
+        Date.now() + tokenData.expires_in * 1000
+      ).toISOString(),
+      is_active: true,
+    };
 
-    let emailAccount;
-    if (existingAccount) {
-      // Update existing account
-      console.log('Updating existing account');
-      emailAccount = await updateEmailAccount(existingAccount.id, {
-        gmail_refresh_token: tokenData.refresh_token,
-        gmail_access_token: tokenData.access_token,
-        token_expires_at: new Date(
-          Date.now() + tokenData.expires_in * 1000
-        ).toISOString(),
-        is_active: true,
-      });
+    // Check if connection already exists
+    const { data: existingConnection } = await supabase
+      .from('gmail_connections')
+      .select('id')
+      .eq('email_address', profile.email)
+      .single();
+
+    if (existingConnection) {
+      // Update existing connection
+      const { error: updateError } = await supabase
+        .from('gmail_connections')
+        .update(connectionData)
+        .eq('id', existingConnection.id);
+
+      if (updateError) {
+        console.error('Error updating Gmail connection:', updateError);
+        return NextResponse.redirect(
+          new URL('/emails?error=connection_update_failed', request.url)
+        );
+      }
+      console.log('Updated existing Gmail connection');
     } else {
-      // Create new account
-      console.log('Creating new account');
-      emailAccount = await createEmailAccount({
-        email_address: profile.email,
-        gmail_refresh_token: tokenData.refresh_token,
-        gmail_access_token: tokenData.access_token,
-        token_expires_at: new Date(
-          Date.now() + tokenData.expires_in * 1000
-        ).toISOString(),
-        is_active: true,
-      });
-    }
-    console.log('Email account processed:', emailAccount);
+      // Create new connection
+      const { error: insertError } = await supabase
+        .from('gmail_connections')
+        .insert([connectionData]);
 
-    // Redirect back to email review page with success
-    console.log('Redirecting to success page');
+      if (insertError) {
+        console.error('Error creating Gmail connection:', insertError);
+        return NextResponse.redirect(
+          new URL('/emails?error=connection_create_failed', request.url)
+        );
+      }
+      console.log('Created new Gmail connection');
+    }
+
+    // Redirect back to emails page with success
+    console.log('Redirecting to emails page with success');
     return NextResponse.redirect(
-      new URL('/email-review?success=connected', request.url)
+      new URL('/emails?success=connected', request.url)
     );
   } catch (error) {
     console.error('OAuth callback error:', error);
     return NextResponse.redirect(
-      new URL('/email-review?error=server_error', request.url)
+      new URL('/emails?error=server_error', request.url)
     );
   }
 }

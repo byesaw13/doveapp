@@ -400,7 +400,7 @@ export default function CalendarPage() {
                 onEventDrop={handleEventDrop}
                 onEventResize={handleEventResize}
                 resizable
-                eventPropGetter={(event: object) => {
+                eventPropGetter={(event: any) => {
                   const typedEvent = event as { resource: { status: string } };
                   const statusColors = {
                     scheduled: {

@@ -5,6 +5,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import {
   Dialog,
   DialogContent,
@@ -12,8 +13,39 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { useToast } from '@/components/ui/toast';
+import { useForm, useFieldArray } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 import type { EstimateWithRelations, EstimateStats } from '@/types/estimate';
+import {
+  estimateSchema,
+  type EstimateFormData,
+} from '@/lib/validations/estimate';
 import {
   Plus,
   Search,
@@ -27,6 +59,9 @@ import {
   DollarSign,
   User,
   Mail,
+  Trash2,
+  Edit,
+  Minus,
 } from 'lucide-react';
 import { format } from 'date-fns';
 
@@ -39,20 +74,110 @@ export default function EstimatesPage() {
   const [selectedEstimate, setSelectedEstimate] =
     useState<EstimateWithRelations | null>(null);
   const [showNewDialog, setShowNewDialog] = useState(false);
+  const [editingEstimate, setEditingEstimate] =
+    useState<EstimateWithRelations | null>(null);
+  const [deleteEstimateId, setDeleteEstimateId] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [clients, setClients] = useState<any[]>([]);
+  const [leads, setLeads] = useState<any[]>([]);
+
+  const form = useForm<EstimateFormData>({
+    resolver: zodResolver(estimateSchema) as any,
+    defaultValues: {
+      client_id: '',
+      lead_id: '',
+      title: '',
+      description: '',
+      line_items: [{ description: '', quantity: 1, unit_price: 0, unit: '' }],
+      tax_rate: 0,
+      discount_amount: 0,
+      valid_until: '',
+      payment_terms: '',
+      terms_and_conditions: '',
+      status: 'draft',
+    },
+  });
+
+  const { fields, append, remove } = useFieldArray({
+    control: form.control,
+    name: 'line_items',
+  });
 
   useEffect(() => {
     loadEstimates();
     loadStats();
+    loadClients();
+    loadLeads();
+    checkForLeadData();
   }, []);
+
+  const checkForLeadData = () => {
+    const leadData = sessionStorage.getItem('newEstimate');
+    if (leadData) {
+      try {
+        const data = JSON.parse(leadData);
+        form.setValue('title', data.service_description || '');
+        form.setValue('description', data.service_description || '');
+        if (data.estimated_value) {
+          form.setValue('line_items', [
+            {
+              description: data.service_description || 'Service',
+              quantity: 1,
+              unit_price: data.estimated_value,
+              unit: '',
+            },
+          ]);
+        }
+        sessionStorage.removeItem('newEstimate');
+        setShowNewDialog(true);
+      } catch (error) {
+        console.error('Failed to parse lead data:', error);
+      }
+    }
+  };
+
+  const loadClients = async () => {
+    try {
+      const response = await fetch('/api/clients');
+      if (!response.ok) {
+        throw new Error(`Failed to fetch clients: ${response.status}`);
+      }
+      const data = await response.json();
+      console.log('Loaded clients:', data.length, data);
+      setClients(Array.isArray(data) ? data : []);
+    } catch (error) {
+      console.error('Failed to load clients:', error);
+      setClients([]);
+    }
+  };
+
+  const loadLeads = async () => {
+    try {
+      const response = await fetch('/api/leads');
+      if (!response.ok) {
+        throw new Error(`Failed to fetch leads: ${response.status}`);
+      }
+      const data = await response.json();
+      const filteredLeads = Array.isArray(data)
+        ? data.filter((l: any) => l.status !== 'converted')
+        : [];
+      console.log('Loaded leads:', filteredLeads.length, filteredLeads);
+      setLeads(filteredLeads);
+    } catch (error) {
+      console.error('Failed to load leads:', error);
+      setLeads([]);
+    }
+  };
 
   const loadEstimates = async () => {
     try {
       setLoading(true);
       const response = await fetch('/api/estimates');
       const data = await response.json();
-      setEstimates(data);
+      setEstimates(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error('Failed to load estimates:', error);
+      setEstimates([]);
       toast({
         title: 'Error',
         description: 'Failed to load estimates',
@@ -84,10 +209,201 @@ export default function EstimatesPage() {
         `/api/estimates?q=${encodeURIComponent(searchQuery)}`
       );
       const data = await response.json();
-      setEstimates(data);
+      setEstimates(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error('Search failed:', error);
+      setEstimates([]);
     }
+  };
+
+  const handleCreateEstimate = async (data: EstimateFormData) => {
+    setIsSubmitting(true);
+    try {
+      // Validate client or lead is selected
+      if (
+        (!data.client_id || data.client_id === 'none') &&
+        (!data.lead_id || data.lead_id === 'none')
+      ) {
+        toast({
+          title: 'Validation Error',
+          description: 'Please select either a client or a lead',
+          variant: 'destructive',
+        });
+        setIsSubmitting(false);
+        return;
+      }
+
+      // Calculate totals
+      const subtotal = data.line_items.reduce(
+        (sum, item) => sum + item.quantity * item.unit_price,
+        0
+      );
+      const tax_amount = subtotal * (data.tax_rate / 100);
+      const total = subtotal + tax_amount - (data.discount_amount || 0);
+
+      const submitData = {
+        ...data,
+        subtotal,
+        tax_amount,
+        total,
+        client_id:
+          data.client_id && data.client_id !== 'none'
+            ? data.client_id
+            : undefined,
+        lead_id:
+          data.lead_id && data.lead_id !== 'none' ? data.lead_id : undefined,
+      };
+
+      console.log('Submitting estimate:', submitData);
+
+      const url = editingEstimate
+        ? `/api/estimates/${editingEstimate.id}`
+        : '/api/estimates';
+      const method = editingEstimate ? 'PUT' : 'POST';
+
+      const response = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(submitData),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error('API error:', errorData);
+        throw new Error(errorData.error || 'Failed to save estimate');
+      }
+
+      const estimate = await response.json();
+
+      if (editingEstimate) {
+        setEstimates((prev) =>
+          Array.isArray(prev)
+            ? prev.map((e) => (e.id === estimate.id ? estimate : e))
+            : [estimate]
+        );
+      } else {
+        setEstimates((prev) =>
+          Array.isArray(prev) ? [estimate, ...prev] : [estimate]
+        );
+      }
+
+      setShowNewDialog(false);
+      setEditingEstimate(null);
+      form.reset();
+      toast({
+        title: 'Success',
+        description: editingEstimate
+          ? 'Estimate updated successfully'
+          : 'Estimate created successfully',
+      });
+      loadStats();
+    } catch (error) {
+      console.error('Failed to save estimate:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to save estimate',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleUpdateStatus = async (id: string, status: string) => {
+    try {
+      const response = await fetch(`/api/estimates/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status }),
+      });
+
+      if (!response.ok) throw new Error('Failed to update status');
+
+      const updated = await response.json();
+      setEstimates((prev) =>
+        Array.isArray(prev) ? prev.map((e) => (e.id === id ? updated : e)) : []
+      );
+      setSelectedEstimate(updated);
+      toast({
+        title: 'Success',
+        description: `Estimate marked as ${status}`,
+      });
+      loadStats();
+    } catch (error) {
+      console.error('Failed to update status:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to update estimate status',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handleDeleteEstimate = async () => {
+    if (!deleteEstimateId) return;
+
+    try {
+      const response = await fetch(`/api/estimates/${deleteEstimateId}`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) throw new Error('Failed to delete estimate');
+
+      setEstimates((prev) =>
+        Array.isArray(prev) ? prev.filter((e) => e.id !== deleteEstimateId) : []
+      );
+      setDeleteEstimateId(null);
+      setSelectedEstimate(null);
+      toast({
+        title: 'Success',
+        description: 'Estimate deleted successfully',
+      });
+      loadStats();
+    } catch (error) {
+      console.error('Failed to delete estimate:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to delete estimate',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handleEditEstimate = (estimate: EstimateWithRelations) => {
+    setEditingEstimate(estimate);
+    form.reset({
+      client_id: estimate.client_id || '',
+      lead_id: estimate.lead_id || '',
+      title: estimate.title,
+      description: estimate.description || '',
+      line_items: estimate.line_items || [
+        { description: '', quantity: 1, unit_price: 0, unit: '' },
+      ],
+      tax_rate: estimate.tax_rate,
+      discount_amount: estimate.discount_amount || 0,
+      valid_until: estimate.valid_until.split('T')[0],
+      payment_terms: estimate.payment_terms || '',
+      terms_and_conditions: estimate.terms_and_conditions || '',
+      status: estimate.status,
+    });
+    setSelectedEstimate(null);
+    setShowNewDialog(true);
+  };
+
+  const calculateSubtotal = () => {
+    const lineItems = form.watch('line_items');
+    return lineItems.reduce(
+      (sum, item) => sum + item.quantity * item.unit_price,
+      0
+    );
+  };
+
+  const calculateTotal = () => {
+    const subtotal = calculateSubtotal();
+    const taxRate = form.watch('tax_rate') || 0;
+    const discount = form.watch('discount_amount') || 0;
+    const tax = subtotal * (taxRate / 100);
+    return subtotal + tax - discount;
   };
 
   const getStatusColor = (status: string) => {
@@ -528,8 +844,21 @@ export default function EstimatesPage() {
 
               {/* Actions */}
               <div className="flex gap-3 pt-4 border-t">
+                <Button
+                  variant="outline"
+                  className="flex-1"
+                  onClick={() => handleEditEstimate(selectedEstimate)}
+                >
+                  <Edit className="w-4 h-4 mr-2" />
+                  Edit
+                </Button>
                 {selectedEstimate.status === 'draft' && (
-                  <Button className="flex-1 bg-gradient-to-r from-blue-500 to-indigo-500">
+                  <Button
+                    className="flex-1 bg-gradient-to-r from-blue-500 to-indigo-500"
+                    onClick={() =>
+                      handleUpdateStatus(selectedEstimate.id, 'sent')
+                    }
+                  >
                     <Send className="w-4 h-4 mr-2" />
                     Send to Client
                   </Button>
@@ -538,19 +867,46 @@ export default function EstimatesPage() {
                   selectedEstimate.status
                 ) && (
                   <>
-                    <Button variant="outline" className="flex-1">
+                    <Button
+                      variant="outline"
+                      className="flex-1"
+                      onClick={() =>
+                        handleUpdateStatus(selectedEstimate.id, 'accepted')
+                      }
+                    >
                       <CheckCircle className="w-4 h-4 mr-2" />
                       Mark Accepted
                     </Button>
-                    <Button variant="outline" className="flex-1">
+                    <Button
+                      variant="outline"
+                      className="flex-1"
+                      onClick={() =>
+                        handleUpdateStatus(selectedEstimate.id, 'declined')
+                      }
+                    >
                       <XCircle className="w-4 h-4 mr-2" />
                       Mark Declined
                     </Button>
                   </>
                 )}
-                <Button variant="outline" className="flex-1">
+                <Button
+                  variant="outline"
+                  className="flex-1"
+                  onClick={() =>
+                    window.open(
+                      `/api/estimates/${selectedEstimate.id}/pdf`,
+                      '_blank'
+                    )
+                  }
+                >
                   <FileText className="w-4 h-4 mr-2" />
                   View PDF
+                </Button>
+                <Button
+                  variant="destructive"
+                  onClick={() => setDeleteEstimateId(selectedEstimate.id)}
+                >
+                  <Trash2 className="w-4 h-4" />
                 </Button>
               </div>
             </div>
@@ -558,23 +914,441 @@ export default function EstimatesPage() {
         </DialogContent>
       </Dialog>
 
-      {/* New Estimate Dialog - Placeholder */}
-      <Dialog open={showNewDialog} onOpenChange={setShowNewDialog}>
-        <DialogContent>
+      {/* New/Edit Estimate Dialog */}
+      <Dialog
+        open={showNewDialog}
+        onOpenChange={(open) => {
+          setShowNewDialog(open);
+          if (!open) {
+            setEditingEstimate(null);
+            form.reset();
+          }
+        }}
+      >
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Create New Estimate</DialogTitle>
+            <DialogTitle>
+              {editingEstimate ? 'Edit Estimate' : 'Create New Estimate'}
+            </DialogTitle>
             <DialogDescription>
               Create a quote or proposal for a client or lead
             </DialogDescription>
           </DialogHeader>
-          <div className="text-center py-8">
-            <p className="text-gray-600">Estimate builder coming soon...</p>
-            <p className="text-sm text-gray-500 mt-2">
-              Use the API endpoint to create estimates for now
-            </p>
-          </div>
+          <Form {...form}>
+            <form
+              onSubmit={form.handleSubmit(handleCreateEstimate)}
+              className="space-y-6"
+            >
+              {/* Client/Lead Selection */}
+              <div className="space-y-4">
+                <FormField
+                  control={form.control}
+                  name="client_id"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Client</FormLabel>
+                      <Select
+                        value={field.value || ''}
+                        onValueChange={(value) => {
+                          field.onChange(value);
+                          if (value && value !== 'none')
+                            form.setValue('lead_id', '');
+                        }}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select a client..." />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="none">-- None --</SelectItem>
+                          {clients.length === 0 ? (
+                            <SelectItem value="loading" disabled>
+                              Loading clients...
+                            </SelectItem>
+                          ) : (
+                            clients.map((client) => (
+                              <SelectItem key={client.id} value={client.id}>
+                                {client.first_name} {client.last_name}
+                                {client.company_name &&
+                                  ` (${client.company_name})`}
+                              </SelectItem>
+                            ))
+                          )}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <div className="text-center text-sm text-gray-500">OR</div>
+
+                <FormField
+                  control={form.control}
+                  name="lead_id"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Lead</FormLabel>
+                      <Select
+                        value={field.value || ''}
+                        onValueChange={(value) => {
+                          field.onChange(value);
+                          if (value && value !== 'none')
+                            form.setValue('client_id', '');
+                        }}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select a lead..." />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="none">-- None --</SelectItem>
+                          {leads.length === 0 ? (
+                            <SelectItem value="loading" disabled>
+                              Loading leads...
+                            </SelectItem>
+                          ) : (
+                            leads.map((lead) => (
+                              <SelectItem key={lead.id} value={lead.id}>
+                                {lead.first_name} {lead.last_name}
+                                {lead.company_name && ` (${lead.company_name})`}
+                              </SelectItem>
+                            ))
+                          )}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              {/* Title & Description */}
+              <FormField
+                control={form.control}
+                name="title"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Title *</FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder="Kitchen Renovation Estimate"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="description"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Description</FormLabel>
+                    <FormControl>
+                      <Textarea
+                        placeholder="Detailed description of the work..."
+                        className="min-h-[80px]"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {/* Line Items */}
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <h3 className="font-semibold text-gray-900">Line Items</h3>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() =>
+                      append({
+                        description: '',
+                        quantity: 1,
+                        unit_price: 0,
+                        unit: '',
+                      })
+                    }
+                  >
+                    <Plus className="w-4 h-4 mr-2" />
+                    Add Item
+                  </Button>
+                </div>
+
+                {fields.map((field, index) => (
+                  <div
+                    key={field.id}
+                    className="grid grid-cols-12 gap-2 items-start p-3 bg-gray-50 rounded-lg"
+                  >
+                    <div className="col-span-5">
+                      <FormField
+                        control={form.control}
+                        name={`line_items.${index}.description`}
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormControl>
+                              <Input placeholder="Description" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                    <div className="col-span-2">
+                      <FormField
+                        control={form.control}
+                        name={`line_items.${index}.quantity`}
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormControl>
+                              <Input
+                                type="number"
+                                placeholder="Qty"
+                                {...field}
+                                onChange={(e) =>
+                                  field.onChange(Number(e.target.value))
+                                }
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                    <div className="col-span-2">
+                      <FormField
+                        control={form.control}
+                        name={`line_items.${index}.unit_price`}
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormControl>
+                              <Input
+                                type="number"
+                                placeholder="Price"
+                                {...field}
+                                onChange={(e) =>
+                                  field.onChange(Number(e.target.value))
+                                }
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                    <div className="col-span-2">
+                      <FormField
+                        control={form.control}
+                        name={`line_items.${index}.unit`}
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormControl>
+                              <Input placeholder="Unit" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                    <div className="col-span-1 flex items-center justify-center">
+                      {fields.length > 1 && (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => remove(index)}
+                        >
+                          <Minus className="w-4 h-4" />
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Pricing */}
+              <div className="grid grid-cols-3 gap-4">
+                <FormField
+                  control={form.control}
+                  name="tax_rate"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Tax Rate (%)</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          placeholder="0"
+                          {...field}
+                          onChange={(e) =>
+                            field.onChange(Number(e.target.value))
+                          }
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="discount_amount"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Discount ($)</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          placeholder="0"
+                          {...field}
+                          onChange={(e) =>
+                            field.onChange(Number(e.target.value))
+                          }
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="valid_until"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Valid Until *</FormLabel>
+                      <FormControl>
+                        <Input type="date" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              {/* Totals Preview */}
+              <div className="bg-gradient-to-br from-green-50 to-emerald-50 p-4 rounded-lg border border-green-100">
+                <div className="space-y-2">
+                  <div className="flex justify-between text-sm">
+                    <span>Subtotal:</span>
+                    <span className="font-medium">
+                      ${calculateSubtotal().toFixed(2)}
+                    </span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span>Tax:</span>
+                    <span className="font-medium">
+                      $
+                      {(
+                        calculateSubtotal() *
+                        ((form.watch('tax_rate') || 0) / 100)
+                      ).toFixed(2)}
+                    </span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span>Discount:</span>
+                    <span className="font-medium text-red-600">
+                      -${(form.watch('discount_amount') || 0).toFixed(2)}
+                    </span>
+                  </div>
+                  <div className="flex justify-between text-lg font-bold text-green-600 pt-2 border-t border-green-200">
+                    <span>Total:</span>
+                    <span>${calculateTotal().toFixed(2)}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Terms */}
+              <FormField
+                control={form.control}
+                name="payment_terms"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Payment Terms</FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder="Net 30, 50% deposit required, etc."
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="terms_and_conditions"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Terms & Conditions</FormLabel>
+                    <FormControl>
+                      <Textarea
+                        placeholder="Terms and conditions..."
+                        className="min-h-[80px]"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {/* Actions */}
+              <div className="flex justify-end gap-3 pt-4 border-t">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => {
+                    setShowNewDialog(false);
+                    setEditingEstimate(null);
+                    form.reset();
+                  }}
+                >
+                  Cancel
+                </Button>
+                <Button type="submit" disabled={isSubmitting}>
+                  {isSubmitting
+                    ? 'Saving...'
+                    : editingEstimate
+                      ? 'Update Estimate'
+                      : 'Create Estimate'}
+                </Button>
+              </div>
+            </form>
+          </Form>
         </DialogContent>
       </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog
+        open={!!deleteEstimateId}
+        onOpenChange={() => setDeleteEstimateId(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Estimate</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this estimate? This action cannot
+              be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteEstimate}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

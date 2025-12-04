@@ -24,7 +24,7 @@ export async function POST(request: NextRequest) {
       // Only process emails that don't have insights yet
       const { data: emailsWithInsights, error: insightsError } = await supabase
         .from('email_insights')
-        .select('email_raw_id');
+        .select('email_id');
 
       if (insightsError) {
         console.error('Error fetching insights:', insightsError);
@@ -34,7 +34,7 @@ export async function POST(request: NextRequest) {
         );
       }
 
-      const processedIds = emailsWithInsights?.map((i) => i.email_raw_id) || [];
+      const processedIds = emailsWithInsights?.map((i) => i.email_id) || [];
 
       query = query.not(
         'id',
@@ -72,7 +72,7 @@ export async function POST(request: NextRequest) {
     console.log(`📧 Found ${allEmails.length} emails to reprocess`);
 
     let processed = 0;
-    let skipped = 0;
+    const skipped = 0;
     let failed = 0;
     const results = [];
     const batchSize = 5; // Process in small batches to avoid overwhelming OpenAI

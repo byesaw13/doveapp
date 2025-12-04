@@ -50,8 +50,11 @@ export class GmailClient {
       throw new Error(`Failed to get Gmail access token: ${error}`);
     }
 
-    const data = await response.json();
+    const data = (await response.json()) as { access_token: string };
     this.accessToken = data.access_token;
+    if (!this.accessToken) {
+      throw new Error('No access token received from Gmail API');
+    }
     return this.accessToken;
   }
 
@@ -75,7 +78,7 @@ export class GmailClient {
       throw new Error('Failed to fetch Gmail messages');
     }
 
-    const listData = await listResponse.json();
+    const listData = (await listResponse.json()) as any;
     const messages = listData.messages || [];
 
     // Fetch full message details for each
@@ -114,7 +117,7 @@ export class GmailClient {
       throw new Error(`Failed to fetch email details for ${messageId}`);
     }
 
-    const data = await response.json();
+    const data = (await response.json()) as any;
 
     // Extract headers
     const headers = data.payload.headers;

@@ -240,9 +240,47 @@ FOR EACH ROW
 EXECUTE FUNCTION set_estimate_number();
 ```
 
+### **Step 4: Fix Foreign Key Relationship (if needed)**
+
+If you're getting errors about the relationship between estimates and leads, run this:
+
+```sql
+-- Migration 025: Ensure Estimates-Leads Relationship
+-- Location: supabase/migrations/025_ensure_estimates_leads_relationship.sql
+
+-- Ensure the foreign key relationship between estimates and leads exists
+-- This migration is idempotent and safe to run multiple times
+
+-- Drop the foreign key if it exists (to recreate it)
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1 FROM information_schema.table_constraints
+    WHERE constraint_name = 'estimates_lead_id_fkey'
+    AND table_name = 'estimates'
+  ) THEN
+    ALTER TABLE estimates DROP CONSTRAINT estimates_lead_id_fkey;
+  END IF;
+END $$;
+
+-- Recreate the foreign key relationship
+ALTER TABLE estimates
+ADD CONSTRAINT estimates_lead_id_fkey
+FOREIGN KEY (lead_id)
+REFERENCES leads(id)
+ON DELETE SET NULL;
+
+-- Ensure the index exists
+CREATE INDEX IF NOT EXISTS idx_estimates_lead_id ON estimates(lead_id);
+
+-- Refresh the Supabase schema cache by updating table comment
+COMMENT ON TABLE estimates IS 'Estimates and quotes for potential jobs';
+COMMENT ON TABLE leads IS 'Lead tracking and management';
+```
+
 ## ✅ **Verification**
 
-After running both migrations, verify they worked:
+After running all migrations, verify they worked:
 
 ```sql
 -- Check if tables exist

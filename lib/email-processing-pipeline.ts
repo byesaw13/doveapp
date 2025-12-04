@@ -36,7 +36,7 @@ export async function processEmailIntelligence(
       const { data: existingInsight } = await supabase
         .from('email_insights')
         .select('id')
-        .eq('email_raw_id', emailRawId)
+        .eq('email_id', emailRawId)
         .single();
 
       if (existingInsight) {

@@ -1,5 +1,6 @@
 import { supabase } from '@/lib/supabase';
 import type { Payment, PaymentInsert, PaymentUpdate } from '@/types/payment';
+import { logPaymentReceived } from './activities';
 
 /**
  * Get all payments for a job
@@ -52,6 +53,27 @@ export async function createPayment(
   if (error) {
     console.error('Error creating payment:', error);
     throw new Error('Failed to create payment');
+  }
+
+  if (data?.job_id) {
+    try {
+      const { data: job } = await supabase
+        .from('jobs')
+        .select('id, client_id, title, job_number')
+        .eq('id', data.job_id)
+        .single();
+
+      if (job?.client_id) {
+        await logPaymentReceived(
+          job.client_id,
+          data.id,
+          data.amount,
+          data.payment_method || undefined
+        );
+      }
+    } catch (activityError) {
+      console.error('Failed to log payment activity:', activityError);
+    }
   }
 
   return data;
@@ -115,7 +137,8 @@ export async function getJobPaymentSummary(jobId: string): Promise<{
   return {
     total: parseFloat(job.total.toString()),
     paid: parseFloat(job.amount_paid.toString()),
-    remaining: parseFloat(job.total.toString()) - parseFloat(job.amount_paid.toString()),
+    remaining:
+      parseFloat(job.total.toString()) - parseFloat(job.amount_paid.toString()),
     status: job.payment_status,
   };
 }

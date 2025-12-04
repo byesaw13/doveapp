@@ -1,22 +1,22 @@
-# Agent Guidelines for DoveApp
+DoveApp Agent Guide – quick reference.
 
-## Build & Development Commands
-- `npm run dev` - Start development server on localhost:3000
-- `npm run build` - Production build with type checking
-- `npm run lint` - Run ESLint on all files
-- `npm run lint:fix` - Auto-fix ESLint issues
-- `npm run format` - Format code with Prettier
-- `npm run type-check` - TypeScript type checking without build
-
-## Code Style
-- **Imports**: Use `@/` alias for absolute imports (e.g., `@/lib/supabase`)
-- **Formatting**: Prettier config with single quotes, 2 spaces, 80 char width
-- **Types**: Always use TypeScript types; define interfaces in `types/` directory
-- **Naming**: camelCase for variables/functions, PascalCase for components/types
-- **Error Handling**: Always handle Supabase errors with explicit error checking
-- **File Structure**: App Router in `app/`, utilities in `lib/`, types in `types/`
-
-## Environment Setup
-- Copy `.env.local.example` to `.env.local` and add Supabase credentials
-- Supabase client is configured in `lib/supabase.ts`
-- Local backup utilities available in `lib/backup.ts`
+1. `npm run dev` – Next.js dev server on :3000.
+2. `npm run build` – Production build with type checks.
+3. `npm run lint` / `npm run lint:fix` – ESLint repo-wide.
+4. `npm run format` / `format:check` – Prettier + ESLint enforce single quotes, 2 spaces, 80 cols; do not disable rules.
+5. `npm run type-check` – Standalone `tsc --noEmit`.
+6. `npm run test` – Jest suite with setup in `jest.config.js`.
+7. `npm run test -- --runTestsByPath __tests__/clients.test.ts` – run one test file.
+8. `npm run test:watch` – Focused watch mode.
+9. No Cursor or Copilot rule files exist; follow this guide.
+10. Prefer `@/` alias imports; use relative paths only for siblings.
+11. Keep side-effect imports above value imports; group and space logically.
+12. Components/types PascalCase, vars/functions camelCase, enums PascalCase, constants SCREAMING_SNAKE.
+13. Define shared interfaces in `types/` and re-export where helpful.
+14. Exported functions/components need explicit return types and prop interfaces.
+15. React server components live in `app/`, client components need `'use client'`; utilities belong under `lib/`.
+16. Handle Supabase/external client calls with explicit error checks and informative throws/logs.
+17. Async workflows should return structured `{ data, error }` objects and never swallow failures.
+18. Environment secrets live in `.env.local` copied from `.env.local.example`; never commit secrets.
+19. Before PRs, run lint, type-check, and targeted tests; document flaky suites in PR.
+20. Database migrations in `supabase/migrations/`; run via Supabase SQL Editor. See `FIX_ESTIMATES_ERROR.md` for common issues.

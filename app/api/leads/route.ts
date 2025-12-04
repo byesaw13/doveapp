@@ -1,10 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
+import type { LeadStatus } from '@/types/lead';
 import {
   getLeads,
   createLead,
   getLeadStats,
   searchLeads,
   getLeadsForFollowUp,
+  getLeadsByStatus,
 } from '@/lib/db/leads';
 
 // GET /api/leads - Get all leads or search
@@ -26,6 +28,24 @@ export async function GET(request: NextRequest) {
 
     if (query) {
       const leads = await searchLeads(query);
+      return NextResponse.json(leads);
+    }
+
+    const status = searchParams.get('status');
+    if (
+      status &&
+      [
+        'new',
+        'contacted',
+        'qualified',
+        'proposal_sent',
+        'negotiating',
+        'converted',
+        'lost',
+        'unqualified',
+      ].includes(status)
+    ) {
+      const leads = await getLeadsByStatus(status as LeadStatus);
       return NextResponse.json(leads);
     }
 

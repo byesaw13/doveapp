@@ -13,7 +13,25 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { useToast } from '@/components/ui/toast';
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
+import { useForm } from 'react-hook-form';
 import type { Lead, LeadStats } from '@/types/lead';
+import { leadSchema, type LeadFormData } from '@/lib/validations/lead';
 import {
   Plus,
   Search,
@@ -41,6 +59,30 @@ export default function LeadsPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
   const [showNewLeadDialog, setShowNewLeadDialog] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const form = useForm<LeadFormData>({
+    defaultValues: {
+      first_name: '',
+      last_name: '',
+      company_name: '',
+      email: '',
+      phone: '',
+      alternate_phone: '',
+      source: 'website',
+      status: 'new',
+      priority: 'medium',
+      service_type: '',
+      service_description: '',
+      estimated_value: 0,
+      address: '',
+      city: '',
+      state: '',
+      zip_code: '',
+      follow_up_date: '',
+      notes: '',
+    },
+  });
 
   useEffect(() => {
     loadLeads();
@@ -89,6 +131,132 @@ export default function LeadsPage() {
       setLeads(data);
     } catch (error) {
       console.error('Search failed:', error);
+    }
+  };
+
+  const handleCreateLead = async (data: LeadFormData) => {
+    setIsSubmitting(true);
+    try {
+      // Convert 0 estimated_value to undefined
+      const submitData = {
+        ...data,
+        estimated_value:
+          data.estimated_value === 0 ? undefined : data.estimated_value,
+      };
+
+      const response = await fetch('/api/leads', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(submitData),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to create lead');
+      }
+
+      const newLead = await response.json();
+      setLeads((prev) => [newLead, ...prev]);
+      setShowNewLeadDialog(false);
+      form.reset();
+      toast({
+        title: 'Success',
+        description: 'Lead created successfully',
+      });
+      loadStats(); // Refresh stats
+    } catch (error) {
+      console.error('Failed to create lead:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to create lead',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleCreateEstimate = (lead: Lead) => {
+    // Navigate to estimates page with lead data pre-filled
+    const estimateData = {
+      client_name: `${lead.first_name} ${lead.last_name}`,
+      email: lead.email,
+      phone: lead.phone,
+      company_name: lead.company_name,
+      service_description: lead.service_description,
+      estimated_value: lead.estimated_value,
+    };
+
+    // Store in sessionStorage to pre-fill the estimate form
+    sessionStorage.setItem('newEstimate', JSON.stringify(estimateData));
+
+    // Navigate to estimates page
+    window.location.href = '/estimates';
+  };
+
+  const handleConvertToClient = async (lead: Lead) => {
+    try {
+      // Create a new client from the lead data
+      const clientData = {
+        first_name: lead.first_name,
+        last_name: lead.last_name,
+        company_name: lead.company_name,
+        email: lead.email,
+        phone: lead.phone,
+        address_line1: lead.address,
+        city: lead.city,
+        state: lead.state,
+        zip_code: lead.zip_code,
+        notes: lead.notes,
+      };
+
+      const response = await fetch('/api/clients', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(clientData),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to create client');
+      }
+
+      const newClient = await response.json();
+
+      // Update the lead status to converted
+      const updateResponse = await fetch(`/api/leads/${lead.id}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          status: 'converted',
+          converted_to_client_id: newClient.id,
+        }),
+      });
+
+      if (!updateResponse.ok) {
+        throw new Error('Failed to update lead status');
+      }
+
+      toast({
+        title: 'Success',
+        description: 'Lead converted to client successfully',
+      });
+
+      // Close the dialog and refresh leads
+      setSelectedLead(null);
+      loadLeads();
+      loadStats();
+    } catch (error) {
+      console.error('Failed to convert lead:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to convert lead to client',
+        variant: 'destructive',
+      });
     }
   };
 
@@ -511,11 +679,18 @@ export default function LeadsPage() {
 
               {/* Actions */}
               <div className="flex gap-3 pt-4 border-t">
-                <Button className="flex-1 bg-gradient-to-r from-purple-500 to-pink-500">
+                <Button
+                  className="flex-1 bg-gradient-to-r from-purple-500 to-pink-500"
+                  onClick={() => handleCreateEstimate(selectedLead)}
+                >
                   <FileText className="w-4 h-4 mr-2" />
                   Create Estimate
                 </Button>
-                <Button variant="outline" className="flex-1">
+                <Button
+                  variant="outline"
+                  className="flex-1"
+                  onClick={() => handleConvertToClient(selectedLead)}
+                >
                   <Users className="w-4 h-4 mr-2" />
                   Convert to Client
                 </Button>
@@ -525,21 +700,348 @@ export default function LeadsPage() {
         </DialogContent>
       </Dialog>
 
-      {/* New Lead Dialog - Placeholder for now */}
+      {/* New Lead Dialog */}
       <Dialog open={showNewLeadDialog} onOpenChange={setShowNewLeadDialog}>
-        <DialogContent>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Create New Lead</DialogTitle>
             <DialogDescription>
               Add a new potential customer to your pipeline
             </DialogDescription>
           </DialogHeader>
-          <div className="text-center py-8">
-            <p className="text-gray-600">Lead form coming soon...</p>
-            <p className="text-sm text-gray-500 mt-2">
-              Use the API endpoint to create leads for now
-            </p>
-          </div>
+          <Form {...form}>
+            <form
+              onSubmit={form.handleSubmit(handleCreateLead)}
+              className="space-y-6"
+            >
+              {/* Contact Information */}
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="first_name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>First Name *</FormLabel>
+                      <FormControl>
+                        <Input placeholder="John" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="last_name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Last Name *</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Doe" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              <FormField
+                control={form.control}
+                name="company_name"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Company Name</FormLabel>
+                    <FormControl>
+                      <Input placeholder="ABC Construction" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="estimated_value"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Estimated Value</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          placeholder="50000"
+                          value={field.value || ''}
+                          onChange={(e) => {
+                            const value = e.target.value;
+                            field.onChange(value === '' ? 0 : Number(value));
+                          }}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="phone"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Phone *</FormLabel>
+                      <FormControl>
+                        <Input placeholder="(555) 123-4567" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              <FormField
+                control={form.control}
+                name="alternate_phone"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Alternate Phone</FormLabel>
+                    <FormControl>
+                      <Input placeholder="(555) 987-6543" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {/* Lead Details */}
+              <div className="grid grid-cols-3 gap-4">
+                <FormField
+                  control={form.control}
+                  name="source"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Source *</FormLabel>
+                      <Select
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select source" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="website">Website</SelectItem>
+                          <SelectItem value="referral">Referral</SelectItem>
+                          <SelectItem value="social_media">
+                            Social Media
+                          </SelectItem>
+                          <SelectItem value="email">Email</SelectItem>
+                          <SelectItem value="phone">Phone</SelectItem>
+                          <SelectItem value="walk_in">Walk In</SelectItem>
+                          <SelectItem value="advertisement">
+                            Advertisement
+                          </SelectItem>
+                          <SelectItem value="other">Other</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="priority"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Priority</FormLabel>
+                      <Select
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select priority" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="low">Low</SelectItem>
+                          <SelectItem value="medium">Medium</SelectItem>
+                          <SelectItem value="high">High</SelectItem>
+                          <SelectItem value="urgent">Urgent</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="estimated_value"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Estimated Value</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          placeholder="50000"
+                          {...field}
+                          onChange={(e) =>
+                            field.onChange(
+                              e.target.value
+                                ? Number(e.target.value)
+                                : undefined
+                            )
+                          }
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              {/* Service Details */}
+              <FormField
+                control={form.control}
+                name="service_type"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Service Type</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Roofing, Plumbing, etc." {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="service_description"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Service Description</FormLabel>
+                    <FormControl>
+                      <Textarea
+                        placeholder="Describe the service needed..."
+                        className="min-h-[80px]"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {/* Address */}
+              <div className="space-y-4">
+                <FormField
+                  control={form.control}
+                  name="address"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Address</FormLabel>
+                      <FormControl>
+                        <Input placeholder="123 Main St" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <div className="grid grid-cols-3 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="city"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>City</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Anytown" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="state"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>State</FormLabel>
+                        <FormControl>
+                          <Input placeholder="CA" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="zip_code"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>ZIP Code</FormLabel>
+                        <FormControl>
+                          <Input placeholder="12345" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              </div>
+
+              {/* Follow-up and Notes */}
+              <FormField
+                control={form.control}
+                name="follow_up_date"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Follow-up Date</FormLabel>
+                    <FormControl>
+                      <Input type="date" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="priority"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Priority</FormLabel>
+                    <Select value={field.value} onValueChange={field.onChange}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select priority" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="low">Low</SelectItem>
+                        <SelectItem value="medium">Medium</SelectItem>
+                        <SelectItem value="high">High</SelectItem>
+                        <SelectItem value="urgent">Urgent</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {/* Actions */}
+              <div className="flex justify-end gap-3 pt-4 border-t">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setShowNewLeadDialog(false)}
+                >
+                  Cancel
+                </Button>
+                <Button type="submit" disabled={isSubmitting}>
+                  {isSubmitting ? 'Creating...' : 'Create Lead'}
+                </Button>
+              </div>
+            </form>
+          </Form>
         </DialogContent>
       </Dialog>
     </div>

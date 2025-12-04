@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, useState, ReactNode } from 'react';
+import { createContext, useContext, useState, ReactNode, useRef } from 'react';
 
 interface Toast {
   id: string;
@@ -19,13 +19,14 @@ const ToastContext = createContext<ToastContextType | undefined>(undefined);
 
 export function ToastProvider({ children }: { children: ReactNode }) {
   const [toasts, setToasts] = useState<Toast[]>([]);
+  const toastIdCounter = useRef(0);
 
   const toast = ({
     title,
     description,
     variant = 'default',
   }: Omit<Toast, 'id'>) => {
-    const id = Math.random().toString(36).substring(2, 9);
+    const id = `toast-${++toastIdCounter.current}`;
     const newToast: Toast = { id, title, description, variant };
     setToasts((prev) => [...prev, newToast]);
 

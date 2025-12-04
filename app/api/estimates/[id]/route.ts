@@ -54,6 +54,25 @@ export async function PUT(
   }
 }
 
+// PATCH /api/estimates/[id] - Partially update estimate
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id } = await params;
+    const body = await request.json();
+    const estimate = await updateEstimate(id, body);
+    return NextResponse.json(estimate);
+  } catch (error) {
+    console.error('Error updating estimate:', error);
+    return NextResponse.json(
+      { error: 'Failed to update estimate' },
+      { status: 500 }
+    );
+  }
+}
+
 // DELETE /api/estimates/[id] - Delete estimate
 export async function DELETE(
   request: NextRequest,

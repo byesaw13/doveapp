@@ -6,12 +6,18 @@ import type {
   EstimateWithRelations,
   EstimateStatus,
 } from '@/types/estimate';
+import {
+  logEstimateSent,
+  logEstimateAccepted,
+  logEstimateDeclined,
+} from './activities';
 
 /**
  * Get all estimates
  */
 export async function getEstimates(): Promise<EstimateWithRelations[]> {
-  const { data, error } = await supabase
+  // Try with relationships first
+  let { data, error } = await supabase
     .from('estimates')
     .select(
       `
@@ -21,6 +27,20 @@ export async function getEstimates(): Promise<EstimateWithRelations[]> {
     `
     )
     .order('created_at', { ascending: false });
+
+  // If relationship error, fallback to simple query
+  if (error && error.code === 'PGRST200') {
+    console.warn(
+      'Foreign key relationship not found. Run migration 025_ensure_estimates_leads_relationship.sql'
+    );
+    const fallback = await supabase
+      .from('estimates')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (fallback.error) throw fallback.error;
+    return (fallback.data || []) as EstimateWithRelations[];
+  }
 
   if (error) throw error;
   return data || [];
@@ -32,7 +52,7 @@ export async function getEstimates(): Promise<EstimateWithRelations[]> {
 export async function getEstimate(
   id: string
 ): Promise<EstimateWithRelations | null> {
-  const { data, error } = await supabase
+  let { data, error } = await supabase
     .from('estimates')
     .select(
       `
@@ -43,6 +63,18 @@ export async function getEstimate(
     )
     .eq('id', id)
     .single();
+
+  // If relationship error, fallback to simple query
+  if (error && error.code === 'PGRST200') {
+    const fallback = await supabase
+      .from('estimates')
+      .select('*')
+      .eq('id', id)
+      .single();
+
+    if (fallback.error) throw fallback.error;
+    return (fallback.data || null) as EstimateWithRelations | null;
+  }
 
   if (error) throw error;
   return data;
@@ -108,6 +140,20 @@ export async function sendEstimate(id: string): Promise<Estimate> {
     .single();
 
   if (error) throw error;
+
+  if (data?.client_id) {
+    try {
+      await logEstimateSent(
+        data.client_id,
+        data.id,
+        data.estimate_number,
+        data.total ?? 0
+      );
+    } catch (activityError) {
+      console.error('Failed to log estimate sent activity:', activityError);
+    }
+  }
+
   return data;
 }
 
@@ -144,6 +190,20 @@ export async function acceptEstimate(id: string): Promise<Estimate> {
     .single();
 
   if (error) throw error;
+
+  if (data?.client_id) {
+    try {
+      await logEstimateAccepted(
+        data.client_id,
+        data.id,
+        data.estimate_number,
+        data.total ?? 0
+      );
+    } catch (activityError) {
+      console.error('Failed to log estimate accepted activity:', activityError);
+    }
+  }
+
   return data;
 }
 
@@ -166,6 +226,20 @@ export async function declineEstimate(
     .single();
 
   if (error) throw error;
+
+  if (data?.client_id) {
+    try {
+      await logEstimateDeclined(
+        data.client_id,
+        data.id,
+        data.estimate_number,
+        reason
+      );
+    } catch (activityError) {
+      console.error('Failed to log estimate declined activity:', activityError);
+    }
+  }
+
   return data;
 }
 
@@ -188,6 +262,23 @@ export async function convertEstimateToJob(
     .single();
 
   if (error) throw error;
+
+  if (data?.client_id) {
+    try {
+      await logEstimateAccepted(
+        data.client_id,
+        data.id,
+        data.estimate_number,
+        data.total ?? 0
+      );
+    } catch (activityError) {
+      console.error(
+        'Failed to log estimate conversion activity:',
+        activityError
+      );
+    }
+  }
+
   return data;
 }
 

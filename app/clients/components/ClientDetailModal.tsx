@@ -28,6 +28,7 @@ import {
   createProperty,
   getJobPaymentSummary,
 } from '@/lib/db';
+import { ActivityTimeline } from './ActivityTimeline';
 import type { Client } from '@/types/client';
 import type { PropertyWithClient } from '@/types/property';
 import type { JobWithClient } from '@/types/job';
@@ -75,9 +76,56 @@ export function ClientDetailModal({
   const [jobs, setJobs] = useState<JobWithPayment[]>([]);
   const [loading, setLoading] = useState(false);
   const [editingAddress, setEditingAddress] = useState(false);
-  const [editingNotes, setEditingNotes] = useState(false);
-  const [editingPreferences, setEditingPreferences] = useState(false);
   const [addingProperty, setAddingProperty] = useState(false);
+
+  // Helper functions
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+    });
+  };
+
+  const getJobStatusBadge = (status: string) => {
+    const statusConfig: Record<
+      string,
+      {
+        label: string;
+        variant: 'default' | 'secondary' | 'destructive' | 'outline';
+      }
+    > = {
+      draft: { label: 'Draft', variant: 'secondary' },
+      scheduled: { label: 'Scheduled', variant: 'default' },
+      in_progress: { label: 'In Progress', variant: 'default' },
+      completed: { label: 'Completed', variant: 'outline' },
+      cancelled: { label: 'Cancelled', variant: 'destructive' },
+    };
+    const config = statusConfig[status] || {
+      label: status,
+      variant: 'secondary' as const,
+    };
+    return <Badge variant={config.variant}>{config.label}</Badge>;
+  };
+
+  const getPaymentStatusBadge = (status: string) => {
+    const statusConfig: Record<
+      string,
+      {
+        label: string;
+        variant: 'default' | 'secondary' | 'destructive' | 'outline';
+      }
+    > = {
+      unpaid: { label: 'Unpaid', variant: 'destructive' },
+      partial: { label: 'Partial', variant: 'secondary' },
+      paid: { label: 'Paid', variant: 'outline' },
+    };
+    const config = statusConfig[status] || {
+      label: status,
+      variant: 'secondary' as const,
+    };
+    return <Badge variant={config.variant}>{config.label}</Badge>;
+  };
 
   // Address editing state
   const [addressData, setAddressData] = useState({
@@ -215,12 +263,19 @@ export function ClientDetailModal({
     try {
       await updateClient(client.id, { notes: notesData.notes });
       setClient({ ...client, notes: notesData.notes });
-      setEditingNotes(false);
       onClientUpdated?.();
     } catch (error) {
       console.error('Failed to update notes:', error);
       alert('Failed to update notes');
     }
+  };
+
+  const formatCurrency = (amount: number) => {
+    if (!amount || Number.isNaN(amount)) return '$0.00';
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+    }).format(amount);
   };
 
   const handleUpdatePreferences = async () => {
@@ -229,7 +284,6 @@ export function ClientDetailModal({
     try {
       await updateClient(client.id, { preferences: notesData.preferences });
       setClient({ ...client, preferences: notesData.preferences });
-      setEditingPreferences(false);
       onClientUpdated?.();
     } catch (error) {
       console.error('Failed to update preferences:', error);
@@ -237,107 +291,72 @@ export function ClientDetailModal({
     }
   };
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-    }).format(amount);
-  };
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric',
-    });
-  };
-
-  const getPaymentStatusBadge = (status: string) => {
-    switch (status) {
-      case 'paid':
-        return (
-          <Badge className="bg-green-100 text-green-800">
-            <CheckCircle className="w-3 h-3 mr-1" />
-            Paid
-          </Badge>
-        );
-      case 'partial':
-        return (
-          <Badge className="bg-yellow-100 text-yellow-800">
-            <Clock className="w-3 h-3 mr-1" />
-            Partial
-          </Badge>
-        );
-      case 'unpaid':
-        return (
-          <Badge className="bg-red-100 text-red-800">
-            <AlertCircle className="w-3 h-3 mr-1" />
-            Unpaid
-          </Badge>
-        );
-      default:
-        return <Badge variant="secondary">{status}</Badge>;
-    }
-  };
-
-  const getJobStatusBadge = (status: string) => {
-    const statusColors = {
-      quote: 'bg-gray-100 text-gray-800',
-      scheduled: 'bg-blue-100 text-blue-800',
-      in_progress: 'bg-yellow-100 text-yellow-800',
-      completed: 'bg-green-100 text-green-800',
-      invoiced: 'bg-purple-100 text-purple-800',
-      cancelled: 'bg-red-100 text-red-800',
-    };
-
-    return (
-      <Badge
-        className={
-          statusColors[status as keyof typeof statusColors] ||
-          'bg-gray-100 text-gray-800'
-        }
-      >
-        {status.replace('_', ' ')}
-      </Badge>
-    );
-  };
-
   if (!client) return null;
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto bg-gradient-to-br from-slate-50 via-white to-white">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <User className="w-5 h-5" />
+          <DialogTitle className="flex flex-wrap items-center gap-2 text-slate-800">
+            <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-slate-100">
+              <User className="w-4 h-4 text-slate-600" />
+            </span>
             {client.first_name} {client.last_name}
             {client.company_name && (
               <span className="text-muted-foreground">
-                - {client.company_name}
+                · {client.company_name}
               </span>
             )}
           </DialogTitle>
         </DialogHeader>
 
         <Tabs defaultValue="overview" className="w-full">
-          <TabsList className="grid w-full grid-cols-5">
-            <TabsTrigger value="overview">Overview</TabsTrigger>
-            <TabsTrigger value="properties">
+          <TabsList className="flex flex-wrap gap-2 p-2 bg-slate-50 rounded-xl border border-slate-100">
+            <TabsTrigger
+              value="overview"
+              className="flex-1 basis-full sm:basis-[calc(50%-0.5rem)] lg:basis-[calc(33.33%-0.5rem)] whitespace-normal rounded-lg px-4 py-2 text-sm font-medium data-[state=active]:bg-white data-[state=active]:text-slate-900 data-[state=inactive]:text-slate-500 shadow-sm"
+            >
+              Overview
+            </TabsTrigger>
+            <TabsTrigger
+              value="properties"
+              className="flex-1 basis-full sm:basis-[calc(50%-0.5rem)] lg:basis-[calc(33.33%-0.5rem)] whitespace-normal rounded-lg px-4 py-2 text-sm font-medium data-[state=active]:bg-white data-[state=active]:text-slate-900 data-[state=inactive]:text-slate-500 shadow-sm"
+            >
               Properties ({properties.length})
             </TabsTrigger>
-            <TabsTrigger value="jobs">Jobs ({jobs.length})</TabsTrigger>
-            <TabsTrigger value="financial">Financial</TabsTrigger>
-            <TabsTrigger value="notes">Notes & Preferences</TabsTrigger>
+            <TabsTrigger
+              value="jobs"
+              className="flex-1 basis-full sm:basis-[calc(50%-0.5rem)] lg:basis-[calc(33.33%-0.5rem)] whitespace-normal rounded-lg px-4 py-2 text-sm font-medium data-[state=active]:bg-white data-[state=active]:text-slate-900 data-[state=inactive]:text-slate-500 shadow-sm"
+            >
+              Jobs ({jobs.length})
+            </TabsTrigger>
+            <TabsTrigger
+              value="financial"
+              className="flex-1 basis-full sm:basis-[calc(50%-0.5rem)] lg:basis-[calc(33.33%-0.5rem)] whitespace-normal rounded-lg px-4 py-2 text-sm font-medium data-[state=active]:bg-white data-[state=active]:text-slate-900 data-[state=inactive]:text-slate-500 shadow-sm"
+            >
+              Financial
+            </TabsTrigger>
+            <TabsTrigger
+              value="notes"
+              className="flex-1 basis-full sm:basis-[calc(50%-0.5rem)] lg:basis-[calc(33.33%-0.5rem)] whitespace-normal rounded-lg px-4 py-2 text-sm font-medium data-[state=active]:bg-white data-[state=active]:text-slate-900 data-[state=inactive]:text-slate-500 shadow-sm"
+            >
+              Notes & Preferences
+            </TabsTrigger>
+            <TabsTrigger
+              value="timeline"
+              className="flex-1 basis-full sm:basis-[calc(50%-0.5rem)] lg:basis-[calc(33.33%-0.5rem)] whitespace-normal rounded-lg px-4 py-2 text-sm font-medium data-[state=active]:bg-white data-[state=active]:text-slate-900 data-[state=inactive]:text-slate-500 shadow-sm"
+            >
+              Timeline
+            </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="overview" className="space-y-6">
-            {/* Client Info Card */}
-            <Card>
+          <TabsContent value="overview" className="mt-6 space-y-6">
+            <Card className="border-0 shadow-sm bg-white/90">
               <CardHeader>
-                <CardTitle className="flex items-center justify-between">
+                <CardTitle className="flex items-center justify-between text-slate-800">
                   <span>Contact Information</span>
                   <Button
-                    variant="outline"
+                    variant={editingAddress ? 'secondary' : 'outline'}
                     size="sm"
                     onClick={() => setEditingAddress(!editingAddress)}
                   >
@@ -349,28 +368,36 @@ export function ClientDetailModal({
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <Label className="text-sm font-medium">Name</Label>
-                    <p className="text-sm text-muted-foreground">
+                    <Label className="text-sm font-medium text-slate-500">
+                      Name
+                    </Label>
+                    <p className="text-base font-semibold text-slate-800">
                       {client.first_name} {client.last_name}
                     </p>
                   </div>
                   <div>
-                    <Label className="text-sm font-medium">Company</Label>
-                    <p className="text-sm text-muted-foreground">
+                    <Label className="text-sm font-medium text-slate-500">
+                      Company
+                    </Label>
+                    <p className="text-base font-semibold text-slate-800">
                       {client.company_name || 'N/A'}
                     </p>
                   </div>
                   <div>
-                    <Label className="text-sm font-medium">Email</Label>
-                    <p className="text-sm text-muted-foreground flex items-center">
-                      <Mail className="w-4 h-4 mr-2" />
+                    <Label className="text-sm font-medium text-slate-500">
+                      Email
+                    </Label>
+                    <p className="text-sm text-slate-600 flex items-center">
+                      <Mail className="w-4 h-4 mr-2 text-slate-400" />
                       {client.email || 'N/A'}
                     </p>
                   </div>
                   <div>
-                    <Label className="text-sm font-medium">Phone</Label>
-                    <p className="text-sm text-muted-foreground flex items-center">
-                      <Phone className="w-4 h-4 mr-2" />
+                    <Label className="text-sm font-medium text-slate-500">
+                      Phone
+                    </Label>
+                    <p className="text-sm text-slate-600 flex items-center">
+                      <Phone className="w-4 h-4 mr-2 text-slate-400" />
                       {client.phone || 'N/A'}
                     </p>
                   </div>
@@ -378,7 +405,7 @@ export function ClientDetailModal({
 
                 {editingAddress ? (
                   <div className="space-y-4 border-t pt-4">
-                    <h4 className="font-medium">Edit Address</h4>
+                    <h4 className="font-medium text-slate-800">Edit Address</h4>
                     <div className="grid grid-cols-2 gap-4">
                       <div className="col-span-2">
                         <Label htmlFor="address_line1">Address Line 1</Label>
@@ -460,9 +487,11 @@ export function ClientDetailModal({
                   </div>
                 ) : (
                   <div>
-                    <Label className="text-sm font-medium">Address</Label>
-                    <p className="text-sm text-muted-foreground flex items-start">
-                      <MapPin className="w-4 h-4 mr-2 mt-0.5 flex-shrink-0" />
+                    <Label className="text-sm font-medium text-slate-500">
+                      Address
+                    </Label>
+                    <p className="text-sm text-slate-600 flex items-start">
+                      <MapPin className="w-4 h-4 mr-2 mt-0.5 flex-shrink-0 text-slate-400" />
                       {client.address_line1 ? (
                         <span>
                           {client.address_line1}
@@ -484,15 +513,18 @@ export function ClientDetailModal({
               </CardContent>
             </Card>
 
-            {/* Quick Stats */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <Card>
+              <Card className="border-0 shadow-sm bg-gradient-to-br from-blue-50 to-white">
                 <CardContent className="p-4">
                   <div className="flex items-center">
-                    <Building className="w-8 h-8 text-blue-600" />
+                    <div className="h-10 w-10 rounded-full bg-white flex items-center justify-center shadow-sm">
+                      <Building className="w-5 h-5 text-blue-600" />
+                    </div>
                     <div className="ml-3">
-                      <p className="text-2xl font-bold">{properties.length}</p>
-                      <p className="text-xs text-muted-foreground">
+                      <p className="text-2xl font-bold text-blue-700">
+                        {properties.length}
+                      </p>
+                      <p className="text-xs text-blue-500 uppercase tracking-wide">
                         Properties
                       </p>
                     </div>
@@ -500,13 +532,17 @@ export function ClientDetailModal({
                 </CardContent>
               </Card>
 
-              <Card>
+              <Card className="border-0 shadow-sm bg-gradient-to-br from-emerald-50 to-white">
                 <CardContent className="p-4">
                   <div className="flex items-center">
-                    <Briefcase className="w-8 h-8 text-green-600" />
+                    <div className="h-10 w-10 rounded-full bg-white flex items-center justify-center shadow-sm">
+                      <Briefcase className="w-5 h-5 text-emerald-600" />
+                    </div>
                     <div className="ml-3">
-                      <p className="text-2xl font-bold">{jobs.length}</p>
-                      <p className="text-xs text-muted-foreground">
+                      <p className="text-2xl font-bold text-emerald-700">
+                        {jobs.length}
+                      </p>
+                      <p className="text-xs text-emerald-500 uppercase tracking-wide">
                         Total Jobs
                       </p>
                     </div>
@@ -514,17 +550,19 @@ export function ClientDetailModal({
                 </CardContent>
               </Card>
 
-              <Card>
+              <Card className="border-0 shadow-sm bg-gradient-to-br from-amber-50 to-white">
                 <CardContent className="p-4">
                   <div className="flex items-center">
-                    <DollarSign className="w-8 h-8 text-yellow-600" />
+                    <div className="h-10 w-10 rounded-full bg-white flex items-center justify-center shadow-sm">
+                      <DollarSign className="w-5 h-5 text-amber-600" />
+                    </div>
                     <div className="ml-3">
-                      <p className="text-2xl font-bold">
+                      <p className="text-2xl font-bold text-amber-700">
                         {formatCurrency(
                           jobs.reduce((sum, job) => sum + job.total, 0)
                         )}
                       </p>
-                      <p className="text-xs text-muted-foreground">
+                      <p className="text-xs text-amber-500 uppercase tracking-wide">
                         Total Value
                       </p>
                     </div>
@@ -532,18 +570,20 @@ export function ClientDetailModal({
                 </CardContent>
               </Card>
 
-              <Card>
+              <Card className="border-0 shadow-sm bg-gradient-to-br from-rose-50 to-white">
                 <CardContent className="p-4">
                   <div className="flex items-center">
-                    <AlertCircle className="w-8 h-8 text-red-600" />
+                    <div className="h-10 w-10 rounded-full bg-white flex items-center justify-center shadow-sm">
+                      <AlertCircle className="w-5 h-5 text-rose-500" />
+                    </div>
                     <div className="ml-3">
-                      <p className="text-2xl font-bold">
+                      <p className="text-2xl font-bold text-rose-600">
                         {
                           jobs.filter((job) => job.paymentSummary.remaining > 0)
                             .length
                         }
                       </p>
-                      <p className="text-xs text-muted-foreground">
+                      <p className="text-xs text-rose-500 uppercase tracking-wide">
                         Outstanding
                       </p>
                     </div>
@@ -553,7 +593,7 @@ export function ClientDetailModal({
             </div>
           </TabsContent>
 
-          <TabsContent value="properties" className="space-y-4">
+          <TabsContent value="properties" className="mt-6 space-y-4">
             <div className="flex items-center justify-between">
               <h3 className="text-lg font-medium">Properties</h3>
               <Button onClick={() => setAddingProperty(true)}>
@@ -604,7 +644,7 @@ export function ClientDetailModal({
                             </p>
                           )}
                         </div>
-                        <Badge variant="secondary">
+                        <Badge className="bg-slate-100 text-slate-700 border border-slate-200">
                           {property.property_type}
                         </Badge>
                       </div>
@@ -636,7 +676,7 @@ export function ClientDetailModal({
             )}
           </TabsContent>
 
-          <TabsContent value="jobs" className="space-y-4">
+          <TabsContent value="jobs" className="mt-6 space-y-4">
             <h3 className="text-lg font-medium">Job History</h3>
 
             {jobs.length === 0 ? (
@@ -696,72 +736,73 @@ export function ClientDetailModal({
             )}
           </TabsContent>
 
-          <TabsContent value="financial" className="space-y-4">
-            <h3 className="text-lg font-medium">Financial Overview</h3>
+          <TabsContent value="financial" className="mt-6 space-y-6">
+            <h3 className="text-lg font-medium text-slate-800">
+              Financial Overview
+            </h3>
 
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <Card>
-                <CardContent className="p-4">
-                  <div className="text-center">
-                    <p className="text-2xl font-bold text-green-600">
-                      {formatCurrency(
-                        jobs.reduce(
-                          (sum, job) => sum + job.paymentSummary.paid,
-                          0
-                        )
-                      )}
-                    </p>
-                    <p className="text-xs text-muted-foreground">Total Paid</p>
-                  </div>
+              <Card className="border-0 shadow-sm bg-gradient-to-br from-emerald-50 to-white">
+                <CardContent className="p-4 text-center">
+                  <p className="text-xs uppercase tracking-wide text-emerald-500">
+                    Total Paid
+                  </p>
+                  <p className="text-2xl font-bold text-emerald-700">
+                    {formatCurrency(
+                      jobs.reduce(
+                        (sum, job) => sum + job.paymentSummary.paid,
+                        0
+                      )
+                    )}
+                  </p>
                 </CardContent>
               </Card>
 
-              <Card>
-                <CardContent className="p-4">
-                  <div className="text-center">
-                    <p className="text-2xl font-bold text-red-600">
-                      {formatCurrency(
-                        jobs.reduce(
-                          (sum, job) => sum + job.paymentSummary.remaining,
-                          0
-                        )
-                      )}
-                    </p>
-                    <p className="text-xs text-muted-foreground">Outstanding</p>
-                  </div>
+              <Card className="border-0 shadow-sm bg-gradient-to-br from-rose-50 to-white">
+                <CardContent className="p-4 text-center">
+                  <p className="text-xs uppercase tracking-wide text-rose-500">
+                    Outstanding
+                  </p>
+                  <p className="text-2xl font-bold text-rose-600">
+                    {formatCurrency(
+                      jobs.reduce(
+                        (sum, job) => sum + job.paymentSummary.remaining,
+                        0
+                      )
+                    )}
+                  </p>
                 </CardContent>
               </Card>
 
-              <Card>
-                <CardContent className="p-4">
-                  <div className="text-center">
-                    <p className="text-2xl font-bold text-blue-600">
-                      {formatCurrency(
-                        jobs.reduce((sum, job) => sum + job.total, 0)
-                      )}
-                    </p>
-                    <p className="text-xs text-muted-foreground">Total Value</p>
-                  </div>
+              <Card className="border-0 shadow-sm bg-gradient-to-br from-indigo-50 to-white">
+                <CardContent className="p-4 text-center">
+                  <p className="text-xs uppercase tracking-wide text-indigo-500">
+                    Total Value
+                  </p>
+                  <p className="text-2xl font-bold text-indigo-700">
+                    {formatCurrency(
+                      jobs.reduce((sum, job) => sum + job.total, 0)
+                    )}
+                  </p>
                 </CardContent>
               </Card>
 
-              <Card>
-                <CardContent className="p-4">
-                  <div className="text-center">
-                    <p className="text-2xl font-bold text-purple-600">
-                      {
-                        jobs.filter(
-                          (job) => job.paymentSummary.status === 'paid'
-                        ).length
-                      }
-                    </p>
-                    <p className="text-xs text-muted-foreground">Paid Jobs</p>
-                  </div>
+              <Card className="border-0 shadow-sm bg-gradient-to-br from-purple-50 to-white">
+                <CardContent className="p-4 text-center">
+                  <p className="text-xs uppercase tracking-wide text-purple-500">
+                    Paid Jobs
+                  </p>
+                  <p className="text-2xl font-bold text-purple-700">
+                    {
+                      jobs.filter((job) => job.paymentSummary.status === 'paid')
+                        .length
+                    }
+                  </p>
                 </CardContent>
               </Card>
             </div>
 
-            <Card>
+            <Card className="border-0 shadow-sm">
               <CardHeader>
                 <CardTitle>Outstanding Invoices</CardTitle>
                 <CardDescription>Jobs with unpaid balances</CardDescription>
@@ -788,7 +829,7 @@ export function ClientDetailModal({
                             </p>
                           </div>
                           <div className="text-right">
-                            <p className="font-medium text-red-600">
+                            <p className="font-medium text-rose-600">
                               {formatCurrency(job.paymentSummary.remaining)} due
                             </p>
                             <p className="text-sm text-muted-foreground">
@@ -803,79 +844,44 @@ export function ClientDetailModal({
             </Card>
           </TabsContent>
 
-          <TabsContent value="notes" className="space-y-6">
+          <TabsContent value="notes" className="mt-6 space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* General Notes */}
-              <Card>
+              <Card className="border-0 shadow-sm bg-gradient-to-b from-white to-slate-50">
                 <CardHeader>
-                  <CardTitle className="flex items-center justify-between">
-                    <span>General Notes</span>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setEditingNotes(!editingNotes)}
-                    >
-                      <Edit className="w-4 h-4 mr-2" />
-                      {editingNotes ? 'Cancel' : 'Edit'}
-                    </Button>
+                  <CardTitle className="text-slate-800">
+                    General Notes
                   </CardTitle>
                   <CardDescription>
                     General notes and observations about this client
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  {editingNotes ? (
-                    <div className="space-y-4">
-                      <Textarea
-                        placeholder="Add general notes about this client..."
-                        value={notesData.notes || ''}
-                        onChange={(e) =>
-                          setNotesData((prev) => ({
-                            ...prev,
-                            notes: e.target.value,
-                          }))
-                        }
-                        rows={6}
-                      />
-                      <div className="flex gap-2">
-                        <Button onClick={handleUpdateNotes}>Save Notes</Button>
-                        <Button
-                          variant="outline"
-                          onClick={() => setEditingNotes(false)}
-                        >
-                          Cancel
-                        </Button>
-                      </div>
+                  <div className="space-y-4">
+                    <Textarea
+                      placeholder="Add general notes about this client..."
+                      value={notesData.notes || ''}
+                      onChange={(e) =>
+                        setNotesData((prev) => ({
+                          ...prev,
+                          notes: e.target.value,
+                        }))
+                      }
+                      rows={6}
+                      className="bg-white border-slate-200"
+                    />
+                    <div className="flex gap-2">
+                      <Button onClick={handleUpdateNotes}>Save Notes</Button>
                     </div>
-                  ) : (
-                    <div className="min-h-[120px]">
-                      {client.notes ? (
-                        <p className="text-sm whitespace-pre-wrap">
-                          {client.notes}
-                        </p>
-                      ) : (
-                        <p className="text-sm text-muted-foreground italic">
-                          No general notes yet. Click Edit to add notes.
-                        </p>
-                      )}
-                    </div>
-                  )}
+                  </div>
                 </CardContent>
               </Card>
 
               {/* Preferences & Instructions */}
-              <Card>
+              <Card className="border-0 shadow-sm bg-gradient-to-b from-white to-slate-50">
                 <CardHeader>
-                  <CardTitle className="flex items-center justify-between">
-                    <span>Preferences & Instructions</span>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setEditingPreferences(!editingPreferences)}
-                    >
-                      <Edit className="w-4 h-4 mr-2" />
-                      {editingPreferences ? 'Cancel' : 'Edit'}
-                    </Button>
+                  <CardTitle className="text-slate-800">
+                    Preferences & Instructions
                   </CardTitle>
                   <CardDescription>
                     Billing preferences, special instructions, access codes,
@@ -883,52 +889,25 @@ export function ClientDetailModal({
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  {editingPreferences ? (
-                    <div className="space-y-4">
-                      <Textarea
-                        placeholder="Add preferences, billing instructions, door codes, special requirements..."
-                        value={notesData.preferences || ''}
-                        onChange={(e) =>
-                          setNotesData((prev) => ({
-                            ...prev,
-                            preferences: e.target.value,
-                          }))
-                        }
-                        rows={6}
-                      />
-                      <div className="flex gap-2">
-                        <Button onClick={handleUpdatePreferences}>
-                          Save Preferences
-                        </Button>
-                        <Button
-                          variant="outline"
-                          onClick={() => setEditingPreferences(false)}
-                        >
-                          Cancel
-                        </Button>
-                      </div>
+                  <div className="space-y-4">
+                    <Textarea
+                      placeholder="Add preferences, billing instructions, door codes, special requirements..."
+                      value={notesData.preferences || ''}
+                      onChange={(e) =>
+                        setNotesData((prev) => ({
+                          ...prev,
+                          preferences: e.target.value,
+                        }))
+                      }
+                      rows={6}
+                      className="bg-white border-slate-200"
+                    />
+                    <div className="flex gap-2">
+                      <Button onClick={handleUpdatePreferences}>
+                        Save Preferences
+                      </Button>
                     </div>
-                  ) : (
-                    <div className="min-h-[120px]">
-                      {client.preferences ? (
-                        <div className="text-sm whitespace-pre-wrap">
-                          {client.preferences}
-                        </div>
-                      ) : (
-                        <div className="text-sm text-muted-foreground italic">
-                          No preferences or special instructions recorded.
-                          <br />
-                          <br />
-                          Common items to include:
-                          <br />• Billing preferences (email, mail, etc.)
-                          <br />• Door lock codes
-                          <br />• Special access instructions
-                          <br />• Preferred contact methods
-                          <br />• Service preferences
-                        </div>
-                      )}
-                    </div>
-                  )}
+                  </div>
                 </CardContent>
               </Card>
             </div>
@@ -962,6 +941,10 @@ export function ClientDetailModal({
                 </CardContent>
               </Card>
             </div>
+          </TabsContent>
+
+          <TabsContent value="timeline" className="mt-6 space-y-6">
+            <ActivityTimeline clientId={client.id} />
           </TabsContent>
         </Tabs>
       </DialogContent>

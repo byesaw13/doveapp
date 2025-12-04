@@ -71,24 +71,24 @@ const CustomToolbar: React.ComponentType<ToolbarProps<object, object>> = ({
   view,
 }) => {
   return (
-    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-100">
+    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6 p-4 bg-white rounded-lg border border-slate-200 shadow-sm">
       <div className="flex items-center gap-3">
         <Button
           variant="outline"
           size="sm"
           onClick={() => onNavigate('PREV' as NavigateAction)}
-          className="h-9 px-3 hover:bg-white"
+          className="h-9 px-3 hover:bg-slate-50 border-slate-300"
         >
           <ChevronLeft className="w-4 h-4" />
         </Button>
-        <h2 className="text-xl font-bold text-gray-800 min-w-[200px] text-center">
+        <h2 className="text-xl font-bold text-slate-900 min-w-[200px] text-center">
           {label}
         </h2>
         <Button
           variant="outline"
           size="sm"
           onClick={() => onNavigate('NEXT' as NavigateAction)}
-          className="h-9 px-3 hover:bg-white"
+          className="h-9 px-3 hover:bg-slate-50 border-slate-300"
         >
           <ChevronRight className="w-4 h-4" />
         </Button>
@@ -96,7 +96,7 @@ const CustomToolbar: React.ComponentType<ToolbarProps<object, object>> = ({
           variant="outline"
           size="sm"
           onClick={() => onNavigate('TODAY' as NavigateAction)}
-          className="h-9 px-4 hover:bg-white font-medium"
+          className="h-9 px-4 bg-emerald-500 hover:bg-emerald-600 text-white border-emerald-500 font-medium"
         >
           Today
         </Button>
@@ -107,7 +107,11 @@ const CustomToolbar: React.ComponentType<ToolbarProps<object, object>> = ({
           variant={view === 'month' ? 'default' : 'outline'}
           size="sm"
           onClick={() => onView('month' as View)}
-          className="h-9"
+          className={
+            view === 'month'
+              ? 'h-9 bg-emerald-500 hover:bg-emerald-600'
+              : 'h-9 border-slate-300 hover:bg-slate-50'
+          }
         >
           Month
         </Button>
@@ -115,7 +119,11 @@ const CustomToolbar: React.ComponentType<ToolbarProps<object, object>> = ({
           variant={view === 'week' ? 'default' : 'outline'}
           size="sm"
           onClick={() => onView('week' as View)}
-          className="h-9"
+          className={
+            view === 'week'
+              ? 'h-9 bg-emerald-500 hover:bg-emerald-600'
+              : 'h-9 border-slate-300 hover:bg-slate-50'
+          }
         >
           Week
         </Button>
@@ -123,7 +131,11 @@ const CustomToolbar: React.ComponentType<ToolbarProps<object, object>> = ({
           variant={view === 'day' ? 'default' : 'outline'}
           size="sm"
           onClick={() => onView('day' as View)}
-          className="h-9"
+          className={
+            view === 'day'
+              ? 'h-9 bg-emerald-500 hover:bg-emerald-600'
+              : 'h-9 border-slate-300 hover:bg-slate-50'
+          }
         >
           Day
         </Button>
@@ -131,7 +143,11 @@ const CustomToolbar: React.ComponentType<ToolbarProps<object, object>> = ({
           variant={view === 'agenda' ? 'default' : 'outline'}
           size="sm"
           onClick={() => onView('agenda' as View)}
-          className="h-9"
+          className={
+            view === 'agenda'
+              ? 'h-9 bg-emerald-500 hover:bg-emerald-600'
+              : 'h-9 border-slate-300 hover:bg-slate-50'
+          }
         >
           Agenda
         </Button>
@@ -313,153 +329,149 @@ export default function CalendarPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
-      <div className="max-w-[1600px] mx-auto p-4 sm:p-6 lg:p-8">
-        {/* Header */}
-        <div className="mb-6">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4">
-            <div>
-              <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-                Calendar
-              </h1>
-              <p className="text-gray-600 mt-1">
-                Drag & drop to reschedule • Click events for details
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-bold text-slate-900">Calendar</h1>
+          <p className="mt-1 text-sm text-slate-600">
+            Drag & drop to reschedule • Click events for details
+          </p>
+        </div>
+        <Link href="/jobs/new">
+          <Button className="bg-emerald-500 hover:bg-emerald-600 text-white">
+            <Plus className="w-5 h-5 mr-2" />
+            New Job
+          </Button>
+        </Link>
+      </div>
+
+      <div>
+        {/* Success Notification */}
+        {dragSuccess && (
+          <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-lg shadow-sm">
+            <div className="flex items-start">
+              <CheckCircle className="h-5 w-5 text-emerald-600 mt-0.5 mr-3 flex-shrink-0" />
+              <p className="text-sm font-medium text-emerald-800">
+                {dragSuccess}
               </p>
             </div>
-            <Link href="/jobs/new">
-              <Button size="lg" className="shadow-md hover:shadow-lg">
-                <Plus className="w-5 h-5 mr-2" />
-                New Job
-              </Button>
-            </Link>
           </div>
+        )}
 
-          {/* Success Notification */}
-          {dragSuccess && (
-            <div className="p-4 bg-green-50 border border-green-200 rounded-lg shadow-sm mb-4">
-              <div className="flex items-start">
-                <CheckCircle className="h-5 w-5 text-green-500 mt-0.5 mr-3 flex-shrink-0" />
-                <p className="text-sm font-medium text-green-800">
-                  {dragSuccess}
-                </p>
-              </div>
-            </div>
-          )}
-
-          {/* Legend */}
-          <div className="flex flex-wrap items-center gap-4 p-4 bg-white rounded-lg border shadow-sm">
-            <span className="text-sm font-medium text-gray-700">
-              Job Status:
-            </span>
-            <div className="flex items-center gap-2">
-              <div className="w-4 h-4 rounded bg-blue-500"></div>
-              <span className="text-sm text-gray-600">Scheduled</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-4 h-4 rounded bg-yellow-500"></div>
-              <span className="text-sm text-gray-600">In Progress</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-4 h-4 rounded bg-green-500"></div>
-              <span className="text-sm text-gray-600">Completed</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-4 h-4 rounded bg-red-500"></div>
-              <span className="text-sm text-gray-600">Cancelled</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-4 h-4 rounded bg-gray-500"></div>
-              <span className="text-sm text-gray-600">Quote</span>
-            </div>
+        {/* Legend */}
+        <div className="flex flex-wrap items-center gap-4 p-4 bg-white rounded-lg border border-slate-200 shadow-sm">
+          <span className="text-sm font-medium text-slate-700">
+            Job Status:
+          </span>
+          <div className="flex items-center gap-2">
+            <div className="w-4 h-4 rounded bg-blue-500"></div>
+            <span className="text-sm text-slate-600">Scheduled</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-4 h-4 rounded bg-yellow-500"></div>
+            <span className="text-sm text-slate-600">In Progress</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-4 h-4 rounded bg-green-500"></div>
+            <span className="text-sm text-slate-600">Completed</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-4 h-4 rounded bg-red-500"></div>
+            <span className="text-sm text-slate-600">Cancelled</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-4 h-4 rounded bg-gray-500"></div>
+            <span className="text-sm text-slate-600">Quote</span>
           </div>
         </div>
+      </div>
 
-        {/* Calendar */}
-        <Card className="shadow-xl border-0">
-          <CardContent className="p-0">
-            <div className="calendar-wrapper" style={{ height: '700px' }}>
-              <DnDCalendar
-                localizer={localizer}
-                events={events}
-                startAccessor="start"
-                endAccessor="end"
-                date={currentDate}
-                onNavigate={handleNavigate}
-                style={{ height: '100%' }}
-                onSelectEvent={handleSelectEvent}
-                onSelectSlot={handleSelectSlot}
-                selectable
-                components={{
-                  event: EventComponent,
-                  toolbar: CustomToolbar,
-                }}
-                views={[Views.MONTH, Views.WEEK, Views.DAY, Views.AGENDA]}
-                defaultView={Views.MONTH}
-                onView={setCurrentView}
-                view={currentView}
-                onEventDrop={handleEventDrop}
-                onEventResize={handleEventResize}
-                resizable
-                eventPropGetter={(event: any) => {
-                  const typedEvent = event as { resource: { status: string } };
-                  const statusColors = {
-                    scheduled: {
-                      style: {
-                        backgroundColor: '#3b82f6',
-                        borderRadius: '6px',
-                        border: 'none',
-                        boxShadow: '0 1px 3px rgba(59, 130, 246, 0.3)',
-                      },
+      {/* Calendar */}
+      <div className="bg-white rounded-lg border border-slate-200 shadow-sm">
+        <div className="p-0">
+          <div className="calendar-wrapper" style={{ height: '700px' }}>
+            <DnDCalendar
+              localizer={localizer}
+              events={events}
+              startAccessor={(event: any) => new Date(event.start)}
+              endAccessor={(event: any) => new Date(event.end)}
+              date={currentDate}
+              onNavigate={handleNavigate}
+              style={{ height: '100%' }}
+              onSelectEvent={handleSelectEvent}
+              onSelectSlot={handleSelectSlot}
+              selectable
+              components={{
+                event: EventComponent,
+                toolbar: CustomToolbar,
+              }}
+              views={[Views.MONTH, Views.WEEK, Views.DAY, Views.AGENDA]}
+              defaultView={Views.MONTH}
+              onView={setCurrentView}
+              view={currentView}
+              onEventDrop={handleEventDrop}
+              onEventResize={handleEventResize}
+              resizable
+              eventPropGetter={(event: any) => {
+                const typedEvent = event as { resource: { status: string } };
+                const statusColors = {
+                  scheduled: {
+                    style: {
+                      backgroundColor: '#3b82f6',
+                      borderRadius: '6px',
+                      border: 'none',
+                      boxShadow: '0 1px 3px rgba(59, 130, 246, 0.3)',
                     },
-                    in_progress: {
-                      style: {
-                        backgroundColor: '#eab308',
-                        borderRadius: '6px',
-                        border: 'none',
-                        boxShadow: '0 1px 3px rgba(234, 179, 8, 0.3)',
-                      },
+                  },
+                  in_progress: {
+                    style: {
+                      backgroundColor: '#eab308',
+                      borderRadius: '6px',
+                      border: 'none',
+                      boxShadow: '0 1px 3px rgba(234, 179, 8, 0.3)',
                     },
-                    completed: {
-                      style: {
-                        backgroundColor: '#22c55e',
-                        borderRadius: '6px',
-                        border: 'none',
-                        boxShadow: '0 1px 3px rgba(34, 197, 94, 0.3)',
-                      },
+                  },
+                  completed: {
+                    style: {
+                      backgroundColor: '#22c55e',
+                      borderRadius: '6px',
+                      border: 'none',
+                      boxShadow: '0 1px 3px rgba(34, 197, 94, 0.3)',
                     },
-                    cancelled: {
-                      style: {
-                        backgroundColor: '#ef4444',
-                        borderRadius: '6px',
-                        border: 'none',
-                        boxShadow: '0 1px 3px rgba(239, 68, 68, 0.3)',
-                      },
+                  },
+                  cancelled: {
+                    style: {
+                      backgroundColor: '#ef4444',
+                      borderRadius: '6px',
+                      border: 'none',
+                      boxShadow: '0 1px 3px rgba(239, 68, 68, 0.3)',
                     },
-                    quote: {
-                      style: {
-                        backgroundColor: '#6b7280',
-                        borderRadius: '6px',
-                        border: 'none',
-                        boxShadow: '0 1px 3px rgba(107, 114, 128, 0.3)',
-                      },
+                  },
+                  quote: {
+                    style: {
+                      backgroundColor: '#6b7280',
+                      borderRadius: '6px',
+                      border: 'none',
+                      boxShadow: '0 1px 3px rgba(107, 114, 128, 0.3)',
                     },
-                  };
-                  return (
-                    statusColors[
-                      typedEvent.resource.status as keyof typeof statusColors
-                    ] || {
-                      style: {
-                        backgroundColor: '#6b7280',
-                        borderRadius: '6px',
-                        border: 'none',
-                      },
-                    }
-                  );
-                }}
-              />
-            </div>
-          </CardContent>
-        </Card>
+                  },
+                };
+                return (
+                  statusColors[
+                    typedEvent.resource.status as keyof typeof statusColors
+                  ] || {
+                    style: {
+                      backgroundColor: '#6b7280',
+                      borderRadius: '6px',
+                      border: 'none',
+                    },
+                  }
+                );
+              }}
+            />
+          </div>
+        </div>
       </div>
 
       {/* Job Details Modal */}
@@ -549,11 +561,11 @@ export default function CalendarPage() {
               )}
 
               {/* Total */}
-              <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-4 rounded-lg border border-blue-100">
-                <label className="text-xs font-medium text-gray-600 uppercase">
+              <div className="bg-emerald-50 p-4 rounded-lg border border-emerald-200">
+                <label className="text-xs font-medium text-slate-600 uppercase">
                   Total Value
                 </label>
-                <p className="mt-1 text-2xl font-bold text-blue-600">
+                <p className="mt-1 text-2xl font-bold text-emerald-600">
                   ${selectedEvent.total?.toFixed(2) || '0.00'}
                 </p>
               </div>
@@ -561,13 +573,18 @@ export default function CalendarPage() {
               {/* Actions */}
               <div className="flex gap-3 pt-4 border-t">
                 <Link href={`/jobs/${selectedEvent.id}`} className="flex-1">
-                  <Button className="w-full">View Full Details</Button>
+                  <Button className="w-full bg-emerald-500 hover:bg-emerald-600">
+                    View Full Details
+                  </Button>
                 </Link>
                 <Link
                   href={`/jobs/${selectedEvent.id}/edit`}
                   className="flex-1"
                 >
-                  <Button variant="outline" className="w-full">
+                  <Button
+                    variant="outline"
+                    className="w-full border-slate-300 hover:bg-slate-50"
+                  >
                     Edit Job
                   </Button>
                 </Link>

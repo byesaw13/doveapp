@@ -45,6 +45,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
+    console.log('Creating estimate with data:', body);
     const { from_template, template_id, ...estimateData } = body;
 
     if (from_template && template_id) {
@@ -56,11 +57,14 @@ export async function POST(request: NextRequest) {
     }
 
     const estimate = await createEstimate(estimateData);
+    console.log('Estimate created successfully:', estimate);
     return NextResponse.json(estimate, { status: 201 });
   } catch (error) {
     console.error('Error creating estimate:', error);
+    const errorMessage =
+      error instanceof Error ? error.message : 'Failed to create estimate';
     return NextResponse.json(
-      { error: 'Failed to create estimate' },
+      { error: errorMessage, details: String(error) },
       { status: 500 }
     );
   }

@@ -1,6 +1,10 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+
+// Helper to generate unique IDs outside of render
+const generateSegmentId = (): string =>
+  `segment-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 import {
   Clock,
   Play,
@@ -140,8 +144,12 @@ export function TimeTrackingDashboard({
 
   // Handle hydration and update current time every second
   useEffect(() => {
+    // Set hydration flag after mount
     setIsHydrated(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
+  useEffect(() => {
     const timer = setInterval(() => {
       setCurrentTime(new Date());
     }, 1000);
@@ -186,7 +194,7 @@ export function TimeTrackingDashboard({
 
       // Start first activity segment
       const newSegment: ActivitySegment = {
-        id: `segment-${Date.now()}`,
+        id: generateSegmentId(),
         activity: currentActivity,
         jobId: selectedJobId !== 'none' ? selectedJobId : undefined,
         startTime: now,
@@ -251,7 +259,7 @@ export function TimeTrackingDashboard({
 
     // Start new activity segment
     const newSegment: ActivitySegment = {
-      id: `segment-${Date.now()}`,
+      id: generateSegmentId(),
       activity: newActivity,
       jobId: jobId !== 'none' ? jobId : undefined,
       startTime: now,

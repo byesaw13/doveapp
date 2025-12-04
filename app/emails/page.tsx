@@ -545,23 +545,25 @@ export default function EmailIntelligencePage() {
   };
 
   return (
-    <div className="flex h-screen bg-gray-50">
+    <div className="flex h-screen bg-slate-50">
       {/* Sidebar */}
-      <div className="w-80 bg-white border-r border-gray-200 flex flex-col">
+      <div className="w-80 bg-white border-r border-slate-200 flex flex-col">
         {/* Header */}
-        <div className="p-4 border-b border-gray-200">
-          <h1 className="text-lg font-semibold">Email Intelligence</h1>
-          <p className="text-sm text-gray-600">AI-powered email analysis</p>
+        <div className="p-4 border-b border-slate-200">
+          <h1 className="text-lg font-semibold text-slate-900">
+            Email Intelligence
+          </h1>
+          <p className="text-sm text-slate-600">AI-powered email analysis</p>
         </div>
 
         {/* Controls */}
-        <div className="p-4 border-b border-gray-200 space-y-3">
+        <div className="p-4 border-b border-slate-200 space-y-3">
           {gmailConnection ? (
-            <div className="w-full p-3 bg-green-50 border border-green-200 rounded-lg">
+            <div className="w-full p-3 bg-emerald-50 border border-emerald-200 rounded-lg">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                  <span className="text-sm font-medium text-green-800">
+                  <div className="w-2 h-2 bg-emerald-500 rounded-full"></div>
+                  <span className="text-sm font-medium text-emerald-800">
                     Connected to {gmailConnection.email_address}
                   </span>
                 </div>
@@ -569,20 +571,24 @@ export default function EmailIntelligencePage() {
                   onClick={() => handleDisconnectGmail()}
                   variant="ghost"
                   size="sm"
-                  className="text-green-600 hover:text-green-800"
+                  className="text-emerald-600 hover:text-emerald-800"
                 >
                   Disconnect
                 </Button>
               </div>
             </div>
           ) : (
-            <Button onClick={connectGmail} className="w-full" variant="outline">
+            <Button
+              onClick={connectGmail}
+              className="w-full border-slate-300"
+              variant="outline"
+            >
               Connect Gmail
             </Button>
           )}
           <Button
             onClick={handleComposeNew}
-            className="w-full"
+            className="w-full bg-emerald-500 hover:bg-emerald-600"
             variant="default"
           >
             <PenSquare className="w-4 h-4 mr-2" />
@@ -617,8 +623,10 @@ export default function EmailIntelligencePage() {
         </div>
 
         {/* Dashboard Stats */}
-        <div className="p-4 border-b border-gray-200">
-          <h3 className="font-medium mb-3">Dashboard Overview</h3>
+        <div className="p-4 border-b border-slate-200">
+          <h3 className="font-medium mb-3 text-slate-900">
+            Dashboard Overview
+          </h3>
           <div className="space-y-3">
             <div className="flex justify-between items-center">
               <div className="flex items-center gap-2">

@@ -12,6 +12,12 @@ import {
   handlePaymentChange,
   handleJobStatusChange,
 } from '@/lib/job-automation';
+import {
+  logJobCreated,
+  logJobCompleted,
+  logJobStarted,
+  logJobCancelled,
+} from './activities';
 
 /**
  * Get all jobs with client information
@@ -123,6 +129,19 @@ export async function createJob(
   // Recalculate totals
   await recalculateJobTotals(jobData.id);
 
+  if (jobData.client_id) {
+    try {
+      await logJobCreated(
+        jobData.client_id,
+        jobData.id,
+        jobData.title || jobData.job_number,
+        jobData.total ?? 0
+      );
+    } catch (error) {
+      console.error('Failed to log job creation activity:', error);
+    }
+  }
+
   return jobData;
 }
 
@@ -133,10 +152,10 @@ export async function updateJob(
   id: string,
   updates: JobUpdate
 ): Promise<Job | null> {
-  // Get current job status before update (for automation)
+  // Get current job status before update (for automation and activity logging)
   const { data: currentJob } = await supabase
     .from('jobs')
-    .select('status')
+    .select('status, client_id, title, job_number')
     .eq('id', id)
     .single();
 
@@ -164,6 +183,26 @@ export async function updateJob(
     }
     if (automationResult.errors && automationResult.errors.length > 0) {
       console.error('Job automation errors:', automationResult.errors);
+    }
+
+    if (data?.client_id) {
+      const jobTitle = data.title || data.job_number;
+      try {
+        if (updates.status === 'in_progress') {
+          await logJobStarted(data.client_id, data.id, jobTitle);
+        } else if (updates.status === 'completed') {
+          await logJobCompleted(data.client_id, data.id, jobTitle);
+        } else if (updates.status === 'cancelled') {
+          await logJobCancelled(
+            data.client_id,
+            data.id,
+            jobTitle,
+            updates.notes || undefined
+          );
+        }
+      } catch (error) {
+        console.error('Failed to log job status activity:', error);
+      }
     }
   }
 

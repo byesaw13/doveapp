@@ -40,7 +40,7 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 5,
   userScalable: true,
-  themeColor: '#2563eb',
+  themeColor: '#10b981', // Emerald 500 - Jobber green
 };
 
 export default function RootLayout({
@@ -62,10 +62,15 @@ export default function RootLayout({
       >
         <RegisterServiceWorker />
         <ToastProvider>
-          <div className="flex h-screen bg-gray-50">
+          <div className="flex h-screen bg-slate-50">
             <Sidebar />
             <main className="flex-1 overflow-auto">
-              <div className="p-4 lg:p-8">{children}</div>
+              {/* Jobber-style main content area */}
+              <div className="min-h-full">
+                <div className="px-4 py-6 lg:px-8 lg:py-8 max-w-[1600px] mx-auto">
+                  {children}
+                </div>
+              </div>
             </main>
           </div>
         </ToastProvider>

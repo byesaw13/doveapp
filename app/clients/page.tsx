@@ -139,33 +139,145 @@ export default function ClientsPage() {
   }
 
   return (
-    <div>
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle>Clients</CardTitle>
-          <div className="flex gap-2">
-            <Link href="/properties">
-              <Button variant="outline">View Properties</Button>
-            </Link>
-            <Link href="/jobs">
-              <Button variant="outline">View Jobs</Button>
-            </Link>
-            <Button
-              variant="outline"
-              onClick={() => setImportCSVDialogOpen(true)}
-            >
-              Import CSV
-            </Button>
-            <Button onClick={handleAddClient}>Add Client</Button>
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-slate-900">Clients</h1>
+          <p className="mt-1 text-sm text-slate-600">
+            Manage your client relationships and contact information
+          </p>
+        </div>
+        <Button
+          onClick={handleAddClient}
+          className="bg-emerald-500 hover:bg-emerald-600 text-white"
+        >
+          Add Client
+        </Button>
+      </div>
+
+      {/* Stats Cards */}
+      <div className="grid gap-4 md:grid-cols-3">
+        <div className="bg-white rounded-lg border border-slate-200 p-6 shadow-sm">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-slate-600">
+                Total Clients
+              </p>
+              <p className="text-2xl font-bold text-slate-900 mt-1">
+                {clients.length}
+              </p>
+            </div>
+            <div className="h-12 w-12 rounded-lg bg-blue-100 flex items-center justify-center">
+              <svg
+                className="h-6 w-6 text-blue-600"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
+                />
+              </svg>
+            </div>
           </div>
-        </CardHeader>
-        <CardContent className="space-y-4">
+        </div>
+
+        <Link href="/properties" className="block">
+          <div className="bg-white rounded-lg border border-slate-200 p-6 shadow-sm hover:shadow-md transition-shadow">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-slate-600">Properties</p>
+                <p className="text-sm text-emerald-600 mt-2 font-medium hover:text-emerald-700">
+                  View all →
+                </p>
+              </div>
+              <div className="h-12 w-12 rounded-lg bg-purple-100 flex items-center justify-center">
+                <svg
+                  className="h-6 w-6 text-purple-600"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"
+                  />
+                </svg>
+              </div>
+            </div>
+          </div>
+        </Link>
+
+        <Link href="/jobs" className="block">
+          <div className="bg-white rounded-lg border border-slate-200 p-6 shadow-sm hover:shadow-md transition-shadow">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-slate-600">Jobs</p>
+                <p className="text-sm text-emerald-600 mt-2 font-medium hover:text-emerald-700">
+                  View all →
+                </p>
+              </div>
+              <div className="h-12 w-12 rounded-lg bg-emerald-100 flex items-center justify-center">
+                <svg
+                  className="h-6 w-6 text-emerald-600"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+                  />
+                </svg>
+              </div>
+            </div>
+          </div>
+        </Link>
+      </div>
+
+      {/* Action Buttons */}
+      <div className="flex gap-3">
+        <Button
+          variant="outline"
+          onClick={() => setImportCSVDialogOpen(true)}
+          className="border-slate-300 text-slate-700 hover:bg-slate-50"
+        >
+          <svg
+            className="h-4 w-4 mr-2"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
+            />
+          </svg>
+          Import CSV
+        </Button>
+      </div>
+
+      {/* Main Content Card */}
+      <div className="bg-white rounded-lg border border-slate-200 shadow-sm">
+        <div className="p-6 border-b border-slate-200">
           <Input
             placeholder="Search clients by name, email, or company..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="max-w-md"
           />
+        </div>
+        <div className="p-6">
           <ClientTable
             clients={clients}
             onEdit={handleEditClient}
@@ -176,8 +288,8 @@ export default function ClientsPage() {
               window.location.href = `/properties?client=${client.id}`;
             }}
           />
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
       <ClientForm
         open={formOpen}

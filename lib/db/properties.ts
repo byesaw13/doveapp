@@ -5,6 +5,7 @@ import type {
   PropertyInsert,
   PropertyUpdate,
 } from '@/types/property';
+import { logPropertyAdded } from './activities';
 
 /**
  * Get all properties for a client
@@ -91,6 +92,20 @@ export async function createProperty(
   if (error) {
     console.error('Error creating property:', error);
     throw new Error('Failed to create property');
+  }
+
+  if (data?.client_id) {
+    try {
+      await logPropertyAdded(
+        data.client_id,
+        data.id,
+        data.name,
+        data.city || undefined,
+        data.state || undefined
+      );
+    } catch (activityError) {
+      console.error('Failed to log property activity:', activityError);
+    }
   }
 
   return data;

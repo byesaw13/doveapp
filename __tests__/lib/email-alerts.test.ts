@@ -6,7 +6,7 @@ function getAlertDataForCategory(insight: EmailInsight): {
   severity: 'low' | 'medium' | 'high' | 'urgent';
   title: string;
   message: string;
-  due_at?: string;
+  due_at?: string | undefined;
 } | null {
   const { category, priority, details, summary } = insight;
 
@@ -20,23 +20,23 @@ function getAlertDataForCategory(insight: EmailInsight): {
             : priority === 'high'
               ? 'high'
               : 'medium',
-        title: `New Lead: ${details.contact_name || 'Unknown Contact'}`,
-        message: `${summary}. ${details.job_type ? `Service: ${details.job_type}.` : ''} ${details.urgency === 'emergency' ? 'URGENT: Emergency request!' : ''}`,
-        due_at: details.response_deadline,
+        title: `New Lead: ${details?.lead?.customer_name || 'Unknown Contact'}`,
+        message: `${summary || 'New lead inquiry'}. ${details?.lead?.job_type ? `Service: ${details.lead.job_type}.` : ''} ${details?.lead?.urgency === 'high' ? 'URGENT: Emergency request!' : ''}`,
+        due_at: undefined,
       };
 
     case 'LEAD_FOLLOWUP':
       return {
         type: 'lead',
         severity: priority === 'urgent' ? 'urgent' : 'medium',
-        title: `Lead Follow-up: ${details.contact_name || 'Existing Lead'}`,
-        message: summary,
-        due_at: details.follow_up_date,
+        title: `Lead Follow-up: ${details?.lead?.customer_name || 'Existing Lead'}`,
+        message: summary || 'Follow up required',
+        due_at: undefined,
       };
 
     case 'BILLING_INCOMING_INVOICE':
-      if (details.due_date) {
-        const dueDate = new Date(details.due_date);
+      if (details?.billing?.due_date) {
+        const dueDate = new Date(details.billing.due_date);
         const daysUntilDue = Math.ceil(
           (dueDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24)
         );
@@ -50,15 +50,16 @@ function getAlertDataForCategory(insight: EmailInsight): {
                 ? 'high'
                 : 'medium',
           title: `Invoice Due ${daysUntilDue <= 0 ? 'Overdue' : `in ${daysUntilDue} days`}`,
-          message: `$${details.amount} ${details.invoice_number ? `(${details.invoice_number})` : ''} from ${details.vendor_name || 'vendor'} is ${daysUntilDue <= 0 ? 'overdue' : 'due'}.`,
-          due_at: details.due_date,
+          message: `$${details.billing.amount || 0} ${details.billing.invoice_number ? `(${details.billing.invoice_number})` : ''} from ${details.billing.vendor_or_client_name || 'vendor'} is ${daysUntilDue <= 0 ? 'overdue' : 'due'}.`,
+          due_at: details.billing.due_date || undefined,
         };
       }
       return {
         type: 'billing',
         severity: 'medium',
         title: 'New Vendor Invoice',
-        message: `$${details.amount} ${details.invoice_number ? `(${details.invoice_number})` : ''} received from ${details.vendor_name || 'vendor'}.`,
+        message: `$${details?.billing?.amount || 0} ${details?.billing?.invoice_number ? `(${details.billing.invoice_number})` : ''} received from ${details?.billing?.vendor_or_client_name || 'vendor'}.`,
+        due_at: undefined,
       };
 
     case 'BILLING_OUTGOING_INVOICE':
@@ -66,7 +67,8 @@ function getAlertDataForCategory(insight: EmailInsight): {
         type: 'billing',
         severity: 'low',
         title: 'Customer Invoice Reply',
-        message: summary,
+        message: summary || 'Invoice reply received',
+        due_at: undefined,
       };
 
     case 'BILLING_PAYMENT_RECEIVED':
@@ -74,7 +76,8 @@ function getAlertDataForCategory(insight: EmailInsight): {
         type: 'billing',
         severity: 'low',
         title: 'Payment Received',
-        message: `$${details.amount} payment received. ${details.invoice_number ? `Applied to ${details.invoice_number}.` : ''}`,
+        message: `$${details?.billing?.amount || 0} payment received. ${details?.billing?.invoice_number ? `Applied to ${details.billing.invoice_number}.` : ''}`,
+        due_at: undefined,
       };
 
     case 'BILLING_PAYMENT_ISSUE':
@@ -82,8 +85,8 @@ function getAlertDataForCategory(insight: EmailInsight): {
         type: 'billing',
         severity: 'high',
         title: 'Payment Issue Detected',
-        message: summary,
-        due_at: details.due_date,
+        message: summary || 'Payment issue requires attention',
+        due_at: details?.billing?.due_date || undefined,
       };
 
     case 'SCHEDULING_REQUEST':
@@ -91,14 +94,15 @@ function getAlertDataForCategory(insight: EmailInsight): {
         type: 'scheduling',
         severity: priority === 'urgent' ? 'urgent' : 'high',
         title: 'New Scheduling Request',
-        message: `${summary}. ${details.requested_dates ? `Requested dates: ${details.requested_dates.join(', ')}` : ''}`,
-        due_at: details.response_deadline,
+        message: `${summary || 'Scheduling request received'}. ${details?.scheduling?.requested_dates ? `Requested dates: ${details.scheduling.requested_dates.join(', ')}` : ''}`,
+        due_at: undefined,
       };
 
     case 'SCHEDULING_CHANGE':
-      const changeUrgency = details.confirmed_date
+      const changeUrgency = details?.scheduling?.confirmed_date
         ? Math.ceil(
-            (new Date(details.confirmed_date).getTime() - Date.now()) /
+            (new Date(details.scheduling.confirmed_date).getTime() -
+              Date.now()) /
               (1000 * 60 * 60 * 24)
           ) <= 2
         : false;
@@ -107,22 +111,17 @@ function getAlertDataForCategory(insight: EmailInsight): {
         type: 'scheduling',
         severity: changeUrgency ? 'urgent' : 'high',
         title: 'Schedule Change Request',
-        message: summary,
-        due_at: details.confirmed_date,
+        message: summary || 'Schedule change requested',
+        due_at: details?.scheduling?.confirmed_date || undefined,
       };
 
     case 'CUSTOMER_SUPPORT':
       return {
         type: 'support',
-        severity:
-          priority === 'urgent'
-            ? 'urgent'
-            : details.sentiment === 'negative'
-              ? 'high'
-              : 'medium',
+        severity: priority === 'urgent' ? 'urgent' : 'medium',
         title: 'Customer Support Request',
-        message: summary,
-        due_at: details.response_deadline,
+        message: summary || 'Support request received',
+        due_at: undefined,
       };
 
     case 'SYSTEM_SECURITY':
@@ -130,7 +129,8 @@ function getAlertDataForCategory(insight: EmailInsight): {
         type: 'security',
         severity: 'urgent',
         title: 'Security Alert',
-        message: summary,
+        message: summary || 'Security issue detected',
+        due_at: undefined,
       };
 
     default:
@@ -143,6 +143,7 @@ describe.skip('Email Alerts Generation', () => {
   const mockInsightBase = {
     id: 'test-insight-id',
     email_raw_id: 'test-email-raw-id',
+    email_id: 'test-email-id',
     category: 'LEAD_NEW' as const,
     priority: 'high' as const,
     is_action_required: true,
@@ -160,9 +161,11 @@ describe.skip('Email Alerts Generation', () => {
       ...mockInsightBase,
       category: 'LEAD_NEW',
       details: {
-        contact_name: 'John Doe',
-        contact_email: 'john@example.com',
-        job_type: 'painting',
+        lead: {
+          customer_name: 'John Doe',
+          customer_email: 'john@example.com',
+          job_type: 'painting',
+        },
       },
     };
 
@@ -180,10 +183,12 @@ describe.skip('Email Alerts Generation', () => {
       ...mockInsightBase,
       category: 'BILLING_INCOMING_INVOICE',
       details: {
-        amount: 500,
-        invoice_number: 'INV-001',
-        due_date: '2025-12-15', // Far future date
-        vendor_name: 'ABC Supplies',
+        billing: {
+          amount: 500,
+          invoice_number: 'INV-001',
+          due_date: '2025-12-15', // Far future date
+          vendor_or_client_name: 'ABC Supplies',
+        },
       },
     };
 
@@ -204,9 +209,11 @@ describe.skip('Email Alerts Generation', () => {
       ...mockInsightBase,
       category: 'BILLING_INCOMING_INVOICE',
       details: {
-        amount: 250,
-        due_date: yesterday.toISOString().split('T')[0],
-        vendor_name: 'Quick Service',
+        billing: {
+          amount: 250,
+          due_date: yesterday.toISOString().split('T')[0],
+          vendor_or_client_name: 'Quick Service',
+        },
       },
     };
 
@@ -223,8 +230,10 @@ describe.skip('Email Alerts Generation', () => {
       category: 'SCHEDULING_REQUEST',
       priority: 'urgent',
       details: {
-        requested_dates: ['2024-01-05', '2024-01-06'],
-        job_reference: 'JOB-123',
+        scheduling: {
+          requested_dates: ['2024-01-05', '2024-01-06'],
+          job_reference: 'JOB-123',
+        },
       },
     };
 
@@ -240,16 +249,14 @@ describe.skip('Email Alerts Generation', () => {
     const insight: EmailInsight = {
       ...mockInsightBase,
       category: 'CUSTOMER_SUPPORT',
-      details: {
-        sentiment: 'negative',
-      },
+      details: {},
     };
 
     const alertData = getAlertDataForCategory(insight);
 
     expect(alertData).toBeTruthy();
     expect(alertData!.type).toBe('support');
-    expect(alertData!.severity).toBe('high'); // Negative sentiment increases severity
+    expect(alertData!.severity).toBe('medium');
     expect(alertData!.title).toContain('Customer Support');
   });
 

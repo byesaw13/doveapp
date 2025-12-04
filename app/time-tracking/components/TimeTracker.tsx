@@ -181,6 +181,7 @@ export function TimeTracker() {
     loadProjects();
     loadTodaysEntries();
     checkActiveEntry();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (

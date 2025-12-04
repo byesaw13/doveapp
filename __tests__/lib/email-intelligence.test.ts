@@ -48,14 +48,16 @@ describe.skip('Email Intelligence Engine', () => {
         category: 'LEAD_NEW',
         priority: 'high',
         is_action_required: true,
+        action_type: 'respond_to_lead',
         summary: 'New painting lead inquiry',
+        notes: 'Clear lead indicators',
         details: {
-          contact_name: 'John Doe',
-          contact_email: 'john@example.com',
-          job_type: 'painting',
+          lead: {
+            customer_name: 'John Doe',
+            customer_email: 'john@example.com',
+            job_type: 'painting',
+          },
         },
-        confidence_score: 0.95,
-        reasoning: 'Clear lead indicators',
       };
 
       // This would be tested in the actual validation function
@@ -100,9 +102,10 @@ describe.skip('Email Intelligence Engine', () => {
           category: category as any,
           priority: 'medium',
           is_action_required: false,
+          action_type: 'none',
           summary: 'Test summary',
+          notes: '',
           details: {},
-          confidence_score: 0.8,
         };
         expect(result.category).toBe(category);
       });

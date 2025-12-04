@@ -113,7 +113,7 @@ export async function generateInvoicePDF(
   }
 
   // Address
-  let addressLines = [];
+  const addressLines = [];
   if (client.address_line1) addressLines.push(client.address_line1);
   if (client.city || client.state || client.zip_code) {
     addressLines.push(

@@ -9,9 +9,7 @@ import { ClientDetailModal } from './components/ClientDetailModal';
 import { ImportSquareDialog } from './components/ImportSquareDialog';
 import { ImportCSVDialog } from './components/ImportCSVDialog';
 import { ConnectSquareButton } from './components/ConnectSquareButton';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+// Pure Tailwind - no shadcn components needed for layout
 import {
   getClients,
   createClient,
@@ -148,12 +146,12 @@ export default function ClientsPage() {
             Manage your client relationships and contact information
           </p>
         </div>
-        <Button
+        <button
           onClick={handleAddClient}
-          className="bg-emerald-500 hover:bg-emerald-600 text-white"
+          className="px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-white font-medium rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2"
         >
           Add Client
-        </Button>
+        </button>
       </div>
 
       {/* Stats Cards */}
@@ -245,10 +243,9 @@ export default function ClientsPage() {
 
       {/* Action Buttons */}
       <div className="flex gap-3">
-        <Button
-          variant="outline"
+        <button
           onClick={() => setImportCSVDialogOpen(true)}
-          className="border-slate-300 text-slate-700 hover:bg-slate-50"
+          className="px-4 py-2 border border-slate-300 text-slate-700 hover:bg-slate-50 font-medium rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-slate-300 focus:ring-offset-2 inline-flex items-center"
         >
           <svg
             className="h-4 w-4 mr-2"
@@ -264,17 +261,18 @@ export default function ClientsPage() {
             />
           </svg>
           Import CSV
-        </Button>
+        </button>
       </div>
 
       {/* Main Content Card */}
       <div className="bg-white rounded-lg border border-slate-200 shadow-sm">
         <div className="p-6 border-b border-slate-200">
-          <Input
+          <input
+            type="text"
             placeholder="Search clients by name, email, or company..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="max-w-md"
+            className="max-w-md px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 text-sm"
           />
         </div>
         <div className="p-6">

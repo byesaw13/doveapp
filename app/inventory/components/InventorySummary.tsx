@@ -1,13 +1,6 @@
 'use client';
 
 import { Package, DollarSign, AlertTriangle, TrendingDown } from 'lucide-react';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
 import type { InventorySummary as InventorySummaryType } from '@/types/materials';
 
 interface InventorySummaryProps {
@@ -23,66 +16,62 @@ export function InventorySummary({ summary }: InventorySummaryProps) {
   };
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-      {/* Total Materials */}
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">Total Materials</CardTitle>
-          <Package className="h-4 w-4 text-muted-foreground" />
-        </CardHeader>
-        <CardContent>
-          <div className="text-2xl font-bold">{summary.total_materials}</div>
-          <p className="text-xs text-muted-foreground">
-            Active inventory items
-          </p>
-        </CardContent>
-      </Card>
-
-      {/* Total Value */}
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">Total Value</CardTitle>
-          <DollarSign className="h-4 w-4 text-muted-foreground" />
-        </CardHeader>
-        <CardContent>
-          <div className="text-2xl font-bold">
-            {formatCurrency(summary.total_value)}
+    <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-4">
+      {/* Total Materials Card */}
+      <div className="bg-white rounded-xl border border-slate-200 p-6 shadow-sm hover:shadow-lg hover:border-blue-300 transition-all">
+        <div className="flex items-center justify-between mb-3">
+          <div className="p-3 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl shadow-md">
+            <Package className="h-6 w-6 text-white" />
           </div>
-          <p className="text-xs text-muted-foreground">
-            Current inventory value
-          </p>
-        </CardContent>
-      </Card>
+        </div>
+        <div className="text-3xl font-bold text-slate-900 mb-1">
+          {summary.total_materials}
+        </div>
+        <p className="text-sm font-medium text-slate-600">Total Materials</p>
+        <p className="text-xs text-slate-500 mt-1">Active inventory items</p>
+      </div>
 
-      {/* Low Stock Alerts */}
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">Low Stock</CardTitle>
-          <AlertTriangle className="h-4 w-4 text-orange-500" />
-        </CardHeader>
-        <CardContent>
-          <div className="text-2xl font-bold text-orange-600">
-            {summary.low_stock_count}
+      {/* Total Value Card */}
+      <div className="bg-gradient-to-br from-emerald-50 to-emerald-100 rounded-xl border-2 border-emerald-200 p-6 shadow-sm hover:shadow-lg hover:border-emerald-300 transition-all">
+        <div className="flex items-center justify-between mb-3">
+          <div className="p-3 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-xl shadow-md">
+            <DollarSign className="h-6 w-6 text-white" />
           </div>
-          <p className="text-xs text-muted-foreground">
-            Items below minimum stock
-          </p>
-        </CardContent>
-      </Card>
+        </div>
+        <div className="text-3xl font-bold text-emerald-700 mb-1">
+          {formatCurrency(summary.total_value)}
+        </div>
+        <p className="text-sm font-semibold text-emerald-600">Total Value</p>
+        <p className="text-xs text-emerald-600 mt-1">Current inventory value</p>
+      </div>
 
-      {/* Out of Stock */}
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">Out of Stock</CardTitle>
-          <TrendingDown className="h-4 w-4 text-red-500" />
-        </CardHeader>
-        <CardContent>
-          <div className="text-2xl font-bold text-red-600">
-            {summary.out_of_stock_count}
+      {/* Low Stock Alerts Card */}
+      <div className="bg-white rounded-xl border border-slate-200 p-6 shadow-sm hover:shadow-lg hover:border-amber-300 transition-all">
+        <div className="flex items-center justify-between mb-3">
+          <div className="p-3 bg-gradient-to-br from-amber-500 to-amber-600 rounded-xl shadow-md">
+            <AlertTriangle className="h-6 w-6 text-white" />
           </div>
-          <p className="text-xs text-muted-foreground">Items with zero stock</p>
-        </CardContent>
-      </Card>
+        </div>
+        <div className="text-3xl font-bold text-amber-700 mb-1">
+          {summary.low_stock_count}
+        </div>
+        <p className="text-sm font-medium text-slate-600">Low Stock</p>
+        <p className="text-xs text-slate-500 mt-1">Items below minimum stock</p>
+      </div>
+
+      {/* Out of Stock Card */}
+      <div className="bg-white rounded-xl border border-slate-200 p-6 shadow-sm hover:shadow-lg hover:border-red-300 transition-all">
+        <div className="flex items-center justify-between mb-3">
+          <div className="p-3 bg-gradient-to-br from-red-500 to-red-600 rounded-xl shadow-md">
+            <TrendingDown className="h-6 w-6 text-white" />
+          </div>
+        </div>
+        <div className="text-3xl font-bold text-red-700 mb-1">
+          {summary.out_of_stock_count}
+        </div>
+        <p className="text-sm font-medium text-slate-600">Out of Stock</p>
+        <p className="text-xs text-slate-500 mt-1">Items with zero stock</p>
+      </div>
     </div>
   );
 }

@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { getDashboardStats } from '@/lib/dashboard';
+import { SmartDashboard } from '@/components/SmartDashboard';
 import {
   Users,
   Briefcase,
@@ -55,10 +56,10 @@ export default async function Dashboard() {
   return (
     <div className="space-y-8">
       {/* Header - Jobber style with welcome banner */}
-      <div className="bg-gradient-to-r from-emerald-500 to-emerald-600 rounded-xl shadow-lg">
-        <div className="px-8 py-6">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <div>
+      <div className="bg-gradient-to-r from-emerald-500 to-emerald-600 rounded-xl shadow-lg overflow-hidden">
+        <div className="px-6 sm:px-8 lg:px-10 py-6">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6">
+            <div className="flex-1 min-w-0">
               <h1 className="text-3xl font-bold text-white">
                 Good{' '}
                 {new Date().getHours() < 12
@@ -77,12 +78,14 @@ export default async function Dashboard() {
                 })}
               </p>
             </div>
-            <Link href="/jobs/new">
-              <button className="px-6 py-3 bg-white hover:bg-emerald-50 text-emerald-600 font-semibold rounded-lg shadow-md hover:shadow-lg transition-all focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-emerald-500 inline-flex items-center">
-                <Plus className="w-5 h-5 mr-2" />
-                New Job
-              </button>
-            </Link>
+            <div className="flex-shrink-0">
+              <Link href="/jobs/new">
+                <button className="px-6 py-3 bg-white hover:bg-emerald-50 text-emerald-600 font-semibold rounded-lg shadow-md hover:shadow-lg transition-all focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-emerald-500 inline-flex items-center whitespace-nowrap">
+                  <Plus className="w-5 h-5 mr-2" />
+                  New Job
+                </button>
+              </Link>
+            </div>
           </div>
         </div>
       </div>
@@ -375,6 +378,11 @@ export default async function Dashboard() {
             </div>
           </div>
         </div>
+      </div>
+
+      {/* Smart Dashboard */}
+      <div className="mt-8">
+        <SmartDashboard />
       </div>
     </div>
   );

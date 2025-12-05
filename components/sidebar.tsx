@@ -30,7 +30,6 @@ const navigation = [
   { name: 'Time Tracking', href: '/time-tracking', icon: Clock },
   { name: 'Email', href: '/emails', icon: Mail },
   { name: 'Clients', href: '/clients', icon: Users },
-  { name: 'Properties', href: '/properties', icon: MapPin },
   { name: 'Jobs', href: '/jobs', icon: Briefcase },
   { name: 'Inventory', href: '/inventory', icon: Package },
 ];

@@ -10,6 +10,7 @@ import {
   logEstimateSent,
   logEstimateAccepted,
   logEstimateDeclined,
+  createPostEstimateWorkflow,
 } from './activities';
 
 /**
@@ -149,6 +150,9 @@ export async function sendEstimate(id: string): Promise<Estimate> {
         data.estimate_number,
         data.total ?? 0
       );
+
+      // Create post-estimate workflow (follow-up task)
+      await createPostEstimateWorkflow(data.id);
     } catch (activityError) {
       console.error('Failed to log estimate sent activity:', activityError);
     }

@@ -8,8 +8,7 @@ import {
   AlertTriangle,
   Package,
 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
+
 import {
   Table,
   TableBody,
@@ -40,7 +39,6 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { MaterialForm } from './MaterialForm';
 import type { Material } from '@/types/materials';
@@ -110,8 +108,11 @@ export function MaterialTable({
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-32">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      <div className="flex items-center justify-center py-12">
+        <div className="flex items-center gap-3">
+          <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-emerald-500"></div>
+          <div className="text-slate-600">Loading materials...</div>
+        </div>
       </div>
     );
   }
@@ -119,9 +120,13 @@ export function MaterialTable({
   if (materials.length === 0) {
     return (
       <div className="text-center py-12">
-        <Package className="mx-auto h-12 w-12 text-muted-foreground" />
-        <h3 className="mt-4 text-lg font-medium">No materials found</h3>
-        <p className="mt-2 text-muted-foreground">
+        <div className="p-4 bg-slate-100 rounded-full w-16 h-16 mx-auto mb-4 flex items-center justify-center">
+          <Package className="h-8 w-8 text-slate-400" />
+        </div>
+        <h3 className="text-lg font-semibold text-slate-900 mb-2">
+          No materials found
+        </h3>
+        <p className="text-sm text-slate-600">
           Get started by adding your first material to inventory.
         </p>
       </div>
@@ -130,88 +135,118 @@ export function MaterialTable({
 
   return (
     <>
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Name</TableHead>
-            <TableHead>Category</TableHead>
-            <TableHead>Stock Level</TableHead>
-            <TableHead>Unit Cost</TableHead>
-            <TableHead>Status</TableHead>
-            <TableHead className="w-12"></TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {materials.map((material) => {
-            const stockStatus = getStockStatus(material);
-            const StatusIcon = stockStatus.icon;
+      <div className="overflow-x-auto">
+        <Table>
+          <TableHeader>
+            <TableRow className="border-slate-200">
+              <TableHead className="text-slate-900 font-semibold">
+                Name
+              </TableHead>
+              <TableHead className="text-slate-900 font-semibold">
+                Category
+              </TableHead>
+              <TableHead className="text-slate-900 font-semibold">
+                Stock Level
+              </TableHead>
+              <TableHead className="text-slate-900 font-semibold">
+                Unit Cost
+              </TableHead>
+              <TableHead className="text-slate-900 font-semibold">
+                Status
+              </TableHead>
+              <TableHead className="text-slate-900 font-semibold w-12"></TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {materials.map((material) => {
+              const stockStatus = getStockStatus(material);
+              const StatusIcon = stockStatus.icon;
 
-            return (
-              <TableRow key={material.id}>
-                <TableCell className="font-medium">
-                  <div>
-                    <div className="font-medium">{material.name}</div>
-                    {material.sku && (
-                      <div className="text-sm text-muted-foreground">
-                        SKU: {material.sku}
-                      </div>
-                    )}
-                  </div>
-                </TableCell>
-                <TableCell>{material.category}</TableCell>
-                <TableCell>
-                  <div className="flex items-center gap-2">
-                    <span className="font-medium">
-                      {material.current_stock}
+              return (
+                <TableRow
+                  key={material.id}
+                  className="hover:bg-slate-50 transition-colors border-slate-200"
+                >
+                  <TableCell className="font-medium text-slate-900">
+                    <div>
+                      <div className="font-medium">{material.name}</div>
+                      {material.sku && (
+                        <div className="text-sm text-slate-500">
+                          SKU: {material.sku}
+                        </div>
+                      )}
+                    </div>
+                  </TableCell>
+                  <TableCell className="text-slate-700">
+                    {material.category}
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-2">
+                      <span className="font-medium text-slate-900">
+                        {material.current_stock}
+                      </span>
+                      <span className="text-slate-500">
+                        {material.unit_of_measure}
+                      </span>
+                    </div>
+                    <div className="text-sm text-slate-500">
+                      Min: {material.min_stock} | Reorder:{' '}
+                      {material.reorder_point}
+                    </div>
+                  </TableCell>
+                  <TableCell className="text-slate-900">
+                    ${material.unit_cost.toFixed(2)}
+                  </TableCell>
+                  <TableCell>
+                    <span
+                      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                        stockStatus.variant === 'destructive'
+                          ? 'bg-red-100 text-red-800'
+                          : stockStatus.variant === 'secondary'
+                            ? 'bg-amber-100 text-amber-800'
+                            : stockStatus.variant === 'outline'
+                              ? 'bg-blue-100 text-blue-800'
+                              : 'bg-emerald-100 text-emerald-800'
+                      }`}
+                    >
+                      <StatusIcon className="w-3 h-3 mr-1" />
+                      {stockStatus.label}
                     </span>
-                    <span className="text-muted-foreground">
-                      {material.unit_of_measure}
-                    </span>
-                  </div>
-                  <div className="text-sm text-muted-foreground">
-                    Min: {material.min_stock} | Reorder:{' '}
-                    {material.reorder_point}
-                  </div>
-                </TableCell>
-                <TableCell>${material.unit_cost.toFixed(2)}</TableCell>
-                <TableCell>
-                  <Badge
-                    variant={stockStatus.variant}
-                    className="flex items-center gap-1 w-fit"
-                  >
-                    <StatusIcon className="w-3 h-3" />
-                    {stockStatus.label}
-                  </Badge>
-                </TableCell>
-                <TableCell>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="sm">
-                        <MoreHorizontal className="w-4 h-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem
-                        onClick={() => setEditingMaterial(material)}
+                  </TableCell>
+                  <TableCell>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <button className="p-2 hover:bg-slate-100 rounded-lg transition-colors">
+                          <MoreHorizontal className="w-4 h-4 text-slate-600" />
+                        </button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent
+                        align="end"
+                        className="bg-white border-slate-200"
                       >
-                        <Edit className="w-4 h-4 mr-2" />
-                        Edit
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        onClick={() => setDeletingMaterial(material)}
-                        className="text-destructive"
-                      >
-                        <Trash2 className="w-4 h-4 mr-2" />
-                        Delete
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </TableCell>
-              </TableRow>
-            );
-          })}
-        </TableBody>
-      </Table>
+                        <DropdownMenuItem
+                          onClick={() => setEditingMaterial(material)}
+                          className="hover:bg-slate-50 text-slate-700"
+                        >
+                          <Edit className="w-4 h-4 mr-2" />
+                          Edit
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={() => setDeletingMaterial(material)}
+                          className="hover:bg-red-50 text-red-700"
+                        >
+                          <Trash2 className="w-4 h-4 mr-2" />
+                          Delete
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </TableCell>
+                </TableRow>
+              );
+            })}
+          </TableBody>
+        </Table>
+      </div>
 
       {/* Edit Dialog */}
       <Dialog

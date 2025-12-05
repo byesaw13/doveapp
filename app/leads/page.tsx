@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -301,162 +300,289 @@ export default function LeadsPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-blue-50">
-        <div className="text-center">
-          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mb-4"></div>
-          <div className="text-gray-600 font-medium">Loading leads...</div>
+      <div className="space-y-6">
+        {/* Header - Jobber style with emerald gradient */}
+        <div className="bg-gradient-to-r from-emerald-500 to-emerald-600 rounded-xl shadow-lg overflow-hidden">
+          <div className="px-6 sm:px-8 lg:px-10 py-6">
+            <div className="flex items-center justify-center">
+              <div className="text-center">
+                <h1 className="text-3xl font-bold text-white">Leads</h1>
+                <p className="mt-2 text-emerald-50 text-sm">
+                  Loading lead data...
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div className="flex items-center justify-center py-12">
+          <div className="flex items-center gap-3">
+            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-emerald-500"></div>
+            <div className="text-slate-600">Loading leads...</div>
+          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-purple-50 to-pink-50">
-      <div className="max-w-7xl mx-auto p-6">
-        {/* Header */}
-        <div className="mb-8">
-          <div className="flex items-center justify-between mb-6">
-            <div>
-              <h1 className="text-4xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
-                Leads
-              </h1>
-              <p className="text-gray-600 mt-2">
+    <div className="space-y-6">
+      {/* Header - Jobber style with emerald gradient */}
+      <div className="bg-gradient-to-r from-emerald-500 to-emerald-600 rounded-xl shadow-lg overflow-hidden">
+        <div className="px-6 sm:px-8 lg:px-10 py-6">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6">
+            <div className="flex-1 min-w-0">
+              <h1 className="text-3xl font-bold text-white">Leads</h1>
+              <p className="mt-2 text-emerald-50 text-sm">
                 Track and convert potential customers
               </p>
             </div>
-            <Button
-              onClick={() => setShowNewLeadDialog(true)}
-              size="lg"
-              className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 shadow-lg"
-            >
-              <Plus className="w-5 h-5 mr-2" />
-              New Lead
-            </Button>
-          </div>
-
-          {/* Search Bar */}
-          <div className="flex gap-3">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-              <Input
-                placeholder="Search leads by name, email, phone, or company..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-                className="pl-10 h-12 border-2"
-              />
+            <div className="flex-shrink-0">
+              <button
+                onClick={() => setShowNewLeadDialog(true)}
+                className="px-6 py-3 bg-white hover:bg-emerald-50 text-emerald-600 font-semibold rounded-lg shadow-md hover:shadow-lg transition-all focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-emerald-500 inline-flex items-center"
+              >
+                <Plus className="w-5 h-5 mr-2" />
+                New Lead
+              </button>
             </div>
-            <Button onClick={handleSearch} size="lg" variant="outline">
-              Search
-            </Button>
           </div>
         </div>
+      </div>
 
-        {/* Stats Cards */}
-        {stats && (
-          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4 mb-8">
-            <Card className="border-0 shadow-lg bg-gradient-to-br from-blue-500 to-blue-600 text-white">
-              <CardContent className="p-4">
-                <div className="text-3xl font-bold">{stats.total_leads}</div>
-                <div className="text-sm text-blue-100 mt-1">Total Leads</div>
-              </CardContent>
-            </Card>
-
-            <Card className="border-0 shadow-lg bg-gradient-to-br from-purple-500 to-purple-600 text-white">
-              <CardContent className="p-4">
-                <div className="text-3xl font-bold">{stats.new_leads}</div>
-                <div className="text-sm text-purple-100 mt-1">New</div>
-              </CardContent>
-            </Card>
-
-            <Card className="border-0 shadow-lg bg-gradient-to-br from-green-500 to-green-600 text-white">
-              <CardContent className="p-4">
-                <div className="text-3xl font-bold">
-                  {stats.qualified_leads}
-                </div>
-                <div className="text-sm text-green-100 mt-1">Qualified</div>
-              </CardContent>
-            </Card>
-
-            <Card className="border-0 shadow-lg bg-gradient-to-br from-emerald-500 to-emerald-600 text-white">
-              <CardContent className="p-4">
-                <div className="text-3xl font-bold">
-                  {stats.converted_leads}
-                </div>
-                <div className="text-sm text-emerald-100 mt-1">Converted</div>
-              </CardContent>
-            </Card>
-
-            <Card className="border-0 shadow-lg bg-gradient-to-br from-orange-500 to-orange-600 text-white">
-              <CardContent className="p-4">
-                <div className="text-3xl font-bold">
-                  {stats.conversion_rate.toFixed(1)}%
-                </div>
-                <div className="text-sm text-orange-100 mt-1">Conv. Rate</div>
-              </CardContent>
-            </Card>
-
-            <Card className="border-0 shadow-lg bg-gradient-to-br from-pink-500 to-pink-600 text-white">
-              <CardContent className="p-4">
-                <div className="text-3xl font-bold">
-                  ${(stats.total_estimated_value / 1000).toFixed(0)}k
-                </div>
-                <div className="text-sm text-pink-100 mt-1">Est. Value</div>
-              </CardContent>
-            </Card>
-          </div>
-        )}
-
-        {/* Leads List */}
-        <div className="grid gap-4">
-          {leads.length > 0 ? (
-            leads.map((lead) => (
-              <Card
-                key={lead.id}
-                className="border-0 shadow-lg hover:shadow-xl transition-all cursor-pointer"
-                onClick={() => setSelectedLead(lead)}
+      {/* Search Section - Jobber style */}
+      <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
+        <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
+          <div className="flex-1">
+            <h2 className="text-lg font-semibold text-slate-900 mb-2">
+              Search Leads
+            </h2>
+            <div className="flex flex-col sm:flex-row gap-3">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-5 h-5" />
+                <Input
+                  placeholder="Search leads by name, email, phone, or company..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+                  className="pl-10 h-12"
+                />
+              </div>
+              <button
+                onClick={handleSearch}
+                className="px-6 py-3 bg-emerald-500 hover:bg-emerald-600 text-white font-semibold rounded-lg transition-colors"
               >
-                <CardContent className="p-6">
+                Search
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+      {/* Header */}
+      <div className="mb-8">
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h1 className="text-4xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+              Leads
+            </h1>
+            <p className="text-gray-600 mt-2">
+              Track and convert potential customers
+            </p>
+          </div>
+          <Button
+            onClick={() => setShowNewLeadDialog(true)}
+            size="lg"
+            className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 shadow-lg"
+          >
+            <Plus className="w-5 h-5 mr-2" />
+            New Lead
+          </Button>
+        </div>
+
+        {/* Search Bar */}
+        <div className="flex gap-3">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+            <Input
+              placeholder="Search leads by name, email, phone, or company..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+              className="pl-10 h-12 border-2"
+            />
+          </div>
+          <Button onClick={handleSearch} size="lg" variant="outline">
+            Search
+          </Button>
+        </div>
+      </div>
+
+      {/* Stats Cards - Jobber style */}
+      {stats && (
+        <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+          {/* Total Leads Card */}
+          <div className="bg-white rounded-xl border border-slate-200 p-6 shadow-sm hover:shadow-lg hover:border-blue-300 transition-all">
+            <div className="flex items-center justify-between mb-3">
+              <div className="p-3 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl shadow-md">
+                <Users className="h-6 w-6 text-white" />
+              </div>
+            </div>
+            <div className="text-3xl font-bold text-slate-900 mb-1">
+              {stats.total_leads}
+            </div>
+            <p className="text-sm font-medium text-slate-600">Total Leads</p>
+          </div>
+
+          {/* New Leads Card */}
+          <div className="bg-white rounded-xl border border-slate-200 p-6 shadow-sm hover:shadow-lg hover:border-purple-300 transition-all">
+            <div className="flex items-center justify-between mb-3">
+              <div className="p-3 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl shadow-md">
+                <AlertCircle className="h-6 w-6 text-white" />
+              </div>
+            </div>
+            <div className="text-3xl font-bold text-slate-900 mb-1">
+              {stats.new_leads}
+            </div>
+            <p className="text-sm font-medium text-slate-600">New</p>
+          </div>
+
+          {/* Qualified Leads Card */}
+          <div className="bg-white rounded-xl border border-slate-200 p-6 shadow-sm hover:shadow-lg hover:border-green-300 transition-all">
+            <div className="flex items-center justify-between mb-3">
+              <div className="p-3 bg-gradient-to-br from-green-500 to-green-600 rounded-xl shadow-md">
+                <CheckCircle className="h-6 w-6 text-white" />
+              </div>
+            </div>
+            <div className="text-3xl font-bold text-slate-900 mb-1">
+              {stats.qualified_leads}
+            </div>
+            <p className="text-sm font-medium text-slate-600">Qualified</p>
+          </div>
+
+          {/* Converted Leads Card */}
+          <div className="bg-gradient-to-br from-emerald-50 to-emerald-100 rounded-xl border-2 border-emerald-200 p-6 shadow-sm hover:shadow-lg hover:border-emerald-300 transition-all">
+            <div className="flex items-center justify-between mb-3">
+              <div className="p-3 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-xl shadow-md">
+                <Target className="h-6 w-6 text-white" />
+              </div>
+            </div>
+            <div className="text-3xl font-bold text-emerald-700 mb-1">
+              {stats.converted_leads}
+            </div>
+            <p className="text-sm font-semibold text-emerald-600">Converted</p>
+          </div>
+
+          {/* Conversion Rate Card */}
+          <div className="bg-white rounded-xl border border-slate-200 p-6 shadow-sm hover:shadow-lg hover:border-amber-300 transition-all">
+            <div className="flex items-center justify-between mb-3">
+              <div className="p-3 bg-gradient-to-br from-amber-500 to-amber-600 rounded-xl shadow-md">
+                <TrendingUp className="h-6 w-6 text-white" />
+              </div>
+            </div>
+            <div className="text-3xl font-bold text-slate-900 mb-1">
+              {stats.conversion_rate.toFixed(1)}%
+            </div>
+            <p className="text-sm font-medium text-slate-600">Conv. Rate</p>
+          </div>
+
+          {/* Estimated Value Card */}
+          <div className="bg-white rounded-xl border border-slate-200 p-6 shadow-sm hover:shadow-lg hover:border-pink-300 transition-all">
+            <div className="flex items-center justify-between mb-3">
+              <div className="p-3 bg-gradient-to-br from-pink-500 to-pink-600 rounded-xl shadow-md">
+                <DollarSign className="h-6 w-6 text-white" />
+              </div>
+            </div>
+            <div className="text-3xl font-bold text-slate-900 mb-1">
+              ${(stats.total_estimated_value / 1000).toFixed(0)}k
+            </div>
+            <p className="text-sm font-medium text-slate-600">Est. Value</p>
+          </div>
+        </div>
+      )}
+
+      {/* Leads List - Jobber style */}
+      <div className="bg-white rounded-xl border border-slate-200 shadow-md">
+        <div className="px-6 py-5 border-b border-slate-200 bg-gradient-to-r from-slate-50 to-white">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-blue-100 rounded-lg">
+              <Users className="h-5 w-5 text-blue-600" />
+            </div>
+            <h2 className="text-lg font-bold text-slate-900">All Leads</h2>
+            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+              {leads.length} leads
+            </span>
+          </div>
+        </div>
+        <div className="p-6">
+          {leads.length > 0 ? (
+            <div className="grid gap-4">
+              {leads.map((lead) => (
+                <div
+                  key={lead.id}
+                  className="bg-white rounded-lg border border-slate-200 p-6 shadow-sm hover:shadow-lg hover:border-slate-300 transition-all cursor-pointer"
+                  onClick={() => setSelectedLead(lead)}
+                >
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
                       <div className="flex items-center gap-3 mb-3">
-                        <h3 className="text-xl font-bold text-gray-900">
+                        <h3 className="text-xl font-bold text-slate-900">
                           {lead.first_name} {lead.last_name}
                         </h3>
-                        <Badge
-                          variant="outline"
-                          className={getStatusColor(lead.status)}
+                        <span
+                          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                            lead.status === 'new'
+                              ? 'bg-blue-100 text-blue-800'
+                              : lead.status === 'contacted'
+                                ? 'bg-purple-100 text-purple-800'
+                                : lead.status === 'qualified'
+                                  ? 'bg-green-100 text-green-800'
+                                  : lead.status === 'proposal_sent'
+                                    ? 'bg-yellow-100 text-yellow-800'
+                                    : lead.status === 'negotiating'
+                                      ? 'bg-orange-100 text-orange-800'
+                                      : lead.status === 'converted'
+                                        ? 'bg-emerald-100 text-emerald-800'
+                                        : lead.status === 'lost'
+                                          ? 'bg-red-100 text-red-800'
+                                          : 'bg-gray-100 text-gray-800'
+                          }`}
                         >
                           {getStatusIcon(lead.status)}
                           <span className="ml-1">
                             {lead.status.replace('_', ' ')}
                           </span>
-                        </Badge>
-                        <Badge
-                          variant="outline"
-                          className={getPriorityColor(lead.priority)}
+                        </span>
+                        <span
+                          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                            lead.priority === 'low'
+                              ? 'bg-gray-100 text-gray-800'
+                              : lead.priority === 'medium'
+                                ? 'bg-blue-100 text-blue-800'
+                                : lead.priority === 'high'
+                                  ? 'bg-orange-100 text-orange-800'
+                                  : 'bg-red-100 text-red-800'
+                          }`}
                         >
                           {lead.priority}
-                        </Badge>
+                        </span>
                       </div>
 
                       {lead.company_name && (
-                        <p className="text-gray-600 mb-2">
+                        <p className="text-slate-600 mb-2">
                           {lead.company_name}
                         </p>
                       )}
 
                       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                        <div className="flex items-center gap-2 text-gray-600">
+                        <div className="flex items-center gap-2 text-slate-600">
                           <Mail className="w-4 h-4" />
                           <span className="truncate">{lead.email}</span>
                         </div>
-                        <div className="flex items-center gap-2 text-gray-600">
+                        <div className="flex items-center gap-2 text-slate-600">
                           <Phone className="w-4 h-4" />
                           <span>{lead.phone}</span>
                         </div>
                         {lead.city && lead.state && (
-                          <div className="flex items-center gap-2 text-gray-600">
+                          <div className="flex items-center gap-2 text-slate-600">
                             <MapPin className="w-4 h-4" />
                             <span>
                               {lead.city}, {lead.state}
@@ -464,7 +590,7 @@ export default function LeadsPage() {
                           </div>
                         )}
                         {lead.follow_up_date && (
-                          <div className="flex items-center gap-2 text-gray-600">
+                          <div className="flex items-center gap-2 text-slate-600">
                             <Calendar className="w-4 h-4" />
                             <span>
                               Follow-up:{' '}
@@ -475,7 +601,7 @@ export default function LeadsPage() {
                       </div>
 
                       {lead.service_description && (
-                        <p className="text-gray-700 mt-3 line-clamp-2">
+                        <p className="text-slate-700 mt-3 line-clamp-2">
                           {lead.service_description}
                         </p>
                       )}
@@ -483,115 +609,158 @@ export default function LeadsPage() {
 
                     {lead.estimated_value && (
                       <div className="text-right ml-4">
-                        <div className="text-2xl font-bold text-green-600">
+                        <div className="text-2xl font-bold text-emerald-600">
                           ${lead.estimated_value.toLocaleString()}
                         </div>
-                        <div className="text-xs text-gray-500">Est. Value</div>
+                        <div className="text-xs text-slate-500">Est. Value</div>
                       </div>
                     )}
                   </div>
-                </CardContent>
-              </Card>
-            ))
+                </div>
+              ))}
+            </div>
           ) : (
-            <Card className="border-0 shadow-lg">
-              <CardContent className="p-12 text-center">
-                <Users className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                <h3 className="text-xl font-semibold text-gray-700 mb-2">
-                  No leads found
-                </h3>
-                <p className="text-gray-500 mb-4">
-                  {searchQuery
-                    ? 'Try a different search term'
-                    : 'Get started by creating your first lead'}
-                </p>
-                <Button
-                  onClick={() => setShowNewLeadDialog(true)}
-                  className="bg-gradient-to-r from-purple-500 to-pink-500"
-                >
-                  <Plus className="w-4 h-4 mr-2" />
-                  Create First Lead
-                </Button>
-              </CardContent>
-            </Card>
+            <div className="text-center py-12">
+              <div className="p-4 bg-slate-100 rounded-full w-16 h-16 mx-auto mb-4 flex items-center justify-center">
+                <Users className="h-8 w-8 text-slate-400" />
+              </div>
+              <h3 className="text-lg font-semibold text-slate-900 mb-2">
+                No leads found
+              </h3>
+              <p className="text-slate-600 mb-4">
+                {searchQuery
+                  ? 'Try a different search term'
+                  : 'Get started by creating your first lead'}
+              </p>
+              <button
+                onClick={() => setShowNewLeadDialog(true)}
+                className="px-6 py-3 bg-emerald-500 hover:bg-emerald-600 text-white font-semibold rounded-lg transition-colors"
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                Create First Lead
+              </button>
+            </div>
           )}
         </div>
       </div>
 
-      {/* Lead Detail Dialog */}
+      {/* Lead Detail Dialog - Jobber style */}
       <Dialog open={!!selectedLead} onOpenChange={() => setSelectedLead(null)}>
-        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="text-2xl flex items-center gap-2">
-              <Users className="w-6 h-6 text-purple-600" />
-              {selectedLead?.first_name} {selectedLead?.last_name}
-            </DialogTitle>
-            <DialogDescription>
-              {selectedLead?.company_name || 'Individual Lead'}
-            </DialogDescription>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto bg-white border-slate-200">
+          <DialogHeader className="pb-4">
+            <div className="flex items-center gap-3 mb-2">
+              <div className="p-2 bg-blue-100 rounded-lg">
+                <Users className="w-6 h-6 text-blue-600" />
+              </div>
+              <div>
+                <DialogTitle className="text-xl font-bold text-slate-900">
+                  {selectedLead?.first_name} {selectedLead?.last_name}
+                </DialogTitle>
+                <DialogDescription className="text-slate-600">
+                  {selectedLead?.company_name || 'Individual Lead'}
+                </DialogDescription>
+              </div>
+            </div>
           </DialogHeader>
 
           {selectedLead && (
-            <div className="space-y-6 mt-4">
+            <div className="space-y-6">
               {/* Status and Priority */}
               <div className="grid grid-cols-2 gap-4">
-                <div className="bg-gray-50 p-4 rounded-lg">
-                  <label className="text-xs font-medium text-gray-600 uppercase">
+                <div className="bg-slate-50 p-4 rounded-lg border border-slate-200">
+                  <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
                     Status
                   </label>
                   <div className="mt-2">
-                    <Badge
-                      variant="outline"
-                      className={getStatusColor(selectedLead.status)}
+                    <span
+                      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                        selectedLead.status === 'new'
+                          ? 'bg-blue-100 text-blue-800'
+                          : selectedLead.status === 'contacted'
+                            ? 'bg-purple-100 text-purple-800'
+                            : selectedLead.status === 'qualified'
+                              ? 'bg-green-100 text-green-800'
+                              : selectedLead.status === 'proposal_sent'
+                                ? 'bg-yellow-100 text-yellow-800'
+                                : selectedLead.status === 'negotiating'
+                                  ? 'bg-orange-100 text-orange-800'
+                                  : selectedLead.status === 'converted'
+                                    ? 'bg-emerald-100 text-emerald-800'
+                                    : selectedLead.status === 'lost'
+                                      ? 'bg-red-100 text-red-800'
+                                      : 'bg-gray-100 text-gray-800'
+                      }`}
                     >
                       {getStatusIcon(selectedLead.status)}
                       <span className="ml-1">
                         {selectedLead.status.replace('_', ' ')}
                       </span>
-                    </Badge>
+                    </span>
                   </div>
                 </div>
-                <div className="bg-gray-50 p-4 rounded-lg">
-                  <label className="text-xs font-medium text-gray-600 uppercase">
+                <div className="bg-slate-50 p-4 rounded-lg border border-slate-200">
+                  <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
                     Priority
                   </label>
                   <div className="mt-2">
-                    <Badge
-                      variant="outline"
-                      className={getPriorityColor(selectedLead.priority)}
+                    <span
+                      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                        selectedLead.priority === 'low'
+                          ? 'bg-gray-100 text-gray-800'
+                          : selectedLead.priority === 'medium'
+                            ? 'bg-blue-100 text-blue-800'
+                            : selectedLead.priority === 'high'
+                              ? 'bg-orange-100 text-orange-800'
+                              : 'bg-red-100 text-red-800'
+                      }`}
                     >
                       {selectedLead.priority}
-                    </Badge>
+                    </span>
                   </div>
                 </div>
               </div>
 
               {/* Contact Information */}
-              <div className="bg-gradient-to-r from-purple-50 to-pink-50 p-4 rounded-lg border border-purple-100">
-                <h3 className="font-semibold text-gray-900 mb-3">
+              <div className="bg-slate-50 p-6 rounded-lg border border-slate-200">
+                <h3 className="font-semibold text-slate-900 mb-4 flex items-center gap-2">
+                  <div className="p-1.5 bg-blue-100 rounded">
+                    <Mail className="h-4 w-4 text-blue-600" />
+                  </div>
                   Contact Information
                 </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  <div className="flex items-center gap-2">
-                    <Mail className="w-4 h-4 text-purple-600" />
-                    <span className="text-sm">{selectedLead.email}</span>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-slate-200 rounded">
+                      <Mail className="w-4 h-4 text-slate-600" />
+                    </div>
+                    <span className="text-sm text-slate-700">
+                      {selectedLead.email}
+                    </span>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <Phone className="w-4 h-4 text-purple-600" />
-                    <span className="text-sm">{selectedLead.phone}</span>
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-slate-200 rounded">
+                      <Phone className="w-4 h-4 text-slate-600" />
+                    </div>
+                    <span className="text-sm text-slate-700">
+                      {selectedLead.phone}
+                    </span>
                   </div>
                   {selectedLead.alternate_phone && (
-                    <div className="flex items-center gap-2">
-                      <Phone className="w-4 h-4 text-purple-600" />
-                      <span className="text-sm">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-slate-200 rounded">
+                        <Phone className="w-4 h-4 text-slate-600" />
+                      </div>
+                      <span className="text-sm text-slate-700">
                         {selectedLead.alternate_phone}
                       </span>
                     </div>
                   )}
                   {(selectedLead.address || selectedLead.city) && (
-                    <div className="flex items-center gap-2">
-                      <MapPin className="w-4 h-4 text-purple-600" />
-                      <span className="text-sm">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-slate-200 rounded">
+                        <MapPin className="w-4 h-4 text-slate-600" />
+                      </div>
+                      <span className="text-sm text-slate-700">
                         {selectedLead.address && `${selectedLead.address}, `}
                         {selectedLead.city && `${selectedLead.city}, `}
                         {selectedLead.state} {selectedLead.zip_code}
@@ -604,19 +773,22 @@ export default function LeadsPage() {
               {/* Service Details */}
               {(selectedLead.service_type ||
                 selectedLead.service_description) && (
-                <div className="bg-gray-50 p-4 rounded-lg">
-                  <h3 className="font-semibold text-gray-900 mb-3">
+                <div className="bg-slate-50 p-6 rounded-lg border border-slate-200">
+                  <h3 className="font-semibold text-slate-900 mb-4 flex items-center gap-2">
+                    <div className="p-1.5 bg-purple-100 rounded">
+                      <FileText className="h-4 w-4 text-purple-600" />
+                    </div>
                     Service Requested
                   </h3>
                   {selectedLead.service_type && (
-                    <div className="mb-2">
-                      <Badge className="bg-purple-100 text-purple-700">
+                    <div className="mb-3">
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
                         {selectedLead.service_type}
-                      </Badge>
+                      </span>
                     </div>
                   )}
                   {selectedLead.service_description && (
-                    <p className="text-sm text-gray-700">
+                    <p className="text-sm text-slate-700 leading-relaxed">
                       {selectedLead.service_description}
                     </p>
                   )}
@@ -626,23 +798,25 @@ export default function LeadsPage() {
               {/* Value and Dates */}
               <div className="grid grid-cols-2 gap-4">
                 {selectedLead.estimated_value && (
-                  <div className="bg-gradient-to-br from-green-50 to-emerald-50 p-4 rounded-lg border border-green-100">
-                    <label className="text-xs font-medium text-gray-600 uppercase">
+                  <div className="bg-gradient-to-br from-emerald-50 to-emerald-100 p-6 rounded-xl border-2 border-emerald-200">
+                    <label className="text-xs font-semibold text-emerald-700 uppercase tracking-wide">
                       Estimated Value
                     </label>
-                    <div className="text-2xl font-bold text-green-600 mt-1">
+                    <div className="text-2xl font-bold text-emerald-600 mt-1">
                       ${selectedLead.estimated_value.toLocaleString()}
                     </div>
                   </div>
                 )}
                 {selectedLead.follow_up_date && (
-                  <div className="bg-gray-50 p-4 rounded-lg">
-                    <label className="text-xs font-medium text-gray-600 uppercase">
+                  <div className="bg-slate-50 p-6 rounded-lg border border-slate-200">
+                    <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
                       Follow-up Date
                     </label>
-                    <div className="flex items-center gap-2 mt-2">
-                      <Calendar className="w-5 h-5 text-gray-600" />
-                      <span className="font-medium">
+                    <div className="flex items-center gap-3 mt-2">
+                      <div className="p-2 bg-slate-200 rounded">
+                        <Calendar className="w-5 h-5 text-slate-600" />
+                      </div>
+                      <span className="font-medium text-slate-900">
                         {format(new Date(selectedLead.follow_up_date), 'PPP')}
                       </span>
                     </div>
@@ -651,335 +825,288 @@ export default function LeadsPage() {
               </div>
 
               {/* Lead Source */}
-              <div className="bg-gray-50 p-4 rounded-lg">
-                <label className="text-xs font-medium text-gray-600 uppercase">
+              <div className="bg-slate-50 p-4 rounded-lg border border-slate-200">
+                <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
                   Lead Source
                 </label>
                 <div className="mt-2">
-                  <Badge
-                    variant="outline"
-                    className="bg-blue-100 text-blue-700 border-blue-300"
-                  >
+                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
                     {selectedLead.source.replace('_', ' ')}
-                  </Badge>
+                  </span>
                 </div>
               </div>
 
               {/* Notes */}
               {selectedLead.notes && (
-                <div className="bg-gray-50 p-4 rounded-lg">
-                  <label className="text-xs font-medium text-gray-600 uppercase">
+                <div className="bg-slate-50 p-4 rounded-lg border border-slate-200">
+                  <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
                     Notes
                   </label>
-                  <p className="text-sm text-gray-700 mt-2 whitespace-pre-wrap">
+                  <p className="text-sm text-slate-700 mt-2 whitespace-pre-wrap leading-relaxed">
                     {selectedLead.notes}
                   </p>
                 </div>
               )}
 
               {/* Actions */}
-              <div className="flex gap-3 pt-4 border-t">
-                <Button
-                  className="flex-1 bg-gradient-to-r from-purple-500 to-pink-500"
+              <div className="flex gap-3 pt-6 border-t border-slate-200">
+                <button
+                  className="flex-1 px-4 py-3 bg-emerald-500 hover:bg-emerald-600 text-white font-semibold rounded-lg transition-colors"
                   onClick={() => handleCreateEstimate(selectedLead)}
                 >
                   <FileText className="w-4 h-4 mr-2" />
                   Create Estimate
-                </Button>
-                <Button
-                  variant="outline"
-                  className="flex-1"
+                </button>
+                <button
+                  className="flex-1 px-4 py-3 bg-white hover:bg-slate-50 text-slate-700 font-semibold rounded-lg border border-slate-300 transition-colors"
                   onClick={() => handleConvertToClient(selectedLead)}
                 >
                   <Users className="w-4 h-4 mr-2" />
                   Convert to Client
-                </Button>
+                </button>
               </div>
             </div>
           )}
         </DialogContent>
       </Dialog>
 
-      {/* New Lead Dialog */}
+      {/* New Lead Dialog - Jobber style */}
       <Dialog open={showNewLeadDialog} onOpenChange={setShowNewLeadDialog}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Create New Lead</DialogTitle>
-            <DialogDescription>
-              Add a new potential customer to your pipeline
-            </DialogDescription>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto bg-white border-slate-200">
+          <DialogHeader className="pb-4">
+            <div className="flex items-center gap-3 mb-2">
+              <div className="p-2 bg-blue-100 rounded-lg">
+                <Plus className="w-6 h-6 text-blue-600" />
+              </div>
+              <div>
+                <DialogTitle className="text-xl font-bold text-slate-900">
+                  Create New Lead
+                </DialogTitle>
+                <DialogDescription className="text-slate-600">
+                  Add a new potential customer to your pipeline
+                </DialogDescription>
+              </div>
+            </div>
           </DialogHeader>
           <Form {...form}>
             <form
               onSubmit={form.handleSubmit(handleCreateLead)}
-              className="space-y-6"
+              className="space-y-8"
             >
-              {/* Contact Information */}
-              <div className="grid grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="first_name"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>First Name *</FormLabel>
-                      <FormControl>
-                        <Input placeholder="John" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="last_name"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Last Name *</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Doe" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
+              {/* Contact Information Section */}
+              <div className="bg-slate-50 p-6 rounded-lg border border-slate-200">
+                <h3 className="text-lg font-semibold text-slate-900 mb-4 flex items-center gap-2">
+                  <div className="p-1.5 bg-blue-100 rounded">
+                    <Users className="h-4 w-4 text-blue-600" />
+                  </div>
+                  Contact Information
+                </h3>
+                <div className="space-y-6">
+                  <div className="grid grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="first_name"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-sm font-semibold text-slate-700">
+                            First Name *
+                          </FormLabel>
+                          <FormControl>
+                            <Input
+                              placeholder="John"
+                              {...field}
+                              className="bg-white border-slate-300"
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="last_name"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-sm font-semibold text-slate-700">
+                            Last Name *
+                          </FormLabel>
+                          <FormControl>
+                            <Input
+                              placeholder="Doe"
+                              {...field}
+                              className="bg-white border-slate-300"
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
 
-              <FormField
-                control={form.control}
-                name="company_name"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Company Name</FormLabel>
-                    <FormControl>
-                      <Input placeholder="ABC Construction" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <div className="grid grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="estimated_value"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Estimated Value</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="number"
-                          placeholder="50000"
-                          value={field.value || ''}
-                          onChange={(e) => {
-                            const value = e.target.value;
-                            field.onChange(value === '' ? 0 : Number(value));
-                          }}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="phone"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Phone *</FormLabel>
-                      <FormControl>
-                        <Input placeholder="(555) 123-4567" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-
-              <FormField
-                control={form.control}
-                name="alternate_phone"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Alternate Phone</FormLabel>
-                    <FormControl>
-                      <Input placeholder="(555) 987-6543" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              {/* Lead Details */}
-              <div className="grid grid-cols-3 gap-4">
-                <FormField
-                  control={form.control}
-                  name="source"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Source *</FormLabel>
-                      <Select
-                        onValueChange={field.onChange}
-                        defaultValue={field.value}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select source" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="website">Website</SelectItem>
-                          <SelectItem value="referral">Referral</SelectItem>
-                          <SelectItem value="social_media">
-                            Social Media
-                          </SelectItem>
-                          <SelectItem value="email">Email</SelectItem>
-                          <SelectItem value="phone">Phone</SelectItem>
-                          <SelectItem value="walk_in">Walk In</SelectItem>
-                          <SelectItem value="advertisement">
-                            Advertisement
-                          </SelectItem>
-                          <SelectItem value="other">Other</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="priority"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Priority</FormLabel>
-                      <Select
-                        onValueChange={field.onChange}
-                        defaultValue={field.value}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select priority" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="low">Low</SelectItem>
-                          <SelectItem value="medium">Medium</SelectItem>
-                          <SelectItem value="high">High</SelectItem>
-                          <SelectItem value="urgent">Urgent</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="estimated_value"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Estimated Value</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="number"
-                          placeholder="50000"
-                          {...field}
-                          onChange={(e) =>
-                            field.onChange(
-                              e.target.value
-                                ? Number(e.target.value)
-                                : undefined
-                            )
-                          }
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-
-              {/* Service Details */}
-              <FormField
-                control={form.control}
-                name="service_type"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Service Type</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Roofing, Plumbing, etc." {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="service_description"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Service Description</FormLabel>
-                    <FormControl>
-                      <Textarea
-                        placeholder="Describe the service needed..."
-                        className="min-h-[80px]"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              {/* Address */}
-              <div className="space-y-4">
-                <FormField
-                  control={form.control}
-                  name="address"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Address</FormLabel>
-                      <FormControl>
-                        <Input placeholder="123 Main St" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <div className="grid grid-cols-3 gap-4">
                   <FormField
                     control={form.control}
-                    name="city"
+                    name="company_name"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>City</FormLabel>
+                        <FormLabel className="text-sm font-semibold text-slate-700">
+                          Company Name
+                        </FormLabel>
                         <FormControl>
-                          <Input placeholder="Anytown" {...field} />
+                          <Input
+                            placeholder="ABC Construction"
+                            {...field}
+                            className="bg-white border-slate-300"
+                          />
                         </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="phone"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-sm font-semibold text-slate-700">
+                            Phone *
+                          </FormLabel>
+                          <FormControl>
+                            <Input
+                              placeholder="(555) 123-4567"
+                              {...field}
+                              className="bg-white border-slate-300"
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="alternate_phone"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-sm font-semibold text-slate-700">
+                            Alternate Phone
+                          </FormLabel>
+                          <FormControl>
+                            <Input
+                              placeholder="(555) 987-6543"
+                              {...field}
+                              className="bg-white border-slate-300"
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Lead Details Section */}
+              <div className="bg-slate-50 p-6 rounded-lg border border-slate-200">
+                <h3 className="text-lg font-semibold text-slate-900 mb-4 flex items-center gap-2">
+                  <div className="p-1.5 bg-purple-100 rounded">
+                    <Target className="h-4 w-4 text-purple-600" />
+                  </div>
+                  Lead Details
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <FormField
+                    control={form.control}
+                    name="source"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-sm font-semibold text-slate-700">
+                          Source *
+                        </FormLabel>
+                        <Select
+                          onValueChange={field.onChange}
+                          defaultValue={field.value}
+                        >
+                          <FormControl>
+                            <SelectTrigger className="bg-white border-slate-300 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500">
+                              <SelectValue
+                                placeholder="Select source"
+                                className="text-slate-700 font-medium"
+                              />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="website">Website</SelectItem>
+                            <SelectItem value="referral">Referral</SelectItem>
+                            <SelectItem value="social_media">
+                              Social Media
+                            </SelectItem>
+                            <SelectItem value="email">Email</SelectItem>
+                            <SelectItem value="phone">Phone</SelectItem>
+                            <SelectItem value="walk_in">Walk In</SelectItem>
+                            <SelectItem value="advertisement">
+                              Advertisement
+                            </SelectItem>
+                            <SelectItem value="other">Other</SelectItem>
+                          </SelectContent>
+                        </Select>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
                   <FormField
                     control={form.control}
-                    name="state"
+                    name="priority"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>State</FormLabel>
-                        <FormControl>
-                          <Input placeholder="CA" {...field} />
-                        </FormControl>
+                        <FormLabel className="text-sm font-semibold text-slate-700">
+                          Priority
+                        </FormLabel>
+                        <Select
+                          onValueChange={field.onChange}
+                          defaultValue={field.value}
+                        >
+                          <FormControl>
+                            <SelectTrigger className="bg-white border-slate-300 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500">
+                              <SelectValue
+                                placeholder="Select priority"
+                                className="text-slate-700 font-medium"
+                              />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="low">Low</SelectItem>
+                            <SelectItem value="medium">Medium</SelectItem>
+                            <SelectItem value="high">High</SelectItem>
+                            <SelectItem value="urgent">Urgent</SelectItem>
+                          </SelectContent>
+                        </Select>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
                   <FormField
                     control={form.control}
-                    name="zip_code"
+                    name="estimated_value"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>ZIP Code</FormLabel>
+                        <FormLabel className="text-sm font-semibold text-slate-700">
+                          Estimated Value
+                        </FormLabel>
                         <FormControl>
-                          <Input placeholder="12345" {...field} />
+                          <Input
+                            type="number"
+                            placeholder="50000"
+                            {...field}
+                            onChange={(e) =>
+                              field.onChange(
+                                e.target.value
+                                  ? Number(e.target.value)
+                                  : undefined
+                              )
+                            }
+                            className="bg-white border-slate-300"
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -988,57 +1115,214 @@ export default function LeadsPage() {
                 </div>
               </div>
 
-              {/* Follow-up and Notes */}
-              <FormField
-                control={form.control}
-                name="follow_up_date"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Follow-up Date</FormLabel>
-                    <FormControl>
-                      <Input type="date" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              {/* Service Details Section */}
+              <div className="bg-slate-50 p-6 rounded-lg border border-slate-200">
+                <h3 className="text-lg font-semibold text-slate-900 mb-4 flex items-center gap-2">
+                  <div className="p-1.5 bg-emerald-100 rounded">
+                    <FileText className="h-4 w-4 text-emerald-600" />
+                  </div>
+                  Service Details
+                </h3>
+                <div className="space-y-6">
+                  <FormField
+                    control={form.control}
+                    name="service_type"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-sm font-semibold text-slate-700">
+                          Service Type
+                        </FormLabel>
+                        <FormControl>
+                          <Input
+                            placeholder="Roofing, Plumbing, etc."
+                            {...field}
+                            className="bg-white border-slate-300"
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
-              <FormField
-                control={form.control}
-                name="priority"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Priority</FormLabel>
-                    <Select value={field.value} onValueChange={field.onChange}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select priority" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="low">Low</SelectItem>
-                        <SelectItem value="medium">Medium</SelectItem>
-                        <SelectItem value="high">High</SelectItem>
-                        <SelectItem value="urgent">Urgent</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                  <FormField
+                    control={form.control}
+                    name="service_description"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-sm font-semibold text-slate-700">
+                          Service Description
+                        </FormLabel>
+                        <FormControl>
+                          <Textarea
+                            placeholder="Describe the service needed..."
+                            className="min-h-[80px] bg-white border-slate-300"
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              </div>
+
+              {/* Address Section */}
+              <div className="bg-slate-50 p-6 rounded-lg border border-slate-200">
+                <h3 className="text-lg font-semibold text-slate-900 mb-4 flex items-center gap-2">
+                  <div className="p-1.5 bg-amber-100 rounded">
+                    <MapPin className="h-4 w-4 text-amber-600" />
+                  </div>
+                  Address
+                </h3>
+                <div className="space-y-6">
+                  <FormField
+                    control={form.control}
+                    name="address"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-sm font-semibold text-slate-700">
+                          Address
+                        </FormLabel>
+                        <FormControl>
+                          <Input
+                            placeholder="123 Main St"
+                            {...field}
+                            className="bg-white border-slate-300"
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="city"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-sm font-semibold text-slate-700">
+                            City
+                          </FormLabel>
+                          <FormControl>
+                            <Input
+                              placeholder="Anytown"
+                              {...field}
+                              className="bg-white border-slate-300"
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="state"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-sm font-semibold text-slate-700">
+                            State
+                          </FormLabel>
+                          <FormControl>
+                            <Input
+                              placeholder="CA"
+                              {...field}
+                              className="bg-white border-slate-300"
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="zip_code"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-sm font-semibold text-slate-700">
+                            ZIP Code
+                          </FormLabel>
+                          <FormControl>
+                            <Input
+                              placeholder="12345"
+                              {...field}
+                              className="bg-white border-slate-300"
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Follow-up and Notes Section */}
+              <div className="bg-slate-50 p-6 rounded-lg border border-slate-200">
+                <h3 className="text-lg font-semibold text-slate-900 mb-4 flex items-center gap-2">
+                  <div className="p-1.5 bg-indigo-100 rounded">
+                    <Calendar className="h-4 w-4 text-indigo-600" />
+                  </div>
+                  Follow-up & Notes
+                </h3>
+                <div className="space-y-6">
+                  <FormField
+                    control={form.control}
+                    name="follow_up_date"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-sm font-semibold text-slate-700">
+                          Follow-up Date
+                        </FormLabel>
+                        <FormControl>
+                          <Input
+                            type="date"
+                            {...field}
+                            className="bg-white border-slate-300"
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="notes"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-sm font-semibold text-slate-700">
+                          Notes
+                        </FormLabel>
+                        <FormControl>
+                          <Textarea
+                            placeholder="Additional notes about this lead..."
+                            className="min-h-[80px] bg-white border-slate-300"
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              </div>
 
               {/* Actions */}
-              <div className="flex justify-end gap-3 pt-4 border-t">
-                <Button
+              <div className="flex justify-end gap-3 pt-6 border-t border-slate-200">
+                <button
                   type="button"
-                  variant="outline"
                   onClick={() => setShowNewLeadDialog(false)}
+                  className="px-6 py-3 bg-white hover:bg-slate-50 text-slate-700 font-semibold rounded-lg border border-slate-300 transition-colors"
                 >
                   Cancel
-                </Button>
-                <Button type="submit" disabled={isSubmitting}>
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="px-6 py-3 bg-emerald-500 hover:bg-emerald-600 disabled:bg-emerald-400 text-white font-semibold rounded-lg transition-colors disabled:cursor-not-allowed"
+                >
                   {isSubmitting ? 'Creating...' : 'Create Lead'}
-                </Button>
+                </button>
               </div>
             </form>
           </Form>

@@ -79,48 +79,54 @@ export default function JobsPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-slate-900">Jobs</h1>
-          <p className="mt-1 text-sm text-slate-600">
-            Manage jobs and use templates for quick creation
-          </p>
+      <div className="bg-gradient-to-r from-emerald-600 to-emerald-700 rounded-xl shadow-lg p-6 text-white">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold">Jobs</h1>
+            <p className="mt-2 text-emerald-100">
+              Manage jobs and use templates for quick creation
+            </p>
+          </div>
+          <Link href="/jobs/new">
+            <button className="px-6 py-3 bg-white text-emerald-700 hover:bg-emerald-50 font-semibold rounded-lg shadow-md transition-all duration-200 hover:shadow-lg transform hover:-translate-y-0.5">
+              <Plus className="w-4 h-4 mr-2 inline" />
+              New Job
+            </button>
+          </Link>
         </div>
-        <Link href="/jobs/new">
-          <Button className="bg-emerald-500 hover:bg-emerald-600 text-white">
-            <Plus className="w-4 h-4 mr-2" />
-            New Job
-          </Button>
-        </Link>
       </div>
 
       {/* Stats Cards */}
-      <div className="grid gap-4 md:grid-cols-4">
-        <div className="bg-white rounded-lg border border-slate-200 p-6 shadow-sm">
+      <div className="grid gap-6 md:grid-cols-4">
+        <div className="bg-white rounded-xl border border-slate-200 p-6 shadow-lg hover:shadow-xl transition-all duration-200">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-slate-600">Total Jobs</p>
-              <p className="text-2xl font-bold text-slate-900 mt-1">
+              <p className="text-sm font-semibold text-slate-600 uppercase tracking-wide">
+                Total Jobs
+              </p>
+              <p className="text-3xl font-bold text-slate-900 mt-2">
                 {jobs.length}
               </p>
             </div>
-            <div className="h-12 w-12 rounded-lg bg-emerald-100 flex items-center justify-center">
-              <Briefcase className="h-6 w-6 text-emerald-600" />
+            <div className="h-14 w-14 rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-600 flex items-center justify-center shadow-lg">
+              <Briefcase className="h-7 w-7 text-white" />
             </div>
           </div>
         </div>
 
-        <div className="bg-white rounded-lg border border-slate-200 p-6 shadow-sm">
+        <div className="bg-white rounded-xl border border-slate-200 p-6 shadow-lg hover:shadow-xl transition-all duration-200 hover:-translate-y-1">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-slate-600">Scheduled</p>
-              <p className="text-2xl font-bold text-slate-900 mt-1">
+              <p className="text-sm font-semibold text-slate-600 uppercase tracking-wide">
+                Scheduled
+              </p>
+              <p className="text-3xl font-bold text-slate-900 mt-2">
                 {jobs.filter((j) => j.status === 'scheduled').length}
               </p>
             </div>
-            <div className="h-12 w-12 rounded-lg bg-blue-100 flex items-center justify-center">
+            <div className="h-14 w-14 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center shadow-lg">
               <svg
-                className="h-6 w-6 text-blue-600"
+                className="h-7 w-7 text-white"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
@@ -136,17 +142,19 @@ export default function JobsPage() {
           </div>
         </div>
 
-        <div className="bg-white rounded-lg border border-slate-200 p-6 shadow-sm">
+        <div className="bg-white rounded-xl border border-slate-200 p-6 shadow-lg hover:shadow-xl transition-all duration-200 hover:-translate-y-1">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-slate-600">In Progress</p>
-              <p className="text-2xl font-bold text-slate-900 mt-1">
+              <p className="text-sm font-semibold text-slate-600 uppercase tracking-wide">
+                In Progress
+              </p>
+              <p className="text-3xl font-bold text-slate-900 mt-2">
                 {jobs.filter((j) => j.status === 'in_progress').length}
               </p>
             </div>
-            <div className="h-12 w-12 rounded-lg bg-amber-100 flex items-center justify-center">
+            <div className="h-14 w-14 rounded-xl bg-gradient-to-br from-amber-500 to-amber-600 flex items-center justify-center shadow-lg">
               <svg
-                className="h-6 w-6 text-amber-600"
+                className="h-7 w-7 text-white"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
@@ -162,17 +170,19 @@ export default function JobsPage() {
           </div>
         </div>
 
-        <div className="bg-white rounded-lg border border-slate-200 p-6 shadow-sm">
+        <div className="bg-white rounded-xl border border-slate-200 p-6 shadow-lg hover:shadow-xl transition-all duration-200 hover:-translate-y-1">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-slate-600">Completed</p>
-              <p className="text-2xl font-bold text-slate-900 mt-1">
+              <p className="text-sm font-semibold text-slate-600 uppercase tracking-wide">
+                Completed
+              </p>
+              <p className="text-3xl font-bold text-slate-900 mt-2">
                 {jobs.filter((j) => j.status === 'completed').length}
               </p>
             </div>
-            <div className="h-12 w-12 rounded-lg bg-green-100 flex items-center justify-center">
+            <div className="h-14 w-14 rounded-xl bg-gradient-to-br from-green-500 to-green-600 flex items-center justify-center shadow-lg">
               <svg
-                className="h-6 w-6 text-green-600"
+                className="h-7 w-7 text-white"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
@@ -190,33 +200,43 @@ export default function JobsPage() {
       </div>
 
       {/* Tabs */}
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="bg-white border border-slate-200">
-          <TabsTrigger
-            value="jobs"
-            className="flex items-center gap-2 data-[state=active]:bg-emerald-50 data-[state=active]:text-emerald-700"
-          >
-            <Briefcase className="w-4 h-4" />
-            All Jobs
-          </TabsTrigger>
-          <TabsTrigger
-            value="templates"
-            className="flex items-center gap-2 data-[state=active]:bg-emerald-50 data-[state=active]:text-emerald-700"
-          >
-            <FileText className="w-4 h-4" />
-            Templates
-          </TabsTrigger>
-        </TabsList>
+      <div className="bg-white rounded-xl border border-slate-200 shadow-lg overflow-hidden">
+        <div className="border-b border-slate-200">
+          <div className="flex">
+            <button
+              onClick={() => setActiveTab('jobs')}
+              className={`flex items-center gap-3 px-6 py-4 font-semibold transition-colors ${
+                activeTab === 'jobs'
+                  ? 'text-emerald-700 border-b-2 border-emerald-500 bg-emerald-50'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+              }`}
+            >
+              <Briefcase className="w-5 h-5" />
+              All Jobs
+            </button>
+            <button
+              onClick={() => setActiveTab('templates')}
+              className={`flex items-center gap-3 px-6 py-4 font-semibold transition-colors ${
+                activeTab === 'templates'
+                  ? 'text-emerald-700 border-b-2 border-emerald-500 bg-emerald-50'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+              }`}
+            >
+              <FileText className="w-5 h-5" />
+              Templates
+            </button>
+          </div>
+        </div>
 
-        <TabsContent value="jobs" className="mt-6">
-          <div className="bg-white rounded-lg border border-slate-200 shadow-sm">
-            <div className="p-6 border-b border-slate-200">
-              <h2 className="text-lg font-semibold text-slate-900">All Jobs</h2>
-              <p className="text-sm text-slate-600 mt-1">
-                View and manage all service jobs
-              </p>
-            </div>
-            <div className="p-6">
+        <div className="p-6">
+          {activeTab === 'jobs' && (
+            <div>
+              <div className="mb-6">
+                <h2 className="text-xl font-bold text-slate-900">All Jobs</h2>
+                <p className="text-sm text-slate-600 mt-1">
+                  View and manage all service jobs
+                </p>
+              </div>
               <JobTable
                 jobs={jobs}
                 onEdit={handleEdit}
@@ -225,15 +245,23 @@ export default function JobsPage() {
                 onStatusChange={handleStatusChange}
               />
             </div>
-          </div>
-        </TabsContent>
+          )}
 
-        <TabsContent value="templates" className="mt-6">
-          <div className="bg-white rounded-lg border border-slate-200 shadow-sm p-6">
-            <JobTemplates />
-          </div>
-        </TabsContent>
-      </Tabs>
+          {activeTab === 'templates' && (
+            <div>
+              <div className="mb-6">
+                <h2 className="text-xl font-bold text-slate-900">
+                  Job Templates
+                </h2>
+                <p className="text-sm text-slate-600 mt-1">
+                  Create and manage reusable job templates
+                </p>
+              </div>
+              <JobTemplates />
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   );
 }

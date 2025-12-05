@@ -5,6 +5,7 @@
 
 import { supabase } from '@/lib/supabase';
 import type { JobStatus } from '@/types/job';
+import { createPostJobWorkflow } from './db/activities';
 
 export interface JobAutomationResult {
   success: boolean;
@@ -286,12 +287,22 @@ export async function handleJobStatusChange(
   actions.push(`Job status changed: ${oldStatus} → ${newStatus}`);
 
   try {
-    // When job is completed, auto-generate invoice
+    // When job is completed, auto-generate invoice and create workflow tasks
     if (newStatus === 'completed' && oldStatus !== 'completed') {
       const invoiceResult = await autoGenerateInvoice(jobId);
       actions.push(...invoiceResult.actions);
       if (invoiceResult.errors) {
         errors.push(...invoiceResult.errors);
+      }
+
+      // Create post-job workflow tasks (follow-ups, surveys, maintenance)
+      try {
+        await createPostJobWorkflow(jobId);
+        actions.push(
+          'Created post-job workflow tasks (follow-up calls, surveys, maintenance scheduling)'
+        );
+      } catch (workflowError) {
+        errors.push(`Failed to create workflow tasks: ${workflowError}`);
       }
     }
 

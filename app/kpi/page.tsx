@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import type { KPIDashboard, KPIMetric, KPIPeriod } from '@/types/kpi';
@@ -125,81 +124,92 @@ export default function KPIPage() {
     const isAboveTarget = hasTarget && metric.value >= metric.target!;
 
     return (
-      <Card className="relative overflow-hidden border-0 shadow-lg hover:shadow-xl transition-all">
-        <div
-          className={`absolute top-0 right-0 w-32 h-32 bg-gradient-to-br ${getCategoryColor(metric.category)} opacity-10 rounded-full -mr-16 -mt-16`}
-        ></div>
-        <CardHeader className="pb-3">
-          <div className="flex items-start justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">{metric.name}</p>
-              {metric.description && (
-                <p className="text-xs text-gray-400 mt-1">
-                  {metric.description}
-                </p>
-              )}
-            </div>
-            <div
-              className={`p-2 bg-gradient-to-br ${getCategoryColor(metric.category)} rounded-lg`}
-            >
-              <Icon className="w-4 h-4 text-white" />
-            </div>
+      <div className="bg-white rounded-xl border border-slate-200 p-6 shadow-sm hover:shadow-lg hover:border-slate-300 transition-all">
+        <div className="flex items-start justify-between mb-4">
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-semibold text-slate-900">
+              {metric.name}
+            </p>
+            {metric.description && (
+              <p className="text-xs text-slate-500 mt-1">
+                {metric.description}
+              </p>
+            )}
           </div>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-3">
-            <div className="flex items-baseline justify-between">
-              <div className="text-3xl font-bold text-gray-900">
-                {formatValue(metric)}
-              </div>
-              {metric.changePercent !== undefined && (
-                <div
-                  className={`flex items-center gap-1 text-sm font-medium ${getTrendColor(metric.trend)}`}
-                >
-                  {getTrendIcon(metric.trend)}
-                  <span>{Math.abs(metric.changePercent).toFixed(1)}%</span>
-                </div>
-              )}
-            </div>
+          <div className="p-2 bg-slate-100 rounded-lg ml-3">
+            <Icon className="w-4 h-4 text-slate-600" />
+          </div>
+        </div>
 
-            {hasTarget && (
-              <div className="space-y-2">
-                <div className="flex justify-between text-xs text-gray-600">
-                  <span>
-                    Target: {formatValue({ ...metric, value: metric.target! })}
-                  </span>
-                  <span
-                    className={
-                      isAboveTarget
-                        ? 'text-green-600 font-medium'
-                        : 'text-gray-600'
-                    }
-                  >
-                    {metric.targetProgress?.toFixed(0)}%
-                  </span>
-                </div>
-                <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
-                  <div
-                    className={`h-full bg-gradient-to-r ${getCategoryColor(metric.category)} transition-all`}
-                    style={{
-                      width: `${Math.min(metric.targetProgress || 0, 100)}%`,
-                    }}
-                  ></div>
-                </div>
+        <div className="space-y-4">
+          <div className="flex items-baseline justify-between">
+            <div className="text-2xl font-bold text-slate-900">
+              {formatValue(metric)}
+            </div>
+            {metric.changePercent !== undefined && (
+              <div
+                className={`flex items-center gap-1 text-sm font-medium ${getTrendColor(metric.trend)}`}
+              >
+                {getTrendIcon(metric.trend)}
+                <span>{Math.abs(metric.changePercent).toFixed(1)}%</span>
               </div>
             )}
           </div>
-        </CardContent>
-      </Card>
+
+          {hasTarget && (
+            <div className="space-y-3">
+              <div className="flex justify-between text-xs text-slate-600">
+                <span>
+                  Target: {formatValue({ ...metric, value: metric.target! })}
+                </span>
+                <span
+                  className={
+                    isAboveTarget
+                      ? 'text-emerald-600 font-medium'
+                      : 'text-slate-600'
+                  }
+                >
+                  {metric.targetProgress?.toFixed(0)}%
+                </span>
+              </div>
+              <div className="h-2 bg-slate-200 rounded-full overflow-hidden">
+                <div
+                  className={`h-full bg-gradient-to-r ${getCategoryColor(metric.category)} transition-all`}
+                  style={{
+                    width: `${Math.min(metric.targetProgress || 0, 100)}%`,
+                  }}
+                ></div>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
     );
   };
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-blue-50">
-        <div className="text-center">
-          <RefreshCw className="w-12 h-12 animate-spin text-blue-600 mx-auto mb-4" />
-          <p className="text-gray-600 font-medium">Loading KPIs...</p>
+      <div className="space-y-6">
+        {/* Header - Jobber style with emerald gradient */}
+        <div className="bg-gradient-to-r from-emerald-500 to-emerald-600 rounded-xl shadow-lg overflow-hidden">
+          <div className="px-6 sm:px-8 lg:px-10 py-6">
+            <div className="flex items-center justify-center">
+              <div className="text-center">
+                <h1 className="text-3xl font-bold text-white">
+                  Key Performance Indicators
+                </h1>
+                <p className="mt-2 text-emerald-50 text-sm">
+                  Loading KPI data...
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div className="flex items-center justify-center py-12">
+          <div className="flex items-center gap-3">
+            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-emerald-500"></div>
+            <div className="text-slate-600">Loading KPIs...</div>
+          </div>
         </div>
       </div>
     );
@@ -207,215 +217,316 @@ export default function KPIPage() {
 
   if (!dashboard) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <p>Failed to load KPIs</p>
+      <div className="space-y-6">
+        {/* Header - Jobber style with emerald gradient */}
+        <div className="bg-gradient-to-r from-emerald-500 to-emerald-600 rounded-xl shadow-lg overflow-hidden">
+          <div className="px-6 sm:px-8 lg:px-10 py-6">
+            <div className="flex items-center justify-center">
+              <div className="text-center">
+                <h1 className="text-3xl font-bold text-white">
+                  Key Performance Indicators
+                </h1>
+                <p className="mt-2 text-emerald-50 text-sm">
+                  Failed to load KPI data
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div className="flex items-center justify-center py-12">
+          <div className="text-center">
+            <div className="p-4 bg-slate-100 rounded-full w-16 h-16 mx-auto mb-4 flex items-center justify-center">
+              <BarChart3 className="h-8 w-8 text-slate-400" />
+            </div>
+            <h3 className="text-lg font-semibold text-slate-900 mb-2">
+              Failed to load KPIs
+            </h3>
+            <p className="text-sm text-slate-600">
+              Please try refreshing the page
+            </p>
+          </div>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-indigo-50 pb-12">
-      <div className="max-w-[1800px] mx-auto p-6">
-        {/* Header */}
-        <div className="mb-8">
-          <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 mb-6">
-            <div>
-              <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+    <div className="space-y-6">
+      {/* Header - Jobber style with emerald gradient */}
+      <div className="bg-gradient-to-r from-emerald-500 to-emerald-600 rounded-xl shadow-lg overflow-hidden">
+        <div className="px-6 sm:px-8 lg:px-10 py-6">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6">
+            <div className="flex-1 min-w-0">
+              <h1 className="text-3xl font-bold text-white">
                 Key Performance Indicators
               </h1>
-              <p className="text-gray-600 mt-2">
+              <p className="mt-2 text-emerald-50 text-sm">
                 Track your business metrics and performance goals
               </p>
             </div>
-            <div className="flex gap-2">
-              <Button variant="outline" size="sm">
+            <div className="flex-shrink-0 flex gap-3">
+              <button className="px-4 py-2 bg-white/10 hover:bg-white/20 text-white font-medium rounded-lg transition-colors border border-white/20">
                 <Download className="w-4 h-4 mr-2" />
                 Export Report
-              </Button>
-              <Button onClick={loadKPIs} size="sm">
-                <RefreshCw className="w-4 h-4 mr-2" />
-                Refresh
-              </Button>
-            </div>
-          </div>
-
-          {/* Period Selector */}
-          <div className="flex flex-wrap gap-2">
-            {(
-              ['day', 'week', 'month', 'quarter', 'year', 'all'] as KPIPeriod[]
-            ).map((p) => (
-              <Button
-                key={p}
-                variant={period === p ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setPeriod(p)}
-                className="capitalize"
+              </button>
+              <button
+                onClick={loadKPIs}
+                className="px-6 py-3 bg-white hover:bg-emerald-50 text-emerald-600 font-semibold rounded-lg shadow-md hover:shadow-lg transition-all focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-emerald-500 inline-flex items-center"
               >
-                <Calendar className="w-4 h-4 mr-2" />
-                {p === 'all' ? 'All Time' : p}
-              </Button>
-            ))}
+                <RefreshCw className="w-5 h-5 mr-2" />
+                Refresh
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Period Selector - Jobber style */}
+      <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
+        <div className="flex items-center gap-3 mb-4">
+          <div className="p-2 bg-blue-100 rounded-lg">
+            <Calendar className="h-5 w-5 text-blue-600" />
+          </div>
+          <h2 className="text-lg font-bold text-slate-900">Time Period</h2>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          {(
+            ['day', 'week', 'month', 'quarter', 'year', 'all'] as KPIPeriod[]
+          ).map((p) => (
+            <button
+              key={p}
+              onClick={() => setPeriod(p)}
+              className={`px-4 py-2 font-medium rounded-lg transition-colors ${
+                period === p
+                  ? 'bg-emerald-500 text-white'
+                  : 'bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300'
+              }`}
+            >
+              <Calendar className="w-4 h-4 mr-2" />
+              {p === 'all'
+                ? 'All Time'
+                : p.charAt(0).toUpperCase() + p.slice(1)}
+            </button>
+          ))}
+        </div>
+      </div>
+      {/* Header */}
+      <div className="mb-8">
+        <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 mb-6">
+          <div>
+            <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+              Key Performance Indicators
+            </h1>
+            <p className="text-gray-600 mt-2">
+              Track your business metrics and performance goals
+            </p>
+          </div>
+          <div className="flex gap-2">
+            <Button variant="outline" size="sm">
+              <Download className="w-4 h-4 mr-2" />
+              Export Report
+            </Button>
+            <Button onClick={loadKPIs} size="sm">
+              <RefreshCw className="w-4 h-4 mr-2" />
+              Refresh
+            </Button>
           </div>
         </div>
 
-        {/* Summary Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <Card className="border-0 shadow-lg bg-gradient-to-br from-green-500 to-emerald-600 text-white">
-            <CardHeader>
-              <CardTitle className="text-white flex items-center gap-2">
-                <Target className="w-5 h-5" />
-                Metrics Above Target
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-4xl font-bold">
-                {dashboard.summary.metricsAboveTarget}
-              </div>
-              <p className="text-green-100 text-sm mt-1">
-                out of {dashboard.summary.totalMetrics} total metrics
-              </p>
-            </CardContent>
-          </Card>
+        {/* Period Selector */}
+        <div className="flex flex-wrap gap-2">
+          {(
+            ['day', 'week', 'month', 'quarter', 'year', 'all'] as KPIPeriod[]
+          ).map((p) => (
+            <Button
+              key={p}
+              variant={period === p ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setPeriod(p)}
+              className="capitalize"
+            >
+              <Calendar className="w-4 h-4 mr-2" />
+              {p === 'all' ? 'All Time' : p}
+            </Button>
+          ))}
+        </div>
+      </div>
 
-          <Card className="border-0 shadow-lg bg-gradient-to-br from-red-500 to-pink-600 text-white">
-            <CardHeader>
-              <CardTitle className="text-white flex items-center gap-2">
-                <Target className="w-5 h-5" />
-                Below Target
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-4xl font-bold">
-                {dashboard.summary.metricsBelowTarget}
-              </div>
-              <p className="text-red-100 text-sm mt-1">needs improvement</p>
-            </CardContent>
-          </Card>
-
-          <Card className="border-0 shadow-lg bg-gradient-to-br from-blue-500 to-indigo-600 text-white">
-            <CardHeader>
-              <CardTitle className="text-white flex items-center gap-2">
-                <TrendingUp className="w-5 h-5" />
-                Average Growth
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-4xl font-bold">
-                {dashboard.summary.averageGrowth.toFixed(1)}%
-              </div>
-              <p className="text-blue-100 text-sm mt-1">vs previous period</p>
-            </CardContent>
-          </Card>
-
-          <Card className="border-0 shadow-lg bg-gradient-to-br from-purple-500 to-pink-600 text-white">
-            <CardHeader>
-              <CardTitle className="text-white flex items-center gap-2">
-                <BarChart3 className="w-5 h-5" />
-                Total Metrics
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-4xl font-bold">
-                {dashboard.summary.totalMetrics}
-              </div>
-              <p className="text-purple-100 text-sm mt-1">tracked indicators</p>
-            </CardContent>
-          </Card>
+      {/* Summary Cards - Jobber style */}
+      <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-4">
+        {/* Metrics Above Target Card */}
+        <div className="bg-white rounded-xl border border-slate-200 p-6 shadow-sm hover:shadow-lg hover:border-green-300 transition-all">
+          <div className="flex items-center justify-between mb-3">
+            <div className="p-3 bg-gradient-to-br from-green-500 to-green-600 rounded-xl shadow-md">
+              <Target className="h-6 w-6 text-white" />
+            </div>
+          </div>
+          <div className="text-3xl font-bold text-slate-900 mb-1">
+            {dashboard.summary.metricsAboveTarget}
+          </div>
+          <p className="text-sm font-medium text-slate-600">Above Target</p>
+          <p className="text-xs text-slate-500 mt-1">
+            out of {dashboard.summary.totalMetrics} total metrics
+          </p>
         </div>
 
-        {/* Revenue KPIs */}
-        <div className="mb-8">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="p-2 bg-gradient-to-br from-green-500 to-emerald-600 rounded-lg">
-              <DollarSign className="w-6 h-6 text-white" />
+        {/* Below Target Card */}
+        <div className="bg-white rounded-xl border border-slate-200 p-6 shadow-sm hover:shadow-lg hover:border-red-300 transition-all">
+          <div className="flex items-center justify-between mb-3">
+            <div className="p-3 bg-gradient-to-br from-red-500 to-red-600 rounded-xl shadow-md">
+              <Target className="h-6 w-6 text-white" />
             </div>
-            <h2 className="text-2xl font-bold text-gray-900">
+          </div>
+          <div className="text-3xl font-bold text-slate-900 mb-1">
+            {dashboard.summary.metricsBelowTarget}
+          </div>
+          <p className="text-sm font-medium text-slate-600">Below Target</p>
+          <p className="text-xs text-slate-500 mt-1">needs improvement</p>
+        </div>
+
+        {/* Average Growth Card */}
+        <div className="bg-gradient-to-br from-emerald-50 to-emerald-100 rounded-xl border-2 border-emerald-200 p-6 shadow-sm hover:shadow-lg hover:border-emerald-300 transition-all">
+          <div className="flex items-center justify-between mb-3">
+            <div className="p-3 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-xl shadow-md">
+              <TrendingUp className="h-6 w-6 text-white" />
+            </div>
+          </div>
+          <div className="text-3xl font-bold text-emerald-700 mb-1">
+            {dashboard.summary.averageGrowth.toFixed(1)}%
+          </div>
+          <p className="text-sm font-semibold text-emerald-600">
+            Average Growth
+          </p>
+          <p className="text-xs text-emerald-600 mt-1">vs previous period</p>
+        </div>
+
+        {/* Total Metrics Card */}
+        <div className="bg-white rounded-xl border border-slate-200 p-6 shadow-sm hover:shadow-lg hover:border-blue-300 transition-all">
+          <div className="flex items-center justify-between mb-3">
+            <div className="p-3 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl shadow-md">
+              <BarChart3 className="h-6 w-6 text-white" />
+            </div>
+          </div>
+          <div className="text-3xl font-bold text-slate-900 mb-1">
+            {dashboard.summary.totalMetrics}
+          </div>
+          <p className="text-sm font-medium text-slate-600">Total Metrics</p>
+          <p className="text-xs text-slate-500 mt-1">tracked indicators</p>
+        </div>
+      </div>
+
+      {/* Revenue KPIs - Jobber style */}
+      <div className="bg-white rounded-xl border border-slate-200 shadow-md">
+        <div className="px-6 py-5 border-b border-slate-200 bg-gradient-to-r from-slate-50 to-white">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-emerald-100 rounded-lg">
+              <DollarSign className="h-5 w-5 text-emerald-600" />
+            </div>
+            <h2 className="text-lg font-bold text-slate-900">
               Revenue Metrics
             </h2>
-            <Badge className="bg-green-100 text-green-700">
+            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800">
               {Object.keys(dashboard.kpis.revenue).length} metrics
-            </Badge>
+            </span>
           </div>
+        </div>
+        <div className="p-6">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {Object.values(dashboard.kpis.revenue).map((metric) => (
               <MetricCard key={metric.id} metric={metric} />
             ))}
           </div>
         </div>
+      </div>
 
-        {/* Job KPIs */}
-        <div className="mb-8">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="p-2 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg">
-              <Briefcase className="w-6 h-6 text-white" />
+      {/* Job KPIs - Jobber style */}
+      <div className="bg-white rounded-xl border border-slate-200 shadow-md">
+        <div className="px-6 py-5 border-b border-slate-200 bg-gradient-to-r from-slate-50 to-white">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-blue-100 rounded-lg">
+              <Briefcase className="h-5 w-5 text-blue-600" />
             </div>
-            <h2 className="text-2xl font-bold text-gray-900">
+            <h2 className="text-lg font-bold text-slate-900">
               Job Performance
             </h2>
-            <Badge className="bg-blue-100 text-blue-700">
+            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
               {Object.keys(dashboard.kpis.jobs).length} metrics
-            </Badge>
+            </span>
           </div>
+        </div>
+        <div className="p-6">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {Object.values(dashboard.kpis.jobs).map((metric) => (
               <MetricCard key={metric.id} metric={metric} />
             ))}
           </div>
         </div>
+      </div>
 
-        {/* Client KPIs */}
-        <div className="mb-8">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="p-2 bg-gradient-to-br from-purple-500 to-pink-600 rounded-lg">
-              <Users className="w-6 h-6 text-white" />
+      {/* Client KPIs - Jobber style */}
+      <div className="bg-white rounded-xl border border-slate-200 shadow-md">
+        <div className="px-6 py-5 border-b border-slate-200 bg-gradient-to-r from-slate-50 to-white">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-purple-100 rounded-lg">
+              <Users className="h-5 w-5 text-purple-600" />
             </div>
-            <h2 className="text-2xl font-bold text-gray-900">
+            <h2 className="text-lg font-bold text-slate-900">
               Client Analytics
             </h2>
-            <Badge className="bg-purple-100 text-purple-700">
+            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
               {Object.keys(dashboard.kpis.clients).length} metrics
-            </Badge>
+            </span>
           </div>
+        </div>
+        <div className="p-6">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {Object.values(dashboard.kpis.clients).map((metric) => (
               <MetricCard key={metric.id} metric={metric} />
             ))}
           </div>
         </div>
+      </div>
 
-        {/* Efficiency KPIs */}
-        <div className="mb-8">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="p-2 bg-gradient-to-br from-orange-500 to-red-600 rounded-lg">
-              <Clock className="w-6 h-6 text-white" />
+      {/* Efficiency KPIs - Jobber style */}
+      <div className="bg-white rounded-xl border border-slate-200 shadow-md">
+        <div className="px-6 py-5 border-b border-slate-200 bg-gradient-to-r from-slate-50 to-white">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-amber-100 rounded-lg">
+              <Clock className="h-5 w-5 text-amber-600" />
             </div>
-            <h2 className="text-2xl font-bold text-gray-900">
+            <h2 className="text-lg font-bold text-slate-900">
               Efficiency Metrics
             </h2>
-            <Badge className="bg-orange-100 text-orange-700">
+            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800">
               {Object.keys(dashboard.kpis.efficiency).length} metrics
-            </Badge>
+            </span>
           </div>
+        </div>
+        <div className="p-6">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {Object.values(dashboard.kpis.efficiency).map((metric) => (
               <MetricCard key={metric.id} metric={metric} />
             ))}
           </div>
         </div>
+      </div>
 
-        {/* Quality KPIs */}
-        <div className="mb-8">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="p-2 bg-gradient-to-br from-yellow-500 to-amber-600 rounded-lg">
-              <Star className="w-6 h-6 text-white" />
+      {/* Quality KPIs - Jobber style */}
+      <div className="bg-white rounded-xl border border-slate-200 shadow-md">
+        <div className="px-6 py-5 border-b border-slate-200 bg-gradient-to-r from-slate-50 to-white">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-yellow-100 rounded-lg">
+              <Star className="h-5 w-5 text-yellow-600" />
             </div>
-            <h2 className="text-2xl font-bold text-gray-900">
+            <h2 className="text-lg font-bold text-slate-900">
               Quality Indicators
             </h2>
-            <Badge className="bg-yellow-100 text-yellow-700">
+            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
               {Object.keys(dashboard.kpis.quality).length} metrics
-            </Badge>
+            </span>
           </div>
+        </div>
+        <div className="p-6">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {Object.values(dashboard.kpis.quality).map((metric) => (
               <MetricCard key={metric.id} metric={metric} />

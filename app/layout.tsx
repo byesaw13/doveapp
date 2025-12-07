@@ -1,6 +1,8 @@
 import type { Metadata, Viewport } from 'next';
 import { Geist, Geist_Mono } from 'next/font/google';
 import { Sidebar } from '@/components/sidebar';
+import { CommandPalette } from '@/components/command-palette';
+import { QuickAddLead } from '@/components/quick-add-lead';
 import { ToastProvider } from '@/components/ui/toast';
 import { RegisterServiceWorker } from './register-sw';
 import './globals.css';
@@ -62,6 +64,8 @@ export default function RootLayout({
       >
         <RegisterServiceWorker />
         <ToastProvider>
+          <CommandPalette />
+          <QuickAddLead />
           <div className="flex h-screen bg-slate-50">
             <Sidebar />
             <main className="flex-1 overflow-auto">

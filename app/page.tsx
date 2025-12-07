@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { getDashboardStats } from '@/lib/dashboard';
 import { SmartDashboard } from '@/components/SmartDashboard';
+import { PWARegistration } from '@/components/PWARegistration';
 import {
   Users,
   Briefcase,
@@ -383,6 +384,11 @@ export default async function Dashboard() {
       {/* Smart Dashboard */}
       <div className="mt-8">
         <SmartDashboard />
+      </div>
+
+      {/* PWA Registration */}
+      <div className="mt-8 flex justify-center">
+        <PWARegistration />
       </div>
     </div>
   );

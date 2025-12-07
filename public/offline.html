@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>DoveApp - Offline</title>
+    <style>
+      body {
+        font-family:
+          -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        margin: 0;
+        padding: 0;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .container {
+        text-align: center;
+        padding: 2rem;
+        max-width: 400px;
+      }
+
+      .icon {
+        width: 80px;
+        height: 80px;
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 2rem;
+        font-size: 2rem;
+      }
+
+      h1 {
+        font-size: 2rem;
+        margin-bottom: 1rem;
+        font-weight: 600;
+      }
+
+      p {
+        font-size: 1.1rem;
+        margin-bottom: 2rem;
+        opacity: 0.9;
+        line-height: 1.6;
+      }
+
+      .features {
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+        text-align: left;
+      }
+
+      .features h3 {
+        margin-top: 0;
+        margin-bottom: 1rem;
+        font-size: 1.2rem;
+      }
+
+      .features ul {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+      }
+
+      .features li {
+        padding: 0.5rem 0;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      }
+
+      .features li:last-child {
+        border-bottom: none;
+      }
+
+      .retry-btn {
+        background: white;
+        color: #667eea;
+        border: none;
+        padding: 12px 24px;
+        border-radius: 8px;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: transform 0.2s;
+      }
+
+      .retry-btn:hover {
+        transform: translateY(-2px);
+      }
+
+      .status {
+        margin-top: 2rem;
+        padding: 1rem;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 8px;
+        font-size: 0.9rem;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="icon">📱</div>
+      <h1>You're Offline</h1>
+      <p>
+        Don't worry! DoveApp works offline. Your data will sync automatically
+        when you reconnect.
+      </p>
+
+      <div class="features">
+        <h3>What you can still do:</h3>
+        <ul>
+          <li>✅ View cached client information</li>
+          <li>✅ Access previously loaded jobs</li>
+          <li>✅ Review time tracking data</li>
+          <li>✅ Create notes and activities</li>
+          <li>✅ View dashboard statistics</li>
+        </ul>
+      </div>
+
+      <button class="retry-btn" onclick="window.location.reload()">
+        Try Again
+      </button>
+
+      <div class="status">
+        <strong>Connection Status:</strong> Offline<br />
+        <em>Data will sync when connection is restored</em>
+      </div>
+    </div>
+
+    <script>
+      // Check for connection restoration
+      window.addEventListener('online', function () {
+        // Auto-retry when connection is restored
+        setTimeout(() => {
+          window.location.reload();
+        }, 1000);
+      });
+
+      // Show connection status
+      function updateStatus() {
+        const status = document.querySelector('.status');
+        if (navigator.onLine) {
+          status.innerHTML =
+            '<strong>Connection Status:</strong> Online<br><em>Reloading...</em>';
+          setTimeout(() => window.location.reload(), 1500);
+        }
+      }
+
+      // Check connection periodically
+      setInterval(updateStatus, 5000);
+    </script>
+  </body>
+</html>

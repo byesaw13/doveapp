@@ -109,3 +109,150 @@ export interface EstimateWithRelations extends Estimate {
     phone: string;
   };
 }
+
+// AI Estimate Generation Types
+export interface AIEstimateSettings {
+  id: string;
+  user_id?: string; // null for global defaults
+
+  // Profit & Pricing
+  default_profit_margin: number; // percentage (e.g., 25 for 25%)
+  markup_on_materials: number; // percentage
+  markup_on_subcontractors: number; // percentage
+
+  // Labor Rates
+  hourly_labor_rate: number; // what you pay employees
+  billable_hourly_rate: number; // what you charge clients
+  overtime_multiplier: number; // e.g., 1.5 for time-and-a-half
+
+  // Material Costs
+  material_markup_percentage: number; // additional markup on materials
+  equipment_rental_rate: number; // hourly rate for equipment rental
+  fuel_surcharge_percentage: number; // for transportation
+
+  // Overhead & Expenses
+  overhead_percentage: number; // percentage of total costs
+  insurance_percentage: number; // percentage of total
+  administrative_fee: number; // flat fee per job
+  permit_fees: number; // estimated permit costs
+  disposal_fees: number; // waste disposal costs
+
+  // Tax Settings
+  default_tax_rate: number; // sales tax percentage
+  taxable_labor: boolean; // whether labor is taxable
+  taxable_materials: boolean; // whether materials are taxable
+
+  // Business Rules
+  minimum_job_size: number; // minimum total before profit margin
+  round_to_nearest: number; // round totals to nearest dollar
+  include_contingency: boolean; // add contingency percentage
+  contingency_percentage: number; // percentage for unknowns
+
+  // Service-specific rates
+  service_rates: {
+    painting: {
+      labor_rate_per_sqft: number;
+      material_cost_per_sqft: number;
+      primer_included: boolean;
+    };
+    plumbing: {
+      hourly_rate: number;
+      trip_fee: number;
+      emergency_multiplier: number;
+    };
+    electrical: {
+      hourly_rate: number;
+      permit_fee: number;
+      inspection_fee: number;
+    };
+    hvac: {
+      hourly_rate: number;
+      diagnostic_fee: number;
+      refrigerant_cost_per_lb: number;
+    };
+    general: {
+      hourly_rate: number;
+      minimum_charge: number;
+    };
+  };
+
+  created_at: string;
+  updated_at: string;
+}
+
+export interface AIEstimateRequest {
+  description: string;
+  service_type:
+    | 'painting'
+    | 'plumbing'
+    | 'electrical'
+    | 'hvac'
+    | 'general'
+    | 'other';
+  images?: string[]; // base64 encoded images or URLs
+  property_details?: {
+    square_footage?: number;
+    stories?: number;
+    age?: number;
+    condition?: 'excellent' | 'good' | 'fair' | 'poor';
+  };
+  urgency?: 'low' | 'normal' | 'high' | 'emergency';
+  client_budget?: number;
+  location?: string;
+  special_requirements?: string[];
+}
+
+export interface AIEstimateAnalysis {
+  service_type: string;
+  complexity: 'simple' | 'moderate' | 'complex' | 'very_complex';
+  estimated_duration: {
+    hours: number;
+    days: number;
+  };
+  required_materials: Array<{
+    name: string;
+    quantity: number;
+    unit: string;
+    estimated_cost: number;
+    supplier?: string;
+  }>;
+  labor_breakdown: Array<{
+    task: string;
+    hours: number;
+    skill_level: 'apprentice' | 'journeyman' | 'master';
+    hourly_rate: number;
+  }>;
+  equipment_needed: Array<{
+    name: string;
+    rental_cost_per_day?: number;
+    purchase_cost?: number;
+    usage_days: number;
+  }>;
+  potential_issues: string[];
+  recommendations: string[];
+  confidence_score: number;
+}
+
+export interface AIEstimateResult {
+  analysis: AIEstimateAnalysis;
+  line_items: EstimateLineItem[];
+  subtotal: number;
+  applied_settings: {
+    profit_margin: number;
+    labor_rate: number;
+    material_markup: number;
+    overhead: number;
+    taxes: number;
+  };
+  total: number;
+  breakdown: {
+    materials: number;
+    labor: number;
+    equipment: number;
+    overhead: number;
+    profit: number;
+    taxes: number;
+  };
+  reasoning: string;
+  suggestions: string[];
+}

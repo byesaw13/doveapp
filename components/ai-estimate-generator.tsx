@@ -20,17 +20,12 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { useToast } from '@/components/ui/toast';
-import {
-  generateAIEstimate,
-  getDefaultAIEstimateSettings,
-} from '@/lib/ai/estimate-generation';
-import { getAIEstimateSettings } from '@/lib/db/ai-estimate-settings';
+import { getDefaultAIEstimateSettings } from '@/lib/ai/estimate-generation';
 import type {
   AIEstimateRequest,
   AIEstimateResult,
   AIEstimateSettings,
 } from '@/types/estimate';
-import { createEstimate } from '@/lib/db/estimates';
 import {
   Sparkles,
   Upload,
@@ -69,6 +64,11 @@ export default function AIEstimateGenerator({
   const [images, setImages] = useState<AIImagePreview[]>([]);
   const [settings, setSettings] = useState<AIEstimateSettings | null>(null);
   const [showSettings, setShowSettings] = useState(false);
+  const [historicalDataInfo, setHistoricalDataInfo] = useState<{
+    confidence: number;
+    similarJobs: number;
+    totalRecords: number;
+  } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [formData, setFormData] = useState<AIEstimateRequest>({
@@ -89,7 +89,9 @@ export default function AIEstimateGenerator({
 
   const loadSettings = async () => {
     try {
-      const userSettings = await getAIEstimateSettings();
+      const response = await fetch('/api/ai-estimates');
+      if (!response.ok) throw new Error('Failed to fetch settings');
+      const userSettings = await response.json();
       setSettings(userSettings);
     } catch (error) {
       console.error('Failed to load AI settings:', error);
@@ -140,29 +142,35 @@ export default function AIEstimateGenerator({
 
     setIsGenerating(true);
     try {
-      if (!settings) {
-        await loadSettings();
-      }
-
-      const imageUrls = images.map((img) => img.preview);
+      if (!settings) await loadSettings();
 
       const request: AIEstimateRequest = {
         ...formData,
-        images: imageUrls,
+        images: images.map((img) => img.preview),
       };
 
-      const result = await generateAIEstimate({
-        settings: settings || {
-          ...getDefaultAIEstimateSettings(),
-          id: 'default',
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        },
-        request,
-        useVision: imageUrls.length > 0,
+      const response = await fetch('/api/ai-estimates', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(request),
       });
 
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to generate estimate');
+      }
+
+      const result: AIEstimateResult = await response.json();
       setGeneratedEstimate(result);
+
+      // Extract historical data info if present
+      if (result.historical_data_used) {
+        setHistoricalDataInfo({
+          confidence: result.historical_data_used.confidence || 0,
+          similarJobs: result.historical_data_used.similar_jobs_count || 0,
+          totalRecords: result.historical_data_used.total_records || 0,
+        });
+      }
 
       toast({
         title: 'Estimate Generated',
@@ -171,9 +179,11 @@ export default function AIEstimateGenerator({
       });
     } catch (error) {
       console.error('Failed to generate estimate:', error);
+      const errorMessage =
+        error instanceof Error ? error.message : 'Unknown error';
       toast({
         title: 'Generation Failed',
-        description: 'Failed to generate AI estimate. Please try again.',
+        description: `${errorMessage}. Please check your API key configuration.`,
         variant: 'destructive',
       });
     } finally {
@@ -206,7 +216,14 @@ export default function AIEstimateGenerator({
         notes: `AI-generated estimate with ${Math.round(generatedEstimate.analysis.confidence_score * 100)}% confidence. ${generatedEstimate.reasoning}`,
       };
 
-      const savedEstimate = await createEstimate(estimateData);
+      const response = await fetch('/api/estimates', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(estimateData),
+      });
+
+      if (!response.ok) throw new Error('Failed to save estimate');
+      const savedEstimate = await response.json();
 
       toast({
         title: 'Estimate Saved',
@@ -575,6 +592,26 @@ export default function AIEstimateGenerator({
                         % Confident
                       </Badge>
                     </div>
+
+                    {historicalDataInfo &&
+                      historicalDataInfo.confidence > 0.3 && (
+                        <div className="mb-3 p-2 bg-blue-50 border border-blue-200 rounded text-xs">
+                          <div className="flex items-center gap-2 text-blue-900">
+                            <Sparkles className="w-3 h-3" />
+                            <span className="font-semibold">
+                              AI learned from your past work!
+                            </span>
+                          </div>
+                          <div className="mt-1 text-blue-700">
+                            Based on {historicalDataInfo.totalRecords} past{' '}
+                            {historicalDataInfo.totalRecords === 1
+                              ? 'job'
+                              : 'jobs'}
+                            {historicalDataInfo.similarJobs > 0 &&
+                              ` (${historicalDataInfo.similarJobs} similar)`}
+                          </div>
+                        </div>
+                      )}
 
                     <div className="grid grid-cols-2 gap-3">
                       <div className="bg-white rounded p-3">

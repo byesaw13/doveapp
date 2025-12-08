@@ -5,6 +5,10 @@ import type {
   AIEstimateSettings,
   EstimateLineItem,
 } from '@/types/estimate';
+import {
+  analyzeHistoricalPricing,
+  type HistoricalPricingData,
+} from './historical-pricing-analysis';
 
 export interface EstimateGenerationOptions {
   settings: AIEstimateSettings;
@@ -28,8 +32,20 @@ export async function generateAIEstimate({
     throw new Error('OpenAI API key not configured');
   }
 
-  // Build the prompt based on request type
-  const prompt = buildEstimatePrompt(settings, request);
+  // Analyze historical pricing data to learn from past estimates/jobs
+  let historicalData: HistoricalPricingData | null = null;
+  try {
+    historicalData = await analyzeHistoricalPricing(request);
+    console.log('Historical pricing data loaded:', {
+      confidence: historicalData.confidence,
+      similarJobs: historicalData.similarJobs.length,
+    });
+  } catch (error) {
+    console.warn('Failed to load historical pricing data:', error);
+  }
+
+  // Build the prompt based on request type and historical data
+  const prompt = buildEstimatePrompt(settings, request, historicalData);
 
   let messages: any[] = [{ role: 'user', content: prompt }];
 
@@ -70,7 +86,18 @@ export async function generateAIEstimate({
   const aiResult = JSON.parse(content);
 
   // Apply business rules and settings to generate final estimate
-  return applyBusinessRules(aiResult, settings, request);
+  const result = applyBusinessRules(aiResult, settings, request);
+
+  // Add historical data info to result for UI display
+  if (historicalData && historicalData.confidence > 0) {
+    (result as any).historical_data_used = {
+      confidence: historicalData.confidence,
+      similar_jobs_count: historicalData.similarJobs.length,
+      total_records: historicalData.totalEstimates + historicalData.totalJobs,
+    };
+  }
+
+  return result;
 }
 
 /**
@@ -78,16 +105,48 @@ export async function generateAIEstimate({
  */
 function buildEstimatePrompt(
   settings: AIEstimateSettings,
-  request: AIEstimateRequest
+  request: AIEstimateRequest,
+  historicalData: HistoricalPricingData | null
 ): string {
   const serviceSpecificRates =
     settings.service_rates[
       request.service_type as keyof typeof settings.service_rates
     ] || settings.service_rates.general;
 
-  return `You are an expert estimator for a field service company specializing in ${request.service_type} services. Generate a detailed, accurate estimate based on the provided information.
+  // Build historical context section if data is available
+  let historicalContext = '';
+  if (historicalData && historicalData.confidence > 0.3) {
+    historicalContext = `
+HISTORICAL PRICING DATA FROM THIS BUSINESS:
+- Data Confidence: ${Math.round(historicalData.confidence * 100)}% (based on ${historicalData.totalEstimates} estimates and ${historicalData.totalJobs} completed jobs)
+- Actual Average Labor Rate: $${historicalData.avgLaborRate}/hour
+- Actual Average Material Markup: ${historicalData.avgMaterialMarkup}%
+- Actual Average Profit Margin: ${historicalData.avgProfitMargin}%
+- Actual Average Overhead: ${historicalData.avgOverhead}%
 
-BUSINESS CONTEXT:
+SIMILAR JOBS PREVIOUSLY COMPLETED:
+${historicalData.similarJobs
+  .map(
+    (
+      job,
+      i
+    ) => `${i + 1}. "${job.title}" (${Math.round(job.similarity * 100)}% similar)
+   Description: ${job.description}
+   Labor: ${job.laborHours} hours @ $${Math.round(job.laborCost / job.laborHours || 0)}/hour = $${job.laborCost}
+   Materials: $${job.materialsCost}
+   Total: $${job.total}`
+  )
+  .join('\n')}
+
+IMPORTANT: Use the historical pricing data above as your PRIMARY guide for this estimate. 
+The business context rates below are fallback defaults - prioritize the actual rates from past jobs.
+${historicalData.similarJobs.length > 0 ? 'Pay special attention to the similar jobs - they are the best indicators of realistic pricing for this type of work.' : ''}
+`;
+  }
+
+  return `You are an expert estimator for a field service company specializing in ${request.service_type} services. Generate a detailed, accurate estimate based on the provided information.
+${historicalContext}
+BUSINESS CONTEXT (Fallback Defaults):
 - Service Type: ${request.service_type}
 - Your hourly labor rate: $${settings.hourly_labor_rate}/hour
 - Your billable rate: $${settings.billable_hourly_rate}/hour

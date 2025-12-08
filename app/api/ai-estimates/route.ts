@@ -8,6 +8,20 @@ import type { AIEstimateRequest } from '@/types/estimate';
 
 export async function POST(request: NextRequest) {
   try {
+    // Check for OpenAI API key first
+    if (!process.env.OPENAI_API_KEY) {
+      console.error(
+        'OPENAI_API_KEY is not configured in environment variables'
+      );
+      return NextResponse.json(
+        {
+          error:
+            'OpenAI API key not configured. Please add OPENAI_API_KEY to your .env.local file.',
+        },
+        { status: 500 }
+      );
+    }
+
     const body = await request.json();
     const {
       description,
@@ -61,8 +75,15 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(result);
   } catch (error) {
     console.error('AI estimate generation failed:', error);
+
+    const errorMessage =
+      error instanceof Error ? error.message : 'Unknown error';
+
     return NextResponse.json(
-      { error: 'Failed to generate AI estimate' },
+      {
+        error: 'Failed to generate AI estimate',
+        details: errorMessage,
+      },
       { status: 500 }
     );
   }

@@ -255,4 +255,9 @@ export interface AIEstimateResult {
   };
   reasoning: string;
   suggestions: string[];
+  historical_data_used?: {
+    confidence: number;
+    similar_jobs_count: number;
+    total_records: number;
+  };
 }

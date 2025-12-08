@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -80,6 +81,7 @@ import estimateDisclaimers from '@/data/pricebook/estimate_disclaimers.json';
 
 export default function EstimatesPage() {
   const { toast } = useToast();
+  const router = useRouter();
   const [estimates, setEstimates] = useState<EstimateWithRelations[]>([]);
   const [stats, setStats] = useState<EstimateStats | null>(null);
   const [loading, setLoading] = useState(true);
@@ -343,13 +345,23 @@ export default function EstimatesPage() {
             : undefined,
         lead_id:
           data.lead_id && data.lead_id !== 'none' ? data.lead_id : undefined,
-        // Preserve pricebook fields in line items
-        line_items: data.line_items.map((item) => ({
-          ...item,
-          serviceId: item.serviceId,
-          materialCost: item.materialCost,
-          tier: item.tier,
-        })),
+        // Preserve pricebook fields in line items and update totals if pricebook calculation available
+        line_items: data.line_items.map((item, index) => {
+          const updatedItem: any = {
+            ...item,
+            serviceId: item.serviceId,
+            materialCost: item.materialCost,
+            tier: item.tier,
+          };
+
+          // Update total if pricebook calculation includes line item totals
+          if (pricebookCalculation?.lineItems?.[index]) {
+            updatedItem.total = pricebookCalculation.lineItems[index].lineTotal;
+            updatedItem.code = pricebookCalculation.lineItems[index].code;
+          }
+
+          return updatedItem;
+        }),
       };
 
       console.log('Updating estimate:', submitData);
@@ -529,13 +541,23 @@ export default function EstimatesPage() {
           data.lead_id && data.lead_id !== 'none' ? data.lead_id : undefined,
       };
 
-      // Preserve pricebook fields in line items
-      submitData.line_items = data.line_items.map((item) => ({
-        ...item,
-        serviceId: item.serviceId,
-        materialCost: item.materialCost,
-        tier: item.tier,
-      }));
+      // Preserve pricebook fields in line items and update totals if pricebook calculation available
+      submitData.line_items = data.line_items.map((item, index) => {
+        const updatedItem: any = {
+          ...item,
+          serviceId: item.serviceId,
+          materialCost: item.materialCost,
+          tier: item.tier,
+        };
+
+        // Update total if pricebook calculation includes line item totals
+        if (pricebookCalculation?.lineItems?.[index]) {
+          updatedItem.total = pricebookCalculation.lineItems[index].lineTotal;
+          updatedItem.code = pricebookCalculation.lineItems[index].code;
+        }
+
+        return updatedItem;
+      });
 
       console.log('Submitting estimate:', submitData);
 
@@ -992,6 +1014,19 @@ export default function EstimatesPage() {
                           Send Estimate
                         </Button>
                       )}
+                      {selectedEstimate.status === 'approved' &&
+                        selectedEstimate.converted_to_job_id && (
+                          <Button
+                            onClick={() =>
+                              router.push(
+                                `/jobs/${selectedEstimate.converted_to_job_id}`
+                              )
+                            }
+                            className="bg-green-600 hover:bg-green-700"
+                          >
+                            Go to Job
+                          </Button>
+                        )}
                       <Button
                         onClick={() =>
                           window.open(
@@ -1003,6 +1038,16 @@ export default function EstimatesPage() {
                       >
                         <FileText className="w-4 h-4 mr-2" />
                         Download PDF
+                      </Button>
+                      <Button
+                        onClick={() =>
+                          router.push(
+                            `/estimates/${selectedEstimate.id}/summary`
+                          )
+                        }
+                        variant="outline"
+                      >
+                        View Summary
                       </Button>
                       <Button
                         onClick={() => setEditingEstimate(selectedEstimate)}

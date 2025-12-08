@@ -1,4 +1,5 @@
 export type JobStatus =
+  | 'draft'
   | 'quote'
   | 'scheduled'
   | 'in_progress'
@@ -16,6 +17,9 @@ export interface JobLineItem {
   quantity: number;
   unit_price: number;
   total: number;
+  service_id?: number;
+  tier?: string;
+  line_total?: number;
   created_at: string;
 }
 
@@ -23,12 +27,15 @@ export interface Job {
   id: string;
   client_id: string;
   property_id?: string | null;
+  estimate_id?: string | null;
   job_number: string;
   title: string;
   description?: string | null;
   status: JobStatus;
   service_date?: string | null;
   scheduled_time?: string | null;
+  scheduled_for?: string | null;
+  technician_id?: string | null;
   subtotal: number;
   tax: number;
   total: number;

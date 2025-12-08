@@ -591,3 +591,57 @@ export async function createJobFromTemplate(
 
   return job;
 }
+
+/**
+ * Create a job from an approved estimate
+ */
+export async function createJobFromEstimate(estimateId: string): Promise<Job> {
+  // Import here to avoid circular dependency
+  const { getEstimate } = await import('./estimates');
+
+  const estimate = await getEstimate(estimateId);
+  if (!estimate) {
+    throw new Error('Estimate not found');
+  }
+
+  if (estimate.status !== 'approved') {
+    throw new Error('Estimate must be approved to create a job');
+  }
+
+  // Create job data
+  const jobData = {
+    client_id: estimate.client_id || '',
+    estimate_id: estimateId,
+    title: estimate.title,
+    description: estimate.description,
+    status: 'scheduled' as const,
+    subtotal: estimate.subtotal,
+    total: estimate.total,
+    notes: `Created from estimate ${estimate.estimate_number}`,
+  };
+
+  // Create line items from estimate line items
+  const lineItems = (estimate.line_items || []).map((item: any) => ({
+    description: item.description,
+    quantity: item.quantity,
+    unit_price: item.unit_price,
+    total: item.total,
+    item_type: 'labor' as const,
+    service_id: item.serviceId,
+    tier: item.tier,
+  }));
+
+  const job = await createJob(jobData, lineItems as any);
+
+  if (!job) {
+    throw new Error('Failed to create job from estimate');
+  }
+
+  // Update estimate with job reference
+  const { updateEstimate } = await import('./estimates');
+  await updateEstimate(estimateId, {
+    converted_to_job_id: job.id,
+  });
+
+  return job;
+}

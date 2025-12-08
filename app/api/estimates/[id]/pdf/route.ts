@@ -19,7 +19,7 @@ export async function GET(
     const pdfBuffer = await generateEstimatePdf({ estimateId });
 
     // Return PDF with proper headers
-    return new NextResponse(pdfBuffer, {
+    return new NextResponse(pdfBuffer as any, {
       status: 200,
       headers: {
         'Content-Type': 'application/pdf',

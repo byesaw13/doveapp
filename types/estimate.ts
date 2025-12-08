@@ -1,9 +1,9 @@
 // Estimate/Quote types
 export type EstimateStatus =
   | 'draft'
+  | 'pending'
   | 'sent'
-  | 'viewed'
-  | 'accepted'
+  | 'approved'
   | 'declined'
   | 'expired'
   | 'revised';
@@ -17,6 +17,10 @@ export interface EstimateLineItem {
   total: number;
   tax_rate?: number;
   discount?: number;
+  tier?: string;
+  serviceId?: number | string;
+  materialCost?: number;
+  code?: string;
 }
 
 export interface Estimate {
@@ -55,6 +59,11 @@ export interface Estimate {
   accepted_date?: string;
   declined_date?: string;
   decline_reason?: string;
+
+  // Approval/Decline Info
+  approval_info?: any;
+  decline_info?: any;
+  sent_history?: any[];
 
   // Conversion
   converted_to_job_id?: string;

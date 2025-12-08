@@ -48,6 +48,12 @@ import {
 } from '@/lib/validations/estimate';
 import { sendEstimate } from '@/lib/db/estimates';
 import { getPendingTasks } from '@/lib/db/activities';
+import AIEstimateGenerator from '@/components/ai-estimate-generator';
+import {
+  reviewEstimateWithAI,
+  quickEstimateValidation,
+} from '@/lib/ai/estimate-review';
+import type { EstimateReviewResult } from '@/lib/ai/estimate-review';
 import {
   Plus,
   Search,
@@ -64,6 +70,9 @@ import {
   Trash2,
   Edit,
   Minus,
+  Sparkles,
+  Loader2,
+  AlertCircle,
 } from 'lucide-react';
 import { format } from 'date-fns';
 
@@ -83,6 +92,9 @@ export default function EstimatesPage() {
   const [clients, setClients] = useState<any[]>([]);
   const [leads, setLeads] = useState<any[]>([]);
   const [pendingTasks, setPendingTasks] = useState<any[]>([]);
+  const [aiReview, setAiReview] = useState<EstimateReviewResult | null>(null);
+  const [isReviewing, setIsReviewing] = useState(false);
+  const [showReview, setShowReview] = useState(false);
 
   const form = useForm<EstimateFormData>({
     resolver: zodResolver(estimateSchema) as any,
@@ -248,6 +260,169 @@ export default function EstimatesPage() {
     }
   };
 
+  const handleUpdateEstimate = async (data: EstimateFormData) => {
+    if (!editingEstimate) return;
+
+    setIsSubmitting(true);
+    try {
+      // Validate client or lead is selected
+      if (
+        (!data.client_id || data.client_id === 'none') &&
+        (!data.lead_id || data.lead_id === 'none')
+      ) {
+        toast({
+          title: 'Validation Error',
+          description: 'Please select either a client or a lead',
+          variant: 'destructive',
+        });
+        setIsSubmitting(false);
+        return;
+      }
+
+      // Calculate totals
+      const subtotal = data.line_items.reduce(
+        (sum, item) => sum + item.quantity * item.unit_price,
+        0
+      );
+      const tax_amount = subtotal * (data.tax_rate / 100);
+      const total = subtotal + tax_amount - (data.discount_amount || 0);
+
+      const submitData = {
+        ...data,
+        subtotal,
+        tax_amount,
+        total,
+        client_id:
+          data.client_id && data.client_id !== 'none'
+            ? data.client_id
+            : undefined,
+        lead_id:
+          data.lead_id && data.lead_id !== 'none' ? data.lead_id : undefined,
+      };
+
+      console.log('Updating estimate:', submitData);
+
+      const response = await fetch(`/api/estimates/${editingEstimate.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(submitData),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error('API error:', errorData);
+        throw new Error(errorData.error || 'Failed to update estimate');
+      }
+
+      const estimate = await response.json();
+
+      setEstimates((prev) =>
+        Array.isArray(prev)
+          ? prev.map((e) => (e.id === estimate.id ? estimate : e))
+          : [estimate]
+      );
+
+      setShowNewDialog(false);
+      setEditingEstimate(null);
+      form.reset();
+      toast({
+        title: 'Success',
+        description: 'Estimate updated successfully',
+      });
+      loadStats();
+    } catch (error) {
+      console.error('Failed to update estimate:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to update estimate',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleAIReview = async () => {
+    setIsReviewing(true);
+    setShowReview(true);
+
+    try {
+      const lineItems = form.watch('line_items');
+      const taxRate = form.watch('tax_rate') || 0;
+      const title = form.watch('title');
+      const description = form.watch('description') || '';
+
+      const subtotal = lineItems.reduce(
+        (sum, item) => sum + item.quantity * item.unit_price,
+        0
+      );
+      const tax = subtotal * (taxRate / 100);
+      const total = subtotal + tax;
+
+      // Quick validation first
+      const validation = quickEstimateValidation({
+        title,
+        description,
+        service_type: 'general',
+        line_items: lineItems.map((item, idx) => ({
+          id: `item-${idx}`,
+          description: item.description,
+          quantity: item.quantity,
+          unit_price: item.unit_price,
+          unit: item.unit || 'each',
+          total: item.quantity * item.unit_price,
+        })),
+        subtotal,
+        tax_rate: taxRate,
+        total,
+      });
+
+      if (validation.errors.length > 0) {
+        toast({
+          title: 'Validation Errors',
+          description: validation.errors.join(', '),
+          variant: 'destructive',
+        });
+        setIsReviewing(false);
+        return;
+      }
+
+      // Get AI review
+      const review = await reviewEstimateWithAI({
+        title,
+        description,
+        service_type: 'general',
+        line_items: lineItems.map((item, idx) => ({
+          id: `item-${idx}`,
+          description: item.description,
+          quantity: item.quantity,
+          unit_price: item.unit_price,
+          unit: item.unit || 'each',
+          total: item.quantity * item.unit_price,
+        })),
+        subtotal,
+        tax_rate: taxRate,
+        total,
+      });
+
+      setAiReview(review);
+
+      toast({
+        title: 'Review Complete',
+        description: `AI assessment: ${review.overall_assessment}`,
+      });
+    } catch (error) {
+      console.error('Failed to review estimate:', error);
+      toast({
+        title: 'Review Failed',
+        description: 'Failed to get AI review. Please try again.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsReviewing(false);
+    }
+  };
+
   const handleCreateEstimate = async (data: EstimateFormData) => {
     setIsSubmitting(true);
     try {
@@ -288,13 +463,8 @@ export default function EstimatesPage() {
 
       console.log('Submitting estimate:', submitData);
 
-      const url = editingEstimate
-        ? `/api/estimates/${editingEstimate.id}`
-        : '/api/estimates';
-      const method = editingEstimate ? 'PUT' : 'POST';
-
-      const response = await fetch(url, {
-        method,
+      const response = await fetch('/api/estimates', {
+        method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(submitData),
       });
@@ -307,26 +477,17 @@ export default function EstimatesPage() {
 
       const estimate = await response.json();
 
-      if (editingEstimate) {
-        setEstimates((prev) =>
-          Array.isArray(prev)
-            ? prev.map((e) => (e.id === estimate.id ? estimate : e))
-            : [estimate]
-        );
-      } else {
-        setEstimates((prev) =>
-          Array.isArray(prev) ? [estimate, ...prev] : [estimate]
-        );
-      }
+      setEstimates((prev) =>
+        Array.isArray(prev) ? [estimate, ...prev] : [estimate]
+      );
 
       setShowNewDialog(false);
-      setEditingEstimate(null);
+      setAiReview(null);
+      setShowReview(false);
       form.reset();
       toast({
         title: 'Success',
-        description: editingEstimate
-          ? 'Estimate updated successfully'
-          : 'Estimate created successfully',
+        description: 'Estimate created successfully',
       });
       loadStats();
     } catch (error) {
@@ -515,12 +676,13 @@ export default function EstimatesPage() {
               </p>
             </div>
             <div className="flex gap-3">
+              <AIEstimateGenerator onEstimateCreated={loadEstimates} />
               <button
                 onClick={() => setShowNewDialog(true)}
                 className="px-4 py-2 bg-white text-emerald-700 font-semibold rounded-lg shadow-md hover:shadow-lg transition-all duration-200 hover:-translate-y-0.5"
               >
                 <Plus className="w-4 h-4 mr-2" />
-                New Estimate
+                Manual Estimate
               </button>
             </div>
           </div>
@@ -1117,18 +1279,205 @@ export default function EstimatesPage() {
                 )}
               />
 
-              <div className="flex justify-end gap-3">
+              <div className="flex justify-between gap-3">
                 <Button
                   type="button"
                   variant="outline"
-                  onClick={() => setShowNewDialog(false)}
+                  onClick={handleAIReview}
+                  disabled={isReviewing}
+                  className="border-purple-300 text-purple-700 hover:bg-purple-50"
                 >
-                  Cancel
+                  {isReviewing ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Reviewing...
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="w-4 h-4 mr-2" />
+                      AI Review
+                    </>
+                  )}
                 </Button>
-                <Button type="submit" disabled={isSubmitting}>
-                  {isSubmitting ? 'Creating...' : 'Create Estimate'}
-                </Button>
+
+                <div className="flex gap-3">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => {
+                      setShowNewDialog(false);
+                      setAiReview(null);
+                      setShowReview(false);
+                    }}
+                  >
+                    Cancel
+                  </Button>
+                  <Button type="submit" disabled={isSubmitting}>
+                    {isSubmitting ? 'Creating...' : 'Create Estimate'}
+                  </Button>
+                </div>
               </div>
+
+              {/* AI Review Panel */}
+              {showReview && aiReview && (
+                <div className="mt-6 border-t border-slate-200 pt-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-lg font-bold text-slate-900">
+                      AI Review Results
+                    </h3>
+                    <Badge
+                      className={
+                        aiReview.overall_assessment === 'excellent'
+                          ? 'bg-green-600'
+                          : aiReview.overall_assessment === 'good'
+                            ? 'bg-blue-600'
+                            : aiReview.overall_assessment === 'fair'
+                              ? 'bg-yellow-600'
+                              : 'bg-red-600'
+                      }
+                    >
+                      {aiReview.overall_assessment.toUpperCase()}
+                    </Badge>
+                  </div>
+
+                  {/* Warnings */}
+                  {aiReview.warnings.length > 0 && (
+                    <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
+                      <h4 className="font-semibold text-red-900 mb-2 flex items-center gap-2">
+                        <AlertCircle className="w-4 h-4" />
+                        Warnings
+                      </h4>
+                      <ul className="space-y-1">
+                        {aiReview.warnings.map((warning, idx) => (
+                          <li
+                            key={idx}
+                            className="text-sm text-red-800 flex items-start gap-2"
+                          >
+                            <span>•</span>
+                            <span>{warning}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  {/* Suggestions */}
+                  {aiReview.suggestions.length > 0 && (
+                    <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                      <h4 className="font-semibold text-blue-900 mb-2">
+                        Suggestions
+                      </h4>
+                      <ul className="space-y-1">
+                        {aiReview.suggestions.map((suggestion, idx) => (
+                          <li
+                            key={idx}
+                            className="text-sm text-blue-800 flex items-start gap-2"
+                          >
+                            <span>•</span>
+                            <span>{suggestion}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  {/* Pricing Analysis */}
+                  <div className="mb-4 p-4 bg-slate-50 border border-slate-200 rounded-lg">
+                    <h4 className="font-semibold text-slate-900 mb-3">
+                      Pricing Analysis
+                    </h4>
+                    <div className="space-y-2 text-sm">
+                      <div className="flex justify-between">
+                        <span className="text-slate-600">
+                          Market Comparison:
+                        </span>
+                        <Badge
+                          variant="outline"
+                          className={
+                            aiReview.pricing_analysis.market_comparison ===
+                            'above_market'
+                              ? 'border-orange-500 text-orange-700'
+                              : aiReview.pricing_analysis.market_comparison ===
+                                  'below_market'
+                                ? 'border-blue-500 text-blue-700'
+                                : 'border-green-500 text-green-700'
+                          }
+                        >
+                          {aiReview.pricing_analysis.market_comparison.replace(
+                            '_',
+                            ' '
+                          )}
+                        </Badge>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-slate-600">Competitive:</span>
+                        <span className="font-medium">
+                          {aiReview.pricing_analysis.is_competitive
+                            ? 'Yes'
+                            : 'No'}
+                        </span>
+                      </div>
+                      {aiReview.recommended_total &&
+                        aiReview.recommended_total !==
+                          aiReview.total_estimate && (
+                          <div className="flex justify-between pt-2 border-t border-slate-200">
+                            <span className="text-slate-600">
+                              Recommended Total:
+                            </span>
+                            <span className="font-bold text-emerald-600">
+                              ${aiReview.recommended_total.toLocaleString()}
+                            </span>
+                          </div>
+                        )}
+                    </div>
+                  </div>
+
+                  {/* Profitability */}
+                  <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-lg">
+                    <h4 className="font-semibold text-emerald-900 mb-3">
+                      Profitability Analysis
+                    </h4>
+                    <div className="space-y-2 text-sm">
+                      <div className="flex justify-between">
+                        <span className="text-emerald-800">
+                          Estimated Profit Margin:
+                        </span>
+                        <span className="font-bold text-emerald-900">
+                          {
+                            aiReview.profitability_analysis
+                              .estimated_profit_margin
+                          }
+                          %
+                        </span>
+                      </div>
+                      <p className="text-emerald-800 mt-2">
+                        {aiReview.profitability_analysis.break_even_analysis}
+                      </p>
+                      {aiReview.profitability_analysis.risk_factors.length >
+                        0 && (
+                        <div className="mt-3 pt-3 border-t border-emerald-200">
+                          <span className="font-medium text-emerald-900">
+                            Risk Factors:
+                          </span>
+                          <ul className="mt-1 space-y-1">
+                            {aiReview.profitability_analysis.risk_factors.map(
+                              (risk, idx) => (
+                                <li
+                                  key={idx}
+                                  className="text-emerald-800 flex items-start gap-2"
+                                >
+                                  <span>•</span>
+                                  <span>{risk}</span>
+                                </li>
+                              )
+                            )}
+                          </ul>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
             </form>
           </Form>
         </DialogContent>
@@ -1148,26 +1497,19 @@ export default function EstimatesPage() {
           </DialogHeader>
 
           {editingEstimate && (
-            <Form {...form}>
-              <form
-                onSubmit={form.handleSubmit(handleUpdateEstimate)}
-                className="space-y-6"
+            <div className="p-6 text-center text-slate-600">
+              <p>
+                Edit functionality coming soon. Please delete and recreate the
+                estimate.
+              </p>
+              <Button
+                className="mt-4"
+                variant="outline"
+                onClick={() => setEditingEstimate(null)}
               >
-                {/* Similar form fields as create dialog */}
-                <div className="flex justify-end gap-3">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => setEditingEstimate(null)}
-                  >
-                    Cancel
-                  </Button>
-                  <Button type="submit" disabled={isSubmitting}>
-                    {isSubmitting ? 'Updating...' : 'Update Estimate'}
-                  </Button>
-                </div>
-              </form>
-            </Form>
+                Close
+              </Button>
+            </div>
           )}
         </DialogContent>
       </Dialog>

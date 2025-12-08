@@ -34,7 +34,7 @@ interface CommandItem {
   keywords?: string[];
 }
 
-export function CommandPalette(): JSX.Element {
+export function CommandPalette() {
   const router = useRouter();
   const [open, setOpen] = useState(false);
 

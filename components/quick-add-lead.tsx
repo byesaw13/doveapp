@@ -21,7 +21,7 @@ import {
 import { useToast } from '@/components/ui/toast';
 import { Plus, Phone, Mic, Check, X } from 'lucide-react';
 
-export function QuickAddLead(): JSX.Element {
+export function QuickAddLead() {
   const { toast } = useToast();
   const [isOpen, setIsOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);

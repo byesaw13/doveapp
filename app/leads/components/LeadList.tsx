@@ -55,9 +55,7 @@ interface LeadListProps {
   onStatsUpdate?: () => void;
 }
 
-export default function LeadListContent({
-  onStatsUpdate,
-}: LeadListProps): JSX.Element {
+export default function LeadListContent({ onStatsUpdate }: LeadListProps) {
   const { toast } = useToast();
   const [leads, setLeads] = useState<Lead[]>([]);
   const [loading, setLoading] = useState(true);

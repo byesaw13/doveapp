@@ -81,8 +81,9 @@ function buildEstimatePrompt(
   request: AIEstimateRequest
 ): string {
   const serviceSpecificRates =
-    settings.service_rates[request.service_type] ||
-    settings.service_rates.general;
+    settings.service_rates[
+      request.service_type as keyof typeof settings.service_rates
+    ] || settings.service_rates.general;
 
   return `You are an expert estimator for a field service company specializing in ${request.service_type} services. Generate a detailed, accurate estimate based on the provided information.
 

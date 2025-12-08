@@ -1,10 +1,13 @@
 import { z } from 'zod';
 
 export const estimateLineItemSchema = z.object({
+  serviceId: z.union([z.number(), z.string()]).optional(), // For pricebook integration
   description: z.string().min(1, 'Description is required'),
   quantity: z.number().min(0.01, 'Quantity must be greater than 0'),
   unit_price: z.number().min(0, 'Unit price must be positive'),
   unit: z.string().optional(),
+  materialCost: z.number().min(0).optional(), // For pricebook integration
+  tier: z.enum(['basic', 'standard', 'premium']).optional(), // For pricebook integration
 });
 
 export const estimateSchema = z

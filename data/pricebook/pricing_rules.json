@@ -1,0 +1,43 @@
+{
+  "labor_rate": 85,
+  "material_markup": 0.18,
+  "minimum_job_total": 150,
+  "tiers": {
+    "core": {
+      "label": "Core",
+      "target_net_margin_range": [0.25, 0.35]
+    },
+    "standard": {
+      "label": "Standard",
+      "target_net_margin_range": [0.2, 0.3]
+    },
+    "specialty": {
+      "label": "Specialty",
+      "target_net_margin_range": [0.15, 0.25]
+    }
+  },
+  "ui_tier_display_order": ["core", "standard", "specialty"],
+  "multipliers": {
+    "basic": 0.9,
+    "standard": 1.0,
+    "premium": 1.15
+  },
+  "defaults": {
+    "tier": "standard",
+    "apply_minimum_job_total": true,
+    "round_to_nearest_dollar": true
+  },
+  "risk_multipliers": {
+    "low": 1.0,
+    "medium": 1.1,
+    "high": 1.2
+  },
+  "flat_rate_safety_mode": {
+    "current": "medium",
+    "multipliers": {
+      "low": 1.0,
+      "medium": 1.03,
+      "high": 1.06
+    }
+  }
+}

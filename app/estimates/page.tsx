@@ -54,6 +54,7 @@ import {
   quickEstimateValidation,
 } from '@/lib/ai/estimate-review';
 import type { EstimateReviewResult } from '@/lib/ai/estimate-review';
+import SKUPicker from '@/components/estimates/SKUPicker';
 import {
   Plus,
   Search,
@@ -75,6 +76,7 @@ import {
   AlertCircle,
 } from 'lucide-react';
 import { format } from 'date-fns';
+import estimateDisclaimers from '@/data/pricebook/estimate_disclaimers.json';
 
 export default function EstimatesPage() {
   const { toast } = useToast();
@@ -96,6 +98,14 @@ export default function EstimatesPage() {
   const [isReviewing, setIsReviewing] = useState(false);
   const [showReview, setShowReview] = useState(false);
 
+  // Pricebook integration
+  const [showSKUPicker, setShowSKUPicker] = useState(false);
+  const [pricebookCalculation, setPricebookCalculation] = useState<any>(null);
+  const [calculating, setCalculating] = useState(false);
+
+  // Business settings
+  const [businessSettings, setBusinessSettings] = useState<any>(null);
+
   const form = useForm<EstimateFormData>({
     resolver: zodResolver(estimateSchema) as any,
     defaultValues: {
@@ -103,7 +113,16 @@ export default function EstimatesPage() {
       lead_id: '',
       title: '',
       description: '',
-      line_items: [{ description: '', quantity: 1, unit_price: 0, unit: '' }],
+      line_items: [
+        {
+          description: '',
+          quantity: 1,
+          unit_price: 0,
+          unit: '',
+          materialCost: 0,
+          tier: 'standard',
+        },
+      ],
       tax_rate: 0,
       discount_amount: 0,
       valid_until: '',
@@ -124,6 +143,7 @@ export default function EstimatesPage() {
     loadClients();
     loadLeads();
     loadPendingTasks();
+    loadBusinessSettings();
     checkForLeadData();
   }, []);
 
@@ -223,6 +243,20 @@ export default function EstimatesPage() {
     }
   };
 
+  const loadBusinessSettings = async () => {
+    try {
+      const response = await fetch('/api/settings');
+      if (response.ok) {
+        const settings = await response.json();
+        setBusinessSettings(settings);
+        // Update form default tax rate
+        form.setValue('tax_rate', settings.default_tax_rate || 0);
+      }
+    } catch (error) {
+      console.error('Failed to load business settings:', error);
+    }
+  };
+
   const handleSearch = async () => {
     if (!searchQuery.trim()) {
       loadEstimates();
@@ -279,13 +313,24 @@ export default function EstimatesPage() {
         return;
       }
 
-      // Calculate totals
-      const subtotal = data.line_items.reduce(
+      // Calculate totals - prefer pricebook calculation if available
+      let subtotal = data.line_items.reduce(
         (sum, item) => sum + item.quantity * item.unit_price,
         0
       );
-      const tax_amount = subtotal * (data.tax_rate / 100);
-      const total = subtotal + tax_amount - (data.discount_amount || 0);
+      let total = subtotal;
+      let tax_amount = 0;
+
+      if (pricebookCalculation) {
+        // Use pricebook-adjusted total
+        subtotal = pricebookCalculation.subtotal;
+        total = pricebookCalculation.adjustedTotal;
+        tax_amount = 0; // Pricebook handles its own adjustments
+      } else {
+        // Fallback to manual calculation
+        tax_amount = subtotal * (data.tax_rate / 100);
+        total = subtotal + tax_amount - (data.discount_amount || 0);
+      }
 
       const submitData = {
         ...data,
@@ -298,6 +343,13 @@ export default function EstimatesPage() {
             : undefined,
         lead_id:
           data.lead_id && data.lead_id !== 'none' ? data.lead_id : undefined,
+        // Preserve pricebook fields in line items
+        line_items: data.line_items.map((item) => ({
+          ...item,
+          serviceId: item.serviceId,
+          materialCost: item.materialCost,
+          tier: item.tier,
+        })),
       };
 
       console.log('Updating estimate:', submitData);
@@ -352,12 +404,17 @@ export default function EstimatesPage() {
       const title = form.watch('title');
       const description = form.watch('description') || '';
 
-      const subtotal = lineItems.reduce(
+      // Use pricebook calculation if available, otherwise manual calculation
+      let subtotal = lineItems.reduce(
         (sum, item) => sum + item.quantity * item.unit_price,
         0
       );
-      const tax = subtotal * (taxRate / 100);
-      const total = subtotal + tax;
+      let total = subtotal + subtotal * (taxRate / 100);
+
+      if (pricebookCalculation) {
+        subtotal = pricebookCalculation.subtotal;
+        total = pricebookCalculation.adjustedTotal;
+      }
 
       // Quick validation first
       const validation = quickEstimateValidation({
@@ -440,13 +497,24 @@ export default function EstimatesPage() {
         return;
       }
 
-      // Calculate totals
-      const subtotal = data.line_items.reduce(
+      // Calculate totals - prefer pricebook calculation if available
+      let subtotal = data.line_items.reduce(
         (sum, item) => sum + item.quantity * item.unit_price,
         0
       );
-      const tax_amount = subtotal * (data.tax_rate / 100);
-      const total = subtotal + tax_amount - (data.discount_amount || 0);
+      let total = subtotal;
+      let tax_amount = 0;
+
+      if (pricebookCalculation) {
+        // Use pricebook-adjusted total
+        subtotal = pricebookCalculation.subtotal;
+        total = pricebookCalculation.adjustedTotal;
+        tax_amount = 0; // Pricebook handles its own adjustments
+      } else {
+        // Fallback to manual calculation
+        tax_amount = subtotal * (data.tax_rate / 100);
+        total = subtotal + tax_amount - (data.discount_amount || 0);
+      }
 
       const submitData = {
         ...data,
@@ -460,6 +528,14 @@ export default function EstimatesPage() {
         lead_id:
           data.lead_id && data.lead_id !== 'none' ? data.lead_id : undefined,
       };
+
+      // Preserve pricebook fields in line items
+      submitData.line_items = data.line_items.map((item) => ({
+        ...item,
+        serviceId: item.serviceId,
+        materialCost: item.materialCost,
+        tier: item.tier,
+      }));
 
       console.log('Submitting estimate:', submitData);
 
@@ -564,17 +640,41 @@ export default function EstimatesPage() {
 
   const handleEditEstimate = (estimate: EstimateWithRelations) => {
     setEditingEstimate(estimate);
+
+    // Handle backwards compatibility: convert old line items to new format
+    const convertedLineItems = (estimate.line_items || []).map((item: any) => ({
+      serviceId: item.serviceId || undefined, // May not exist in old estimates
+      description: item.description || '',
+      quantity: item.quantity || 1,
+      unit_price: item.unit_price || item.price || 0, // Handle legacy 'price' field
+      unit: item.unit || 'ea',
+      materialCost: item.materialCost || 0,
+      tier: item.tier || 'standard', // Default to standard for backwards compatibility
+    }));
+
     form.reset({
       client_id: estimate.client_id || '',
       lead_id: estimate.lead_id || '',
       title: estimate.title,
       description: estimate.description || '',
-      line_items: estimate.line_items || [
-        { description: '', quantity: 1, unit_price: 0, unit: '' },
-      ],
-      tax_rate: estimate.tax_rate,
+      line_items:
+        convertedLineItems.length > 0
+          ? convertedLineItems
+          : [
+              {
+                description: '',
+                quantity: 1,
+                unit_price: 0,
+                unit: '',
+                materialCost: 0,
+                tier: 'standard',
+              },
+            ],
+      tax_rate: estimate.tax_rate || 0,
       discount_amount: estimate.discount_amount || 0,
-      valid_until: estimate.valid_until.split('T')[0],
+      valid_until: estimate.valid_until
+        ? estimate.valid_until.split('T')[0]
+        : '',
       payment_terms: estimate.payment_terms || '',
       terms_and_conditions: estimate.terms_and_conditions || '',
       status: estimate.status,
@@ -598,6 +698,60 @@ export default function EstimatesPage() {
     const tax = subtotal * (taxRate / 100);
     return subtotal + tax - discount;
   };
+
+  // Pricebook integration functions
+  const handleSelectSKU = (sku: any) => {
+    append({
+      serviceId: sku.id,
+      description: sku.name,
+      quantity: 1,
+      unit_price: sku.standard_price,
+      unit: 'ea',
+      materialCost: 0,
+      tier: 'standard',
+    });
+  };
+
+  const calculatePricebookEstimate = async () => {
+    const lineItems = form.watch('line_items');
+    if (!lineItems || lineItems.length === 0) {
+      setPricebookCalculation(null);
+      return;
+    }
+
+    setCalculating(true);
+    try {
+      const pricebookLineItems = lineItems.map((item: any) => ({
+        id: item.serviceId || item.description, // Fallback for backwards compatibility
+        quantity: item.quantity || 1,
+        materialCost: item.materialCost || 0,
+        tier: item.tier || 'standard',
+      }));
+
+      const response = await fetch('/api/estimate/pricebook', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ lineItems: pricebookLineItems }),
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        setPricebookCalculation(result);
+      }
+    } catch (error) {
+      console.error('Pricebook calculation failed:', error);
+    } finally {
+      setCalculating(false);
+    }
+  };
+
+  // Watch for changes to trigger real-time calculation
+  useEffect(() => {
+    const subscription = form.watch(() => {
+      calculatePricebookEstimate();
+    });
+    return () => subscription.unsubscribe();
+  }, []);
 
   const formatDateTime = (dateString: string) => {
     return new Date(dateString).toLocaleString();
@@ -839,6 +993,18 @@ export default function EstimatesPage() {
                         </Button>
                       )}
                       <Button
+                        onClick={() =>
+                          window.open(
+                            `/api/estimates/${selectedEstimate.id}/pdf`,
+                            '_blank'
+                          )
+                        }
+                        variant="outline"
+                      >
+                        <FileText className="w-4 h-4 mr-2" />
+                        Download PDF
+                      </Button>
+                      <Button
                         onClick={() => setEditingEstimate(selectedEstimate)}
                         variant="outline"
                       >
@@ -920,6 +1086,38 @@ export default function EstimatesPage() {
                       <p>No line items found</p>
                     </div>
                   )}
+
+                  {/* Disclaimers Section */}
+                  <div className="mt-6 px-6 pb-6">
+                    <h3 className="text-lg font-bold text-slate-900 mb-4">
+                      Standard Terms & Conditions
+                    </h3>
+                    <div className="bg-slate-50 p-4 rounded-lg border border-slate-200">
+                      <ul className="space-y-2 text-sm text-slate-700">
+                        {estimateDisclaimers.lines.map((line, index) => (
+                          <li key={index} className="flex items-start gap-2">
+                            <span className="text-slate-500 mt-1">•</span>
+                            <span>{line}</span>
+                          </li>
+                        ))}
+                      </ul>
+                      {selectedEstimate.created_at && (
+                        <div className="mt-4 pt-3 border-t border-slate-200">
+                          <p className="text-sm text-slate-600">
+                            <strong>This estimate is valid until:</strong>{' '}
+                            {new Date(
+                              new Date(selectedEstimate.created_at).getTime() +
+                                estimateDisclaimers.validity_days *
+                                  24 *
+                                  60 *
+                                  60 *
+                                  1000
+                            ).toLocaleDateString()}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
                 </div>
               </div>
             ) : (
@@ -1052,172 +1250,259 @@ export default function EstimatesPage() {
               <div>
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-lg font-medium">Line Items</h3>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() =>
-                      append({
-                        description: '',
-                        quantity: 1,
-                        unit_price: 0,
-                        unit: '',
-                      })
-                    }
-                  >
-                    <Plus className="w-4 h-4 mr-2" />
-                    Add Item
-                  </Button>
+                  <div className="flex gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setShowSKUPicker(true)}
+                    >
+                      <Plus className="w-4 h-4 mr-2" />
+                      Add from Pricebook
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() =>
+                        append({
+                          description: '',
+                          quantity: 1,
+                          unit_price: 0,
+                          unit: '',
+                          materialCost: 0,
+                          tier: 'standard',
+                        })
+                      }
+                    >
+                      <Plus className="w-4 h-4 mr-2" />
+                      Manual Item
+                    </Button>
+                  </div>
                 </div>
 
                 <div className="space-y-4">
                   {fields.map((field, index) => (
                     <div
                       key={field.id}
-                      className="grid grid-cols-12 gap-4 items-end"
+                      className="border rounded-lg p-4 space-y-4"
                     >
-                      <div className="col-span-4">
-                        <FormField
-                          control={form.control}
-                          name={`line_items.${index}.description`}
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Description</FormLabel>
-                              <FormControl>
-                                <Input
-                                  placeholder="Item description"
-                                  {...field}
-                                />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
+                      <div className="grid grid-cols-12 gap-4 items-end">
+                        <div className="col-span-4">
+                          <FormField
+                            control={form.control}
+                            name={`line_items.${index}.description`}
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Description</FormLabel>
+                                <FormControl>
+                                  <Input
+                                    placeholder="Item description"
+                                    {...field}
+                                  />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        </div>
+
+                        <div className="col-span-2">
+                          <FormField
+                            control={form.control}
+                            name={`line_items.${index}.quantity`}
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Qty</FormLabel>
+                                <FormControl>
+                                  <Input
+                                    type="number"
+                                    min="1"
+                                    {...field}
+                                    onChange={(e) =>
+                                      field.onChange(
+                                        parseFloat(e.target.value) || 1
+                                      )
+                                    }
+                                  />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        </div>
+
+                        <div className="col-span-2">
+                          <FormField
+                            control={form.control}
+                            name={`line_items.${index}.materialCost`}
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Material Cost</FormLabel>
+                                <FormControl>
+                                  <Input
+                                    type="number"
+                                    step="0.01"
+                                    min="0"
+                                    {...field}
+                                    onChange={(e) =>
+                                      field.onChange(
+                                        parseFloat(e.target.value) || 0
+                                      )
+                                    }
+                                  />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        </div>
+
+                        <div className="col-span-2">
+                          <FormField
+                            control={form.control}
+                            name={`line_items.${index}.tier`}
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Tier</FormLabel>
+                                <Select
+                                  onValueChange={field.onChange}
+                                  value={field.value}
+                                >
+                                  <FormControl>
+                                    <SelectTrigger>
+                                      <SelectValue />
+                                    </SelectTrigger>
+                                  </FormControl>
+                                  <SelectContent>
+                                    <SelectItem value="basic">
+                                      Basic (0.9x)
+                                    </SelectItem>
+                                    <SelectItem value="standard">
+                                      Standard (1.0x)
+                                    </SelectItem>
+                                    <SelectItem value="premium">
+                                      Premium (1.15x)
+                                    </SelectItem>
+                                  </SelectContent>
+                                </Select>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        </div>
+
+                        <div className="col-span-1">
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => remove(index)}
+                            disabled={fields.length === 1}
+                          >
+                            <Minus className="w-4 h-4" />
+                          </Button>
+                        </div>
                       </div>
 
-                      <div className="col-span-2">
-                        <FormField
-                          control={form.control}
-                          name={`line_items.${index}.quantity`}
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Qty</FormLabel>
-                              <FormControl>
-                                <Input
-                                  type="number"
-                                  min="1"
-                                  {...field}
-                                  onChange={(e) =>
-                                    field.onChange(
-                                      parseFloat(e.target.value) || 0
-                                    )
-                                  }
-                                />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                      </div>
-
-                      <div className="col-span-2">
-                        <FormField
-                          control={form.control}
-                          name={`line_items.${index}.unit_price`}
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Unit Price</FormLabel>
-                              <FormControl>
-                                <Input
-                                  type="number"
-                                  step="0.01"
-                                  min="0"
-                                  {...field}
-                                  onChange={(e) =>
-                                    field.onChange(
-                                      parseFloat(e.target.value) || 0
-                                    )
-                                  }
-                                />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                      </div>
-
-                      <div className="col-span-2">
-                        <FormField
-                          control={form.control}
-                          name={`line_items.${index}.unit`}
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Unit</FormLabel>
-                              <FormControl>
-                                <Input placeholder="ea" {...field} />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                      </div>
-
-                      <div className="col-span-1">
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          onClick={() => remove(index)}
-                          disabled={fields.length === 1}
-                        >
-                          <Minus className="w-4 h-4" />
-                        </Button>
-                      </div>
+                      {/* Display calculated values */}
+                      {pricebookCalculation?.lineItems?.[index] && (
+                        <div className="bg-gray-50 p-3 rounded text-sm">
+                          <div className="grid grid-cols-3 gap-4">
+                            <div>
+                              <span className="font-medium">Labor:</span> $
+                              {
+                                pricebookCalculation.lineItems[index]
+                                  .laborPortion
+                              }
+                            </div>
+                            <div>
+                              <span className="font-medium">Materials:</span> $
+                              {
+                                pricebookCalculation.lineItems[index]
+                                  .materialsPortion
+                              }
+                            </div>
+                            <div>
+                              <span className="font-medium">Line Total:</span> $
+                              {pricebookCalculation.lineItems[index].lineTotal}
+                            </div>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>
               </div>
 
               {/* Totals */}
-              <div className="grid grid-cols-3 gap-4 p-4 bg-gray-50 rounded-lg">
-                <div>
-                  <label className="text-sm font-medium text-gray-700">
-                    Subtotal
-                  </label>
-                  <div className="text-lg font-semibold">
-                    ${calculateSubtotal().toFixed(2)}
+              <div className="p-4 bg-gray-50 rounded-lg space-y-4">
+                {pricebookCalculation && (
+                  <div className="grid grid-cols-2 gap-4 p-3 bg-white rounded border">
+                    <div>
+                      <label className="text-sm font-medium text-gray-700">
+                        Pricebook Subtotal
+                      </label>
+                      <div className="text-lg font-semibold text-green-600">
+                        ${pricebookCalculation.subtotal.toFixed(2)}
+                      </div>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-gray-700">
+                        Adjusted Total
+                      </label>
+                      <div className="text-xl font-bold text-green-700">
+                        ${pricebookCalculation.adjustedTotal.toFixed(2)}
+                        {pricebookCalculation.appliedMinimum && (
+                          <span className="text-sm text-orange-600 ml-2">
+                            (min. $150 applied)
+                          </span>
+                        )}
+                      </div>
+                    </div>
                   </div>
-                </div>
-                <div>
-                  <FormField
-                    control={form.control}
-                    name="tax_rate"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Tax Rate (%)</FormLabel>
-                        <FormControl>
-                          <Input
-                            type="number"
-                            step="0.01"
-                            min="0"
-                            max="100"
-                            {...field}
-                            onChange={(e) =>
-                              field.onChange(parseFloat(e.target.value) || 0)
-                            }
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-gray-700">
-                    Total
-                  </label>
-                  <div className="text-xl font-bold text-blue-600">
-                    ${calculateTotal().toFixed(2)}
+                )}
+
+                <div className="grid grid-cols-3 gap-4">
+                  <div>
+                    <label className="text-sm font-medium text-gray-700">
+                      Manual Subtotal
+                    </label>
+                    <div className="text-lg font-semibold">
+                      ${calculateSubtotal().toFixed(2)}
+                    </div>
+                  </div>
+                  <div>
+                    <FormField
+                      control={form.control}
+                      name="tax_rate"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Tax Rate (%)</FormLabel>
+                          <FormControl>
+                            <Input
+                              type="number"
+                              step="0.01"
+                              min="0"
+                              max="100"
+                              {...field}
+                              onChange={(e) =>
+                                field.onChange(parseFloat(e.target.value) || 0)
+                              }
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-gray-700">
+                      Manual Total
+                    </label>
+                    <div className="text-xl font-bold text-blue-600">
+                      ${calculateTotal().toFixed(2)}
+                    </div>
                   </div>
                 </div>
               </div>
@@ -1538,6 +1823,13 @@ export default function EstimatesPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* SKU Picker Dialog */}
+      <SKUPicker
+        open={showSKUPicker}
+        onOpenChange={setShowSKUPicker}
+        onSelectSKU={handleSelectSKU}
+      />
     </>
   );
 }

@@ -1,0 +1,65 @@
+[
+  {
+    "id": 1,
+    "key": "general_repairs",
+    "name": "General Repairs",
+    "code_range": "1000-1999",
+    "description": "Drywall, doors, windows, trim, and other small repair items."
+  },
+  {
+    "id": 2,
+    "key": "plumbing",
+    "name": "Plumbing",
+    "code_range": "2000-2999",
+    "description": "Faucets, toilets, drains, disposals, and related plumbing tasks."
+  },
+  {
+    "id": 3,
+    "key": "electrical",
+    "name": "Electrical",
+    "code_range": "3000-3999",
+    "description": "Light fixtures, fans, switches, outlets, and smart devices."
+  },
+  {
+    "id": 4,
+    "key": "carpentry_furniture",
+    "name": "Carpentry & Furniture",
+    "code_range": "4000-4999",
+    "description": "Furniture assembly, trim work, handrails, and light carpentry."
+  },
+  {
+    "id": 5,
+    "key": "painting_finishes",
+    "name": "Painting & Finishes",
+    "code_range": "5000-5999",
+    "description": "Interior/exterior painting, staining, and finishing work."
+  },
+  {
+    "id": 6,
+    "key": "outdoor_seasonal",
+    "name": "Outdoor & Seasonal",
+    "code_range": "6000-6999",
+    "description": "Gutters, pressure washing, sheds, mailboxes, and seasonal jobs."
+  },
+  {
+    "id": 7,
+    "key": "mounting_installs",
+    "name": "Mounting & Installs",
+    "code_range": "7000-7999",
+    "description": "TVs, mirrors, curtain rods, blinds, grab bars, and similar installs."
+  },
+  {
+    "id": 8,
+    "key": "maintenance_small_jobs",
+    "name": "Maintenance & Small Jobs",
+    "code_range": "8000-8999",
+    "description": "Dryer vents, filters, weatherstripping, small exterior fixes."
+  },
+  {
+    "id": 9,
+    "key": "specialty_future",
+    "name": "Specialty & Future Expansion",
+    "code_range": "9000-9999",
+    "description": "Complex, custom, or multi-day projects not covered elsewhere."
+  }
+]

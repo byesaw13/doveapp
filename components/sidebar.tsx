@@ -22,6 +22,7 @@ import {
   TrendingUp,
   DollarSign,
   AlertCircle,
+  Settings,
 } from 'lucide-react';
 import { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
@@ -132,6 +133,18 @@ const navigationGroups: NavGroup[] = [
         icon: Package,
         badge: 'lowInventoryItems',
         shortcut: 'I',
+      },
+    ],
+  },
+  {
+    name: 'Administration',
+    defaultOpen: false,
+    items: [
+      {
+        name: 'Settings',
+        href: '/settings',
+        icon: Settings,
+        shortcut: 'S',
       },
     ],
   },

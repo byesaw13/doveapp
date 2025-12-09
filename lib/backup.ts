@@ -77,7 +77,21 @@ export async function importDataFromJSON(
  */
 export async function backupAllData(): Promise<BackupData> {
   // List of all tables to backup (update as new tables are added)
-  const tables = ['clients', 'jobs', 'job_line_items', 'payments', 'square_connections'];
+  const tables = [
+    'clients',
+    'jobs',
+    'job_line_items',
+    'payments',
+    'properties',
+    'materials',
+    'leads',
+    'estimates',
+    'invoices',
+    'invoice_line_items',
+    'client_activities',
+    'business_settings',
+    'square_connections',
+  ];
   return exportDataToJSON(tables);
 }
 

@@ -11,7 +11,7 @@ import { useToast } from '@/components/ui/toast';
 import type { BusinessSettings } from '@/types/business-settings';
 import type { AutomationSettings } from '@/types/automation';
 import { DEFAULT_AUTOMATION_SETTINGS } from '@/types/automation';
-import { Save, Loader2 } from 'lucide-react';
+import { Save, Loader2, Download, Upload } from 'lucide-react';
 
 const automationDescriptions: Record<keyof AutomationSettings, string> = {
   estimate_followups:
@@ -31,6 +31,8 @@ export default function SettingsPage() {
   const [settings, setSettings] = useState<BusinessSettings | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [backupLoading, setBackupLoading] = useState(false);
+  const [importLoading, setImportLoading] = useState(false);
 
   // Form state
   const [formData, setFormData] = useState({
@@ -149,6 +151,86 @@ export default function SettingsPage() {
         [key]: !prev.ai_automation[key],
       },
     }));
+  };
+
+  const handleDownloadBackup = async () => {
+    setBackupLoading(true);
+    try {
+      const response = await fetch('/api/backup');
+      if (!response.ok) throw new Error('Failed to download backup');
+
+      const backup = await response.json();
+      const blob = new Blob([JSON.stringify(backup, null, 2)], {
+        type: 'application/json',
+      });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `doveapp-backup-${new Date().toISOString().split('T')[0]}.json`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+
+      toast({
+        title: 'Backup Downloaded',
+        description: 'Your data has been saved to a local file.',
+      });
+    } catch (error) {
+      console.error('Backup download failed:', error);
+      toast({
+        title: 'Backup Failed',
+        description: 'Unable to download backup. Please try again.',
+        variant: 'destructive',
+      });
+    } finally {
+      setBackupLoading(false);
+    }
+  };
+
+  const handleImportBackup = async (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setImportLoading(true);
+    try {
+      const formDataUpload = new FormData();
+      formDataUpload.append('backup', file);
+
+      const response = await fetch('/api/backup', {
+        method: 'POST',
+        body: formDataUpload,
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Import failed');
+      }
+
+      const result = await response.json();
+      toast({
+        title: 'Import Successful',
+        description: 'Your data has been restored from the backup.',
+      });
+
+      // Optionally reload settings or data
+      loadSettings();
+    } catch (error: any) {
+      console.error('Import failed:', error);
+      toast({
+        title: 'Import Failed',
+        description:
+          error.message ||
+          'Unable to import backup. Please check the file format.',
+        variant: 'destructive',
+      });
+    } finally {
+      setImportLoading(false);
+      // Reset file input
+      event.target.value = '';
+    }
   };
 
   if (loading) {
@@ -414,6 +496,60 @@ export default function SettingsPage() {
                 />
               </div>
             ))}
+          </CardContent>
+        </Card>
+
+        {/* Data Management */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Data Management</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex items-center justify-between rounded-lg border border-slate-200 p-4">
+              <div>
+                <Label>Download Backup</Label>
+                <p className="text-sm text-slate-600 mt-1">
+                  Export all your data to a JSON file for safe keeping.
+                </p>
+              </div>
+              <Button onClick={handleDownloadBackup} disabled={backupLoading}>
+                {backupLoading ? (
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                ) : (
+                  <Download className="h-4 w-4 mr-2" />
+                )}
+                Download
+              </Button>
+            </div>
+
+            <div className="flex items-center justify-between rounded-lg border border-slate-200 p-4">
+              <div>
+                <Label>Import Backup</Label>
+                <p className="text-sm text-slate-600 mt-1">
+                  Restore data from a previously exported backup file.
+                </p>
+              </div>
+              <div>
+                <input
+                  type="file"
+                  accept=".json"
+                  onChange={handleImportBackup}
+                  className="hidden"
+                  id="backup-upload"
+                  disabled={importLoading}
+                />
+                <Button asChild disabled={importLoading}>
+                  <label htmlFor="backup-upload" className="cursor-pointer">
+                    {importLoading ? (
+                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                    ) : (
+                      <Upload className="h-4 w-4 mr-2" />
+                    )}
+                    Upload
+                  </label>
+                </Button>
+              </div>
+            </div>
           </CardContent>
         </Card>
 

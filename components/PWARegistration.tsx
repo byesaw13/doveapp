@@ -79,7 +79,12 @@ export function PWARegistration() {
   }, []);
 
   const registerServiceWorker = async () => {
-    if ('serviceWorker' in navigator) {
+    // Only register service worker in secure contexts (HTTPS or localhost)
+    if (
+      'serviceWorker' in navigator &&
+      (window.location.protocol === 'https:' ||
+        window.location.hostname === 'localhost')
+    ) {
       try {
         setStatus((prev) => ({ ...prev, serviceWorkerStatus: 'registering' }));
 

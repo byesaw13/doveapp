@@ -3,6 +3,27 @@ import type {
   BusinessSettings,
   BusinessSettingsUpdate,
 } from '@/types/business-settings';
+import type { AutomationSettings } from '@/types/automation';
+import { DEFAULT_AUTOMATION_SETTINGS } from '@/types/automation';
+
+const applyAutomationDefaults = (
+  settings: BusinessSettings
+): BusinessSettings => ({
+  ...settings,
+  ai_automation: {
+    ...DEFAULT_AUTOMATION_SETTINGS,
+    ...(settings.ai_automation || {}),
+  },
+});
+
+const mergeAutomationSettings = (
+  current?: AutomationSettings | null,
+  updates?: AutomationSettings
+): AutomationSettings => ({
+  ...DEFAULT_AUTOMATION_SETTINGS,
+  ...(current || {}),
+  ...(updates || {}),
+});
 
 /**
  * Get business settings (returns the first/only record)
@@ -21,7 +42,8 @@ export async function getBusinessSettings(): Promise<BusinessSettings | null> {
     throw error;
   }
 
-  return data;
+  if (!data) return null;
+  return applyAutomationDefaults(data as BusinessSettings);
 }
 
 /**
@@ -30,15 +52,25 @@ export async function getBusinessSettings(): Promise<BusinessSettings | null> {
 export async function updateBusinessSettings(
   updates: BusinessSettingsUpdate
 ): Promise<BusinessSettings> {
+  const current = await getOrCreateBusinessSettings();
+  const payload: BusinessSettingsUpdate = { ...updates };
+
+  if (updates.ai_automation || current.ai_automation) {
+    payload.ai_automation = mergeAutomationSettings(
+      current.ai_automation,
+      updates.ai_automation
+    );
+  }
+
   const { data, error } = await supabase
     .from('business_settings')
-    .update(updates)
-    .eq('id', (await getBusinessSettings())?.id)
+    .update(payload)
+    .eq('id', current.id)
     .select()
     .single();
 
   if (error) throw error;
-  return data;
+  return applyAutomationDefaults(data as BusinessSettings);
 }
 
 /**
@@ -56,21 +88,22 @@ export async function createDefaultBusinessSettings(): Promise<BusinessSettings>
         'This estimate is valid for 30 days. All work is guaranteed for 90 days.',
       default_invoice_terms:
         'Thank you for your business. Please remit payment within 30 days.',
+      ai_automation: DEFAULT_AUTOMATION_SETTINGS,
     })
     .select()
     .single();
 
   if (error) throw error;
-  return data;
+  return applyAutomationDefaults(data as BusinessSettings);
 }
 
 /**
  * Get or create business settings
  */
 export async function getOrCreateBusinessSettings(): Promise<BusinessSettings> {
-  let settings = await getBusinessSettings();
+  const settings = await getBusinessSettings();
   if (!settings) {
-    settings = await createDefaultBusinessSettings();
+    return createDefaultBusinessSettings();
   }
   return settings;
 }

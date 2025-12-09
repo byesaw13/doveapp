@@ -1,5 +1,4 @@
 import jsPDF from 'jspdf';
-import type { EstimateWithRelations } from '@/types/estimate';
 import estimateDisclaimers from '../data/pricebook/estimate_disclaimers.json';
 
 interface EstimatePdfOptions {
@@ -57,16 +56,54 @@ export async function generateEstimatePdf(
 
   // Header with logo and company info
   try {
-    // Add logo placeholder - in production, you'd load the actual logo
-    doc.setFillColor(primaryColor[0], primaryColor[1], primaryColor[2]);
-    doc.rect(20, yPosition, 40, 20, 'F');
-    doc.setTextColor(255, 255, 255);
-    doc.setFontSize(8);
-    doc.text('DOVETAILS', 40, yPosition + 8, { align: 'center' });
-    doc.setTextColor(textColor[0], textColor[1], textColor[2]);
+    if (businessSettings.logo_url) {
+      // Try to load and add the actual logo
+      try {
+        const img = new Image();
+        img.src = businessSettings.logo_url;
+        await new Promise((resolve, reject) => {
+          img.onload = resolve;
+          img.onerror = reject;
+          setTimeout(reject, 3000); // 3 second timeout
+        });
+        doc.addImage(img, 'PNG', 20, yPosition, 40, 20);
+      } catch (imgError) {
+        // If image fails to load, use placeholder
+        console.log('Logo image failed to load, using placeholder');
+        doc.setFillColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+        doc.rect(20, yPosition, 40, 20, 'F');
+        doc.setTextColor(255, 255, 255);
+        doc.setFontSize(8);
+        const initials = businessSettings.company_name
+          .split(' ')
+          .map((w) => w[0])
+          .join('')
+          .toUpperCase()
+          .slice(0, 2);
+        doc.text(initials, 40, yPosition + 12, { align: 'center' });
+        doc.setTextColor(textColor[0], textColor[1], textColor[2]);
+      }
+    } else {
+      // No logo URL, use company initials placeholder
+      doc.setFillColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+      doc.rect(20, yPosition, 40, 20, 'F');
+      doc.setTextColor(255, 255, 255);
+      doc.setFontSize(8);
+      const initials = businessSettings.company_name
+        .split(' ')
+        .map((w) => w[0])
+        .join('')
+        .toUpperCase()
+        .slice(0, 2);
+      doc.text(initials, 40, yPosition + 12, { align: 'center' });
+      doc.setTextColor(textColor[0], textColor[1], textColor[2]);
+    }
   } catch (error) {
     console.log('Logo rendering failed, using text placeholder');
-    addText('DOVETAILS', 40, yPosition + 12, { fontSize: 10, align: 'center' });
+    addText(businessSettings.company_name.slice(0, 10), 40, yPosition + 12, {
+      fontSize: 10,
+      align: 'center',
+    });
   }
 
   // Company info
@@ -162,19 +199,8 @@ export async function generateEstimatePdf(
       addText(client.phone, 20, yPosition);
     }
 
-    // Address
-    const addressLines = [];
-    if (client.address_line1) addressLines.push(client.address_line1);
-    if (client.city || client.state || client.zip_code) {
-      addressLines.push(
-        [client.city, client.state, client.zip_code].filter(Boolean).join(', ')
-      );
-    }
-
-    addressLines.forEach((line) => {
-      yPosition += 8;
-      addText(line, 20, yPosition);
-    });
+    // Address - client object from estimate doesn't include full address
+    // Address would come from properties table if needed
   }
 
   yPosition += 20;
@@ -311,8 +337,8 @@ export async function generateEstimatePdf(
       statusText = 'ESTIMATE SENT';
       statusColor = [59, 130, 246]; // Blue
       break;
-    case 'accepted':
-      statusText = 'ACCEPTED';
+    case 'approved':
+      statusText = 'APPROVED';
       statusColor = [34, 197, 94]; // Green
       break;
     case 'declined':

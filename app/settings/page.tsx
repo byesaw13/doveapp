@@ -6,9 +6,25 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/components/ui/toast';
 import type { BusinessSettings } from '@/types/business-settings';
+import type { AutomationSettings } from '@/types/automation';
+import { DEFAULT_AUTOMATION_SETTINGS } from '@/types/automation';
 import { Save, Loader2 } from 'lucide-react';
+
+const automationDescriptions: Record<keyof AutomationSettings, string> = {
+  estimate_followups:
+    'Send helpful follow-ups 48 hours after an estimate is sent.',
+  invoice_followups:
+    'Remind customers about open invoices with tone that escalates when overdue.',
+  job_closeout:
+    'Summarize completed jobs with safety tips and recommended intervals.',
+  review_requests:
+    'Request a quick review a day after closeout, when contact info is available.',
+  lead_response:
+    'Auto-reply to new leads with clarifying questions and next steps.',
+};
 
 export default function SettingsPage() {
   const { toast } = useToast();
@@ -32,6 +48,7 @@ export default function SettingsPage() {
     default_payment_terms: '',
     default_estimate_terms: '',
     default_invoice_terms: '',
+    ai_automation: DEFAULT_AUTOMATION_SETTINGS,
   });
 
   useEffect(() => {
@@ -61,6 +78,10 @@ export default function SettingsPage() {
           default_payment_terms: data.default_payment_terms || '',
           default_estimate_terms: data.default_estimate_terms || '',
           default_invoice_terms: data.default_invoice_terms || '',
+          ai_automation: {
+            ...DEFAULT_AUTOMATION_SETTINGS,
+            ...(data.ai_automation || {}),
+          },
         });
       }
     } catch (error) {
@@ -87,6 +108,13 @@ export default function SettingsPage() {
       if (response.ok) {
         const updated = await response.json();
         setSettings(updated);
+        setFormData((prev) => ({
+          ...prev,
+          ai_automation: {
+            ...DEFAULT_AUTOMATION_SETTINGS,
+            ...(updated.ai_automation || {}),
+          },
+        }));
         toast({
           title: 'Success',
           description: 'Business settings saved successfully',
@@ -110,6 +138,16 @@ export default function SettingsPage() {
     setFormData((prev) => ({
       ...prev,
       [field]: value,
+    }));
+  };
+
+  const handleAutomationToggle = (key: keyof AutomationSettings) => {
+    setFormData((prev) => ({
+      ...prev,
+      ai_automation: {
+        ...prev.ai_automation,
+        [key]: !prev.ai_automation[key],
+      },
     }));
   };
 
@@ -344,6 +382,38 @@ export default function SettingsPage() {
                 rows={4}
               />
             </div>
+          </CardContent>
+        </Card>
+
+        {/* AI Automations */}
+        <Card>
+          <CardHeader>
+            <CardTitle>AI Automations</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {(
+              Object.keys(formData.ai_automation) as Array<
+                keyof AutomationSettings
+              >
+            ).map((key) => (
+              <div
+                key={key}
+                className="flex items-center justify-between rounded-lg border border-slate-200 p-4"
+              >
+                <div>
+                  <Label className="capitalize">
+                    {key.split('_').join(' ')}
+                  </Label>
+                  <p className="text-sm text-slate-600 mt-1">
+                    {automationDescriptions[key]}
+                  </p>
+                </div>
+                <Switch
+                  checked={formData.ai_automation[key]}
+                  onCheckedChange={() => handleAutomationToggle(key)}
+                />
+              </div>
+            ))}
           </CardContent>
         </Card>
 

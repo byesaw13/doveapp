@@ -1,61 +1,30 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getJob } from '@/lib/db/jobs';
-import { generateInvoicePDF } from '@/lib/pdf-invoice';
+import { getInvoiceByIdWithRelations } from '@/lib/db/invoices';
 
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id: jobId } = await params;
+    const { id: invoiceId } = await params;
 
-    if (!jobId) {
+    if (!invoiceId) {
       return NextResponse.json(
-        { error: 'Job ID is required' },
+        { error: 'Invoice ID is required' },
         { status: 400 }
       );
     }
 
-    // Get job details
-    const job = await getJob(jobId);
-
-    if (!job) {
-      return NextResponse.json({ error: 'Job not found' }, { status: 404 });
+    const invoice = await getInvoiceByIdWithRelations(invoiceId);
+    if (!invoice) {
+      return NextResponse.json({ error: 'Invoice not found' }, { status: 404 });
     }
 
-    // Company information (you can make this configurable)
-    const companyInfo = {
-      name: 'Dovetails',
-      address: 'Your Business Address\nCity, State ZIP',
-      phone: '(555) 123-4567',
-      email: 'billing@dovetails.com',
-      // logo: '/path/to/logo.png' // We'll handle the logo separately
-    };
-
-    // Generate invoice number (you might want to store this in the database)
-    const invoiceNumber = `INV-${job.job_number}-${Date.now().toString().slice(-4)}`;
-    const invoiceDate = new Date().toLocaleDateString('en-US');
-
-    // Generate PDF
-    const pdfBuffer = await generateInvoicePDF({
-      job,
-      companyInfo,
-      invoiceNumber,
-      invoiceDate,
-    });
-
-    // Return PDF as response
-    return new NextResponse(new Uint8Array(pdfBuffer), {
-      status: 200,
-      headers: {
-        'Content-Type': 'application/pdf',
-        'Content-Disposition': `attachment; filename="invoice-${job.job_number}.pdf"`,
-      },
-    });
+    return NextResponse.json(invoice);
   } catch (error) {
-    console.error('Error generating invoice PDF:', error);
+    console.error('Error fetching invoice:', error);
     return NextResponse.json(
-      { error: 'Failed to generate invoice PDF' },
+      { error: 'Failed to fetch invoice' },
       { status: 500 }
     );
   }

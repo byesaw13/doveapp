@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import {
   getJob,
-  updateJobStatus,
+  updateJobStatusWithValidation,
   deleteLineItem,
   addLineItem,
 } from '@/lib/db/jobs';
@@ -79,11 +79,36 @@ export default function JobDetailPage() {
     if (!job) return;
 
     try {
-      await updateJobStatus(job.id, newStatus);
+      await updateJobStatusWithValidation(job.id, newStatus);
       await loadJob();
     } catch (error) {
       console.error('Failed to update status:', error);
       alert('Failed to update status');
+    }
+  };
+
+  const handleCreateInvoice = async () => {
+    if (!job) return;
+
+    try {
+      const response = await fetch(`/api/jobs/${job.id}/invoice`, {
+        method: 'POST',
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to create invoice');
+      }
+
+      const invoice = await response.json();
+      alert(`Invoice ${invoice.invoice_number} created successfully!`);
+      router.push(`/invoices/${invoice.id}`);
+    } catch (error) {
+      console.error('Failed to create invoice:', error);
+      alert(
+        'Failed to create invoice: ' +
+          (error instanceof Error ? error.message : 'Unknown error')
+      );
     }
   };
 
@@ -237,13 +262,19 @@ export default function JobDetailPage() {
                   Mark Completed
                 </Button>
               )}
-              {job.status === 'completed' && (
+              {job.status === 'completed' && job.ready_for_invoice && (
                 <Button
                   size="sm"
-                  onClick={() => handleStatusChange('invoiced')}
+                  onClick={handleCreateInvoice}
+                  className="bg-blue-600 hover:bg-blue-700"
                 >
-                  Mark as Invoiced
+                  Create Invoice
                 </Button>
+              )}
+              {job.status === 'completed' && !job.ready_for_invoice && (
+                <div className="text-sm text-green-600 font-medium">
+                  ✓ Ready for Invoicing (Phase 4)
+                </div>
               )}
             </div>
           </div>

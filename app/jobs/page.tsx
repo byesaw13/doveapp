@@ -1,266 +1,232 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { JobTable } from './components/JobTable';
-import { JobTemplates } from './components/JobTemplates';
-import { Button } from '@/components/ui/button';
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-} from '@/components/ui/card';
-import { getJobs, deleteJob, updateJob } from '@/lib/db/jobs';
-import type { JobWithClient } from '@/types/job';
-import { Briefcase, FileText, Plus } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import type { JobWithClient, JobStatus } from '@/types/job';
+import {
+  Search,
+  Plus,
+  Calendar,
+  User,
+  FileText,
+  Wrench,
+  CheckCircle,
+  XCircle,
+  Clock,
+} from 'lucide-react';
 
 export default function JobsPage() {
+  const router = useRouter();
   const [jobs, setJobs] = useState<JobWithClient[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState('jobs');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState<JobStatus | 'all'>('all');
 
   useEffect(() => {
     loadJobs();
-  }, []);
+  }, [statusFilter, searchQuery]);
 
   const loadJobs = async () => {
     try {
       setLoading(true);
-      const data = await getJobs();
+      const params = new URLSearchParams();
+      if (statusFilter !== 'all') params.set('status', statusFilter);
+      if (searchQuery.trim()) params.set('search', searchQuery.trim());
+
+      const response = await fetch(`/api/jobs?${params.toString()}`);
+      if (!response.ok) throw new Error('Failed to load jobs');
+      const data = await response.json();
       setJobs(data);
     } catch (error) {
       console.error('Failed to load jobs:', error);
-      alert('Failed to load jobs. Please check your database configuration.');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleViewDetails = (job: JobWithClient) => {
-    // Navigate to job details page (to be built)
-    window.location.href = `/jobs/${job.id}`;
+  const getStatusColor = (status: JobStatus) => {
+    const colors: Record<JobStatus, string> = {
+      draft: 'bg-gray-100 text-gray-700',
+      quote: 'bg-blue-100 text-blue-700',
+      scheduled: 'bg-blue-100 text-blue-700',
+      in_progress: 'bg-yellow-100 text-yellow-700',
+      completed: 'bg-green-100 text-green-700',
+      invoiced: 'bg-purple-100 text-purple-700',
+      cancelled: 'bg-red-100 text-red-700',
+    };
+    return colors[status] || 'bg-gray-100 text-gray-700';
   };
 
-  const handleEdit = (job: JobWithClient) => {
-    // Navigate to edit page (to be built)
-    window.location.href = `/jobs/${job.id}/edit`;
-  };
-
-  const handleDelete = async (job: JobWithClient) => {
-    if (!confirm(`Are you sure you want to delete job ${job.job_number}?`)) {
-      return;
-    }
-
-    try {
-      await deleteJob(job.id);
-      await loadJobs();
-    } catch (error) {
-      console.error('Failed to delete job:', error);
-      alert('Failed to delete job. Please try again.');
-    }
-  };
-
-  const handleStatusChange = async (
-    jobId: string,
-    newStatus: JobWithClient['status']
-  ) => {
-    try {
-      await updateJob(jobId, { status: newStatus });
-      await loadJobs(); // Refresh the list
-    } catch (error) {
-      console.error('Failed to update job status:', error);
-      alert('Failed to update job status. Please try again.');
+  const getStatusIcon = (status: JobStatus) => {
+    switch (status) {
+      case 'completed':
+        return <CheckCircle className="w-4 h-4" />;
+      case 'cancelled':
+        return <XCircle className="w-4 h-4" />;
+      case 'in_progress':
+        return <Wrench className="w-4 h-4" />;
+      case 'scheduled':
+        return <Calendar className="w-4 h-4" />;
+      default:
+        return <FileText className="w-4 h-4" />;
     }
   };
+
+  const formatDate = (dateString: string | null) => {
+    if (!dateString) return 'Not scheduled';
+    return new Date(dateString).toLocaleDateString();
+  };
+
+  const statusTabs = [
+    { value: 'all', label: 'All' },
+    { value: 'draft', label: 'Draft' },
+    { value: 'scheduled', label: 'Scheduled' },
+    { value: 'in_progress', label: 'In Progress' },
+    { value: 'completed', label: 'Completed' },
+    { value: 'cancelled', label: 'Cancelled' },
+  ];
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="bg-gradient-to-r from-emerald-600 to-emerald-700 rounded-xl shadow-lg p-6 text-white">
-        <div className="flex items-center justify-between">
+    <div className="min-h-screen bg-gray-50">
+      <div className="max-w-7xl mx-auto px-4 py-8">
+        {/* Header */}
+        <div className="flex items-center justify-between mb-8">
           <div>
-            <h1 className="text-3xl font-bold">Jobs</h1>
-            <p className="mt-2 text-emerald-100">
-              Manage jobs and use templates for quick creation
+            <h1 className="text-3xl font-bold text-gray-900">Jobs</h1>
+            <p className="text-gray-600 mt-1">
+              Manage and track field operations
             </p>
           </div>
-          <Link href="/jobs/new">
-            <button className="px-6 py-3 bg-white text-emerald-700 hover:bg-emerald-50 font-semibold rounded-lg shadow-md transition-all duration-200 hover:shadow-lg transform hover:-translate-y-0.5">
-              <Plus className="w-4 h-4 mr-2 inline" />
-              New Job
-            </button>
-          </Link>
-        </div>
-      </div>
-
-      {/* Stats Cards */}
-      <div className="grid gap-6 md:grid-cols-4">
-        <div className="bg-white rounded-xl border border-slate-200 p-6 shadow-lg hover:shadow-xl transition-all duration-200">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-semibold text-slate-600 uppercase tracking-wide">
-                Total Jobs
-              </p>
-              <p className="text-3xl font-bold text-slate-900 mt-2">
-                {jobs.length}
-              </p>
-            </div>
-            <div className="h-14 w-14 rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-600 flex items-center justify-center shadow-lg">
-              <Briefcase className="h-7 w-7 text-white" />
-            </div>
-          </div>
+          <Button
+            onClick={() => router.push('/jobs/new')}
+            className="flex items-center gap-2"
+          >
+            <Plus className="w-4 h-4" />
+            New Job
+          </Button>
         </div>
 
-        <div className="bg-white rounded-xl border border-slate-200 p-6 shadow-lg hover:shadow-xl transition-all duration-200 hover:-translate-y-1">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-semibold text-slate-600 uppercase tracking-wide">
-                Scheduled
-              </p>
-              <p className="text-3xl font-bold text-slate-900 mt-2">
-                {jobs.filter((j) => j.status === 'scheduled').length}
-              </p>
-            </div>
-            <div className="h-14 w-14 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center shadow-lg">
-              <svg
-                className="h-7 w-7 text-white"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-                />
-              </svg>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-xl border border-slate-200 p-6 shadow-lg hover:shadow-xl transition-all duration-200 hover:-translate-y-1">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-semibold text-slate-600 uppercase tracking-wide">
-                In Progress
-              </p>
-              <p className="text-3xl font-bold text-slate-900 mt-2">
-                {jobs.filter((j) => j.status === 'in_progress').length}
-              </p>
-            </div>
-            <div className="h-14 w-14 rounded-xl bg-gradient-to-br from-amber-500 to-amber-600 flex items-center justify-center shadow-lg">
-              <svg
-                className="h-7 w-7 text-white"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                />
-              </svg>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-xl border border-slate-200 p-6 shadow-lg hover:shadow-xl transition-all duration-200 hover:-translate-y-1">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-semibold text-slate-600 uppercase tracking-wide">
-                Completed
-              </p>
-              <p className="text-3xl font-bold text-slate-900 mt-2">
-                {jobs.filter((j) => j.status === 'completed').length}
-              </p>
-            </div>
-            <div className="h-14 w-14 rounded-xl bg-gradient-to-br from-green-500 to-green-600 flex items-center justify-center shadow-lg">
-              <svg
-                className="h-7 w-7 text-white"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-                />
-              </svg>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Tabs */}
-      <div className="bg-white rounded-xl border border-slate-200 shadow-lg overflow-hidden">
-        <div className="border-b border-slate-200">
-          <div className="flex">
-            <button
-              onClick={() => setActiveTab('jobs')}
-              className={`flex items-center gap-3 px-6 py-4 font-semibold transition-colors ${
-                activeTab === 'jobs'
-                  ? 'text-emerald-700 border-b-2 border-emerald-500 bg-emerald-50'
-                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
-              }`}
-            >
-              <Briefcase className="w-5 h-5" />
-              All Jobs
-            </button>
-            <button
-              onClick={() => setActiveTab('templates')}
-              className={`flex items-center gap-3 px-6 py-4 font-semibold transition-colors ${
-                activeTab === 'templates'
-                  ? 'text-emerald-700 border-b-2 border-emerald-500 bg-emerald-50'
-                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
-              }`}
-            >
-              <FileText className="w-5 h-5" />
-              Templates
-            </button>
-          </div>
-        </div>
-
-        <div className="p-6">
-          {activeTab === 'jobs' && (
-            <div>
-              <div className="mb-6">
-                <h2 className="text-xl font-bold text-slate-900">All Jobs</h2>
-                <p className="text-sm text-slate-600 mt-1">
-                  View and manage all service jobs
-                </p>
+        {/* Filters */}
+        <Card className="mb-6">
+          <CardContent className="pt-6">
+            <div className="flex gap-4 mb-4">
+              <div className="flex-1">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                  <Input
+                    placeholder="Search by job number or customer name..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
               </div>
-              <JobTable
-                jobs={jobs}
-                onEdit={handleEdit}
-                onDelete={handleDelete}
-                onViewDetails={handleViewDetails}
-                onStatusChange={handleStatusChange}
-              />
             </div>
-          )}
 
-          {activeTab === 'templates' && (
-            <div>
-              <div className="mb-6">
-                <h2 className="text-xl font-bold text-slate-900">
-                  Job Templates
-                </h2>
-                <p className="text-sm text-slate-600 mt-1">
-                  Create and manage reusable job templates
-                </p>
-              </div>
-              <JobTemplates />
-            </div>
-          )}
-        </div>
+            <Tabs
+              value={statusFilter}
+              onValueChange={(value) =>
+                setStatusFilter(value as JobStatus | 'all')
+              }
+            >
+              <TabsList className="grid w-full grid-cols-7">
+                {statusTabs.map((tab) => (
+                  <TabsTrigger key={tab.value} value={tab.value}>
+                    {tab.label}
+                  </TabsTrigger>
+                ))}
+              </TabsList>
+            </Tabs>
+          </CardContent>
+        </Card>
+
+        {/* Jobs List */}
+        {loading ? (
+          <div className="text-center py-12">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <p className="text-gray-600">Loading jobs...</p>
+          </div>
+        ) : jobs.length === 0 ? (
+          <Card>
+            <CardContent className="text-center py-12">
+              <FileText className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-gray-900 mb-2">
+                No jobs found
+              </h3>
+              <p className="text-gray-600 mb-4">
+                {statusFilter !== 'all' || searchQuery
+                  ? 'Try adjusting your filters or search terms.'
+                  : 'Get started by creating your first job.'}
+              </p>
+              <Button onClick={() => router.push('/jobs/new')}>
+                <Plus className="w-4 h-4 mr-2" />
+                Create Job
+              </Button>
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="space-y-4">
+            {jobs.map((job) => (
+              <Card key={job.id} className="hover:shadow-md transition-shadow">
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                      <div>
+                        <Link
+                          href={`/jobs/${job.id}`}
+                          className="text-lg font-semibold text-blue-600 hover:text-blue-800"
+                        >
+                          {job.job_number}
+                        </Link>
+                        <p className="text-sm text-gray-600 mt-1">
+                          {job.title}
+                        </p>
+                      </div>
+                      <Badge
+                        className={`inline-flex items-center gap-1.5 px-3 py-1 ${getStatusColor(job.status)}`}
+                      >
+                        {getStatusIcon(job.status)}
+                        {job.status
+                          .replace('_', ' ')
+                          .replace(/\b\w/g, (l) => l.toUpperCase())}
+                      </Badge>
+                    </div>
+
+                    <div className="flex items-center gap-6 text-sm text-gray-600">
+                      <div className="flex items-center gap-2">
+                        <User className="w-4 h-4" />
+                        <span>
+                          {job.client?.first_name} {job.client?.last_name}
+                        </span>
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        <Calendar className="w-4 h-4" />
+                        <span>{formatDate(job.scheduled_for)}</span>
+                      </div>
+
+                      <div className="text-right">
+                        <p className="font-semibold">${job.total.toFixed(2)}</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {job.description && (
+                    <p className="text-sm text-gray-600 mt-3 line-clamp-2">
+                      {job.description}
+                    </p>
+                  )}
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

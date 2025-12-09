@@ -1,28 +1,27 @@
 import jsPDF from 'jspdf';
-import { JobWithDetails } from '@/types/job';
+import type { InvoiceWithRelations } from '@/types/invoice';
 
-interface InvoiceData {
-  job: JobWithDetails;
-  companyInfo: {
-    name: string;
-    address: string;
-    phone: string;
-    email: string;
-    logo?: string;
-  };
-  invoiceNumber: string;
-  invoiceDate: string;
+interface InvoicePdfOptions {
+  invoiceId: string;
 }
 
-export async function generateInvoicePDF(
-  invoiceData: InvoiceData
+export async function generateInvoicePdf(
+  options: InvoicePdfOptions
 ): Promise<Buffer> {
-  const { job, companyInfo, invoiceNumber, invoiceDate } = invoiceData;
+  const { invoiceId } = options;
+
+  // Import here to avoid circular dependencies
+  const { getInvoiceByIdWithRelations } = await import('@/lib/db/invoices');
+
+  const invoice = await getInvoiceByIdWithRelations(invoiceId);
+  if (!invoice) {
+    throw new Error('Invoice not found');
+  }
 
   // Create new PDF document
   const doc = new jsPDF();
 
-  // Set up colors and fonts
+  // Set up colors and fonts (matching estimate styling)
   const primaryColor = [46, 125, 50]; // Green
   const secondaryColor = [96, 125, 139]; // Blue Grey
   const textColor = [33, 33, 33]; // Dark Grey
@@ -67,12 +66,13 @@ export async function generateInvoicePDF(
   }
 
   // Company info
-  addColoredText(companyInfo.name, 70, yPosition + 5, primaryColor, 16);
-  addText(companyInfo.address, 70, yPosition + 15);
-  addText(`Phone: ${companyInfo.phone}`, 70, yPosition + 25);
-  addText(`Email: ${companyInfo.email}`, 70, yPosition + 35);
+  addColoredText('Dovetails Services', 70, yPosition + 5, primaryColor, 16);
+  addText('123 Main Street', 70, yPosition + 15);
+  addText('Anytown, ST 12345', 70, yPosition + 25);
+  addText('Phone: (555) 123-4567', 70, yPosition + 35);
+  addText('Email: info@dovetails.com', 70, yPosition + 45);
 
-  yPosition += 50;
+  yPosition += 60;
 
   // Invoice header
   addColoredText('INVOICE', 20, yPosition, primaryColor, 20);
@@ -85,66 +85,52 @@ export async function generateInvoicePDF(
 
   yPosition += 10;
 
-  addText(`Invoice #: ${invoiceNumber}`, 20, yPosition);
-  addText(`Date: ${invoiceDate}`, 140, yPosition);
+  addText(`Invoice #: ${invoice.invoice_number}`, 20, yPosition);
+  addText(
+    `Issue Date: ${new Date(invoice.issue_date).toLocaleDateString()}`,
+    140,
+    yPosition
+  );
   yPosition += 10;
 
-  addText(`Job #: ${job.job_number}`, 20, yPosition);
-  addText(`Service Date: ${job.service_date || 'TBD'}`, 140, yPosition);
+  if (invoice.due_date) {
+    addText(
+      `Due Date: ${new Date(invoice.due_date).toLocaleDateString()}`,
+      20,
+      yPosition
+    );
+  }
+
+  if (invoice.job) {
+    yPosition += 10;
+    addText(`Job #: ${invoice.job.job_number}`, 20, yPosition);
+  }
+
   yPosition += 20;
 
   // Bill To section
   addColoredText('BILL TO:', 20, yPosition, secondaryColor, 12);
   yPosition += 10;
 
-  const client = job.client;
-  addText(`${client.first_name} ${client.last_name}`, 20, yPosition);
-  if (client.company_name) {
-    yPosition += 8;
-    addText(client.company_name, 20, yPosition);
+  const customer = invoice.customer;
+  if (customer) {
+    addText(`${customer.first_name} ${customer.last_name}`, 20, yPosition);
+    if (customer.email) {
+      yPosition += 8;
+      addText(customer.email, 20, yPosition);
+    }
+    if (customer.phone) {
+      yPosition += 8;
+      addText(customer.phone, 20, yPosition);
+    }
   }
-  if (client.email) {
-    yPosition += 8;
-    addText(client.email, 20, yPosition);
-  }
-  if (client.phone) {
-    yPosition += 8;
-    addText(client.phone, 20, yPosition);
-  }
-
-  // Address
-  const addressLines = [];
-  if (client.address_line1) addressLines.push(client.address_line1);
-  if (client.city || client.state || client.zip_code) {
-    addressLines.push(
-      [client.city, client.state, client.zip_code].filter(Boolean).join(', ')
-    );
-  }
-
-  addressLines.forEach((line) => {
-    yPosition += 8;
-    addText(line, 20, yPosition);
-  });
 
   yPosition += 20;
 
-  // Job description
-  if (job.title) {
-    addColoredText('DESCRIPTION:', 20, yPosition, secondaryColor, 12);
-    yPosition += 10;
-    addText(job.title, 20, yPosition);
-    yPosition += 10;
-  }
-
-  if (job.description) {
-    addText(job.description, 20, yPosition, { fontSize: 9 });
-    yPosition += 15;
-  }
-
   // Line items table
   const tableStartY = yPosition;
-  const colWidths = [80, 20, 30, 30]; // Description, Qty, Rate, Amount
-  const colPositions = [20, 100, 140, 170];
+  const colWidths = [80, 20, 30, 30]; // Description, Qty, Unit Price, Amount
+  const colPositions = [20, 100, 130, 160];
 
   // Table header
   doc.setFillColor(240, 240, 240);
@@ -163,9 +149,29 @@ export async function generateInvoicePDF(
 
   yPosition += 15;
 
+  // Table header
+  addColoredText(
+    'DESCRIPTION',
+    colPositions[0] + 2,
+    yPosition + 7,
+    textColor,
+    9
+  );
+  addColoredText('QTY', colPositions[1] + 2, yPosition + 7, textColor, 9);
+  addColoredText(
+    'UNIT PRICE',
+    colPositions[2] + 2,
+    yPosition + 7,
+    textColor,
+    9
+  );
+  addColoredText('AMOUNT', colPositions[3] + 2, yPosition + 7, textColor, 9);
+
+  yPosition += 15;
+
   // Table rows
-  if (job.line_items && job.line_items.length > 0) {
-    job.line_items.forEach((item, index) => {
+  if (invoice.invoice_line_items && invoice.invoice_line_items.length > 0) {
+    invoice.invoice_line_items.forEach((item, index) => {
       const rowY = yPosition + index * 12;
 
       // Alternate row colors
@@ -174,26 +180,19 @@ export async function generateInvoicePDF(
         doc.rect(20, rowY - 4, 170, 10, 'F');
       }
 
-      addText(item.description, colPositions[0] + 2, rowY + 3, { fontSize: 9 });
+      addText(item.description, colPositions[0] + 2, rowY + 3, { fontSize: 8 });
       addText(item.quantity.toString(), colPositions[1] + 2, rowY + 3, {
-        fontSize: 9,
+        fontSize: 8,
       });
       addText(`$${item.unit_price.toFixed(2)}`, colPositions[2] + 2, rowY + 3, {
-        fontSize: 9,
+        fontSize: 8,
       });
-      addText(`$${item.total.toFixed(2)}`, colPositions[3] + 2, rowY + 3, {
-        fontSize: 9,
+      addText(`$${item.line_total.toFixed(2)}`, colPositions[3] + 2, rowY + 3, {
+        fontSize: 8,
       });
     });
 
-    yPosition += job.line_items.length * 12 + 10;
-  } else {
-    // No line items, show job total
-    addText('Service Work', colPositions[0] + 2, yPosition + 3);
-    addText('1', colPositions[1] + 2, yPosition + 3);
-    addText(`$${job.total.toFixed(2)}`, colPositions[2] + 2, yPosition + 3);
-    addText(`$${job.total.toFixed(2)}`, colPositions[3] + 2, yPosition + 3);
-    yPosition += 20;
+    yPosition += invoice.invoice_line_items.length * 12 + 10;
   }
 
   // Table border
@@ -205,41 +204,53 @@ export async function generateInvoicePDF(
 
   // Subtotal
   addText('Subtotal:', totalsX, yPosition);
-  addText(`$${job.subtotal.toFixed(2)}`, 180, yPosition, { align: 'right' });
+  addText(`$${invoice.subtotal.toFixed(2)}`, 180, yPosition, {
+    align: 'right',
+  });
   yPosition += 8;
 
-  // Tax
-  if (job.tax > 0) {
-    addText('Tax:', totalsX, yPosition);
-    addText(`$${job.tax.toFixed(2)}`, 180, yPosition, { align: 'right' });
+  // Payments applied
+  const totalPaid = (invoice.invoice_payments || []).reduce(
+    (sum, payment) => sum + payment.amount,
+    0
+  );
+  if (totalPaid > 0) {
+    addText('Payments Applied:', totalsX, yPosition);
+    addText(`-$${totalPaid.toFixed(2)}`, 180, yPosition, { align: 'right' });
     yPosition += 8;
   }
 
-  // Total
+  // Balance due
   doc.setLineWidth(0.5);
   doc.line(totalsX, yPosition, 190, yPosition);
   yPosition += 5;
 
-  addColoredText('TOTAL:', totalsX, yPosition, primaryColor, 12);
-  addColoredText(`$${job.total.toFixed(2)}`, 180, yPosition, primaryColor, 12);
+  addColoredText('BALANCE DUE:', totalsX, yPosition, primaryColor, 12);
+  addColoredText(
+    `$${invoice.balance_due.toFixed(2)}`,
+    180,
+    yPosition,
+    primaryColor,
+    12
+  );
 
   yPosition += 20;
 
-  // Payment status
-  const paymentStatus = job.payment_status;
+  // Invoice status
+  const invoiceStatus = invoice.status;
   let statusText = '';
   let statusColor = textColor;
 
-  switch (paymentStatus) {
+  switch (invoiceStatus) {
     case 'paid':
       statusText = 'PAID IN FULL';
       statusColor = [34, 197, 94]; // Green
       break;
     case 'partial':
-      statusText = 'PARTIAL PAYMENT';
+      statusText = 'PARTIALLY PAID';
       statusColor = [251, 191, 36]; // Yellow
       break;
-    case 'unpaid':
+    case 'sent':
       statusText = 'PAYMENT DUE';
       statusColor = [239, 68, 68]; // Red
       break;
@@ -255,14 +266,20 @@ export async function generateInvoicePDF(
 
   yPosition += 25;
 
+  // Client notes
+  if (invoice.client_notes) {
+    addColoredText('NOTES:', 20, yPosition, secondaryColor, 10);
+    yPosition += 8;
+    addText(invoice.client_notes, 20, yPosition, { fontSize: 8 });
+    yPosition += 15;
+  }
+
   // Footer
   doc.setTextColor(textColor[0], textColor[1], textColor[2]);
   doc.setFontSize(8);
   addText('Thank you for your business!', 105, yPosition, { align: 'center' });
   yPosition += 8;
-  addText('Please remit payment within 30 days.', 105, yPosition, {
-    align: 'center',
-  });
+  addText('Payment terms: Net 30 days', 105, yPosition, { align: 'center' });
   yPosition += 8;
   addText(
     `Invoice generated on ${new Date().toLocaleDateString()}`,

@@ -1,3 +1,5 @@
+import type { AutomationSettings } from './automation';
+
 export interface BusinessSettings {
   id: string;
   company_name: string;
@@ -14,6 +16,7 @@ export interface BusinessSettings {
   default_payment_terms: string;
   default_estimate_terms: string;
   default_invoice_terms: string;
+  ai_automation?: AutomationSettings;
   created_at: string;
   updated_at: string;
 }
@@ -33,4 +36,5 @@ export interface BusinessSettingsUpdate {
   default_payment_terms?: string;
   default_estimate_terms?: string;
   default_invoice_terms?: string;
+  ai_automation?: AutomationSettings;
 }

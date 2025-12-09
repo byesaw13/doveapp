@@ -6,6 +6,7 @@ import type {
   JobInsert,
   JobUpdate,
   LineItemInsert,
+  JobStatus,
 } from '@/types/job';
 import {
   handleLineItemChange,
@@ -18,12 +19,14 @@ import {
   logJobStarted,
   logJobCancelled,
 } from './activities';
+import { scheduleJobCompletionAutomations } from '@/lib/db/automation_triggers';
 
 /**
  * Get all jobs with client information
  */
 export async function getJobs(): Promise<JobWithClient[]> {
-  const { data, error } = await supabase
+  // Try with relationships first
+  let { data, error } = await supabase
     .from('jobs')
     .select(
       `
@@ -39,9 +42,24 @@ export async function getJobs(): Promise<JobWithClient[]> {
     )
     .order('created_at', { ascending: false });
 
+  // If relationship error, fallback to simple query
+  if (error && error.code === 'PGRST200') {
+    console.warn(
+      'Foreign key relationship not found for jobs-clients. Jobs will load without client details.'
+    );
+    const fallback = await supabase
+      .from('jobs')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (fallback.error) throw fallback.error;
+    return (fallback.data || []) as JobWithClient[];
+  }
+
   if (error) {
     console.error('Error fetching jobs:', error);
-    throw new Error('Failed to fetch jobs');
+    // Return empty array to prevent app crash
+    return [];
   }
 
   return data || [];
@@ -202,6 +220,17 @@ export async function updateJob(
         }
       } catch (error) {
         console.error('Failed to log job status activity:', error);
+      }
+    }
+
+    if (updates.status === 'completed') {
+      try {
+        await scheduleJobCompletionAutomations(id);
+      } catch (automationError) {
+        console.error(
+          'Failed to schedule job completion automations:',
+          automationError
+        );
       }
     }
   }
@@ -614,10 +643,10 @@ export async function createJobFromEstimate(estimateId: string): Promise<Job> {
     estimate_id: estimateId,
     title: estimate.title,
     description: estimate.description,
-    status: 'scheduled' as const,
+    status: 'draft' as const,
     subtotal: estimate.subtotal,
+    tax: 0,
     total: estimate.total,
-    notes: `Created from estimate ${estimate.estimate_number}`,
   };
 
   // Create line items from estimate line items
@@ -644,4 +673,229 @@ export async function createJobFromEstimate(estimateId: string): Promise<Job> {
   });
 
   return job;
+}
+
+/**
+ * Get a single job with full details including estimate and line items
+ */
+export async function getJobByIdWithRelations(
+  jobId: string
+): Promise<JobWithDetails | null> {
+  const { data, error } = await supabase
+    .from('jobs')
+    .select(
+      `
+      *,
+      client:clients (
+        id,
+        first_name,
+        last_name,
+        email,
+        phone
+      ),
+      estimate:estimates (
+        id,
+        estimate_number,
+        title,
+        status
+      ),
+      job_line_items (*)
+    `
+    )
+    .eq('id', jobId)
+    .single();
+
+  if (error) {
+    if (error.code === 'PGRST116') return null;
+    console.error('Error fetching job with relations:', error);
+    throw new Error('Failed to fetch job');
+  }
+
+  return data;
+}
+
+/**
+ * List jobs with filters
+ */
+export async function listJobsWithFilters(filters: {
+  status?: JobStatus | 'all';
+  search?: string;
+}): Promise<JobWithClient[]> {
+  let query = supabase
+    .from('jobs')
+    .select(
+      `
+      *,
+      client:clients (
+        id,
+        first_name,
+        last_name,
+        email,
+        phone
+      )
+    `
+    )
+    .order('created_at', { ascending: false });
+
+  if (filters.status && filters.status !== 'all') {
+    query = query.eq('status', filters.status);
+  }
+
+  if (filters.search) {
+    // Search by job number or client name
+    query = query.or(
+      `job_number.ilike.%${filters.search}%,client.first_name.ilike.%${filters.search}%,client.last_name.ilike.%${filters.search}%`
+    );
+  }
+
+  const { data, error } = await query;
+
+  if (error) {
+    console.error('Error fetching jobs with filters:', error);
+    throw new Error('Failed to fetch jobs');
+  }
+
+  return data || [];
+}
+
+/**
+ * Update job scheduling
+ */
+export async function updateJobScheduling(
+  jobId: string,
+  updates: { scheduledFor: string | null }
+): Promise<void> {
+  const { error } = await supabase
+    .from('jobs')
+    .update({
+      scheduled_for: updates.scheduledFor,
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', jobId);
+
+  if (error) {
+    console.error('Error updating job scheduling:', error);
+    throw new Error('Failed to update job scheduling');
+  }
+}
+
+/**
+ * Update job notes
+ */
+export async function updateJobNotes(
+  jobId: string,
+  updates: { internalNotes?: string; clientNotes?: string }
+): Promise<void> {
+  const { error } = await supabase
+    .from('jobs')
+    .update({
+      internal_notes: updates.internalNotes,
+      client_notes: updates.clientNotes,
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', jobId);
+
+  if (error) {
+    console.error('Error updating job notes:', error);
+    throw new Error('Failed to update job notes');
+  }
+}
+
+/**
+ * Update job status with validation and business logic
+ */
+export async function updateJobStatusWithValidation(
+  jobId: string,
+  newStatus: JobStatus
+): Promise<void> {
+  // Get current job to validate transition
+  const job = await getJobById(jobId);
+  if (!job) {
+    throw new Error('Job not found');
+  }
+
+  // Validate status transitions
+  const validTransitions: Record<JobStatus, JobStatus[]> = {
+    draft: ['scheduled', 'cancelled'],
+    quote: ['scheduled', 'cancelled'],
+    scheduled: ['in_progress', 'cancelled'],
+    in_progress: ['completed'],
+    completed: [], // Terminal state
+    invoiced: [], // Terminal state
+    cancelled: [], // Terminal state
+  };
+
+  if (!validTransitions[job.status]?.includes(newStatus)) {
+    throw new Error(
+      `Invalid status transition from ${job.status} to ${newStatus}`
+    );
+  }
+
+  const updates: any = {
+    status: newStatus,
+    updated_at: new Date().toISOString(),
+  };
+
+  // If completing job, mark as ready for invoice
+  if (newStatus === 'completed') {
+    updates.ready_for_invoice = true;
+  }
+
+  const { error } = await supabase.from('jobs').update(updates).eq('id', jobId);
+
+  if (error) {
+    console.error('Error updating job status:', error);
+    throw new Error('Failed to update job status');
+  }
+
+  // Log status change activity
+  if (job.client_id) {
+    const jobTitle = job.title || job.job_number;
+    try {
+      switch (newStatus) {
+        case 'in_progress':
+          await logJobStarted(job.client_id, jobId, jobTitle);
+          break;
+        case 'completed':
+          await logJobCompleted(job.client_id, jobId, jobTitle);
+          break;
+        case 'cancelled':
+          await logJobCancelled(job.client_id, jobId, jobTitle);
+          break;
+      }
+    } catch (activityError) {
+      // Don't fail the status update if activity logging fails
+      console.warn('Failed to log job activity:', activityError);
+    }
+  }
+
+  if (newStatus === 'completed') {
+    try {
+      await scheduleJobCompletionAutomations(jobId);
+    } catch (automationError) {
+      console.error(
+        'Failed to schedule job completion automations:',
+        automationError
+      );
+    }
+  }
+}
+
+/**
+ * Get job by ID - helper function used by other functions
+ */
+export async function getJobById(jobId: string): Promise<Job | null> {
+  const { data, error } = await supabase
+    .from('jobs')
+    .select('*')
+    .eq('id', jobId)
+    .single();
+
+  if (error) {
+    if (error.code === 'PGRST116') return null;
+    console.error('Error fetching job:', error);
+    throw new Error('Failed to fetch job');
+  }
+
+  return data;
 }

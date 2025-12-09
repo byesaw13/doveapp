@@ -42,6 +42,9 @@ export interface Job {
   payment_status: 'unpaid' | 'partial' | 'paid';
   amount_paid: number;
   notes?: string | null;
+  internal_notes?: string | null;
+  client_notes?: string | null;
+  ready_for_invoice?: boolean;
   created_at: string;
   updated_at: string;
 }

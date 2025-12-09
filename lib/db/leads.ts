@@ -1,5 +1,6 @@
 import { supabase } from '@/lib/supabase';
 import type { Lead, LeadActivity, LeadStats, LeadStatus } from '@/types/lead';
+import { scheduleLeadResponse } from '@/lib/db/automation_triggers';
 
 /**
  * Get all leads
@@ -41,6 +42,16 @@ export async function createLead(
     .single();
 
   if (error) throw error;
+
+  try {
+    await scheduleLeadResponse(data.id);
+  } catch (automationError) {
+    console.error(
+      'Failed to schedule lead response automation:',
+      automationError
+    );
+  }
+
   return data;
 }
 

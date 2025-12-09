@@ -1482,6 +1482,36 @@ export default function EstimatesPage() {
 
               {/* Totals */}
               <div className="p-4 bg-gray-50 rounded-lg space-y-4">
+                {/* High-risk warning */}
+                {(() => {
+                  const lineItems = form.watch('line_items');
+                  const hasHighRisk = lineItems.some((item: any) => {
+                    // Check if this line item has high risk based on serviceId
+                    const serviceId = item.serviceId;
+                    if (!serviceId) return false;
+
+                    // This would need to fetch from service items, for now simplified
+                    return false; // Placeholder - would check actual service item data
+                  });
+
+                  if (hasHighRisk) {
+                    return (
+                      <div className="flex items-start gap-2 p-3 bg-orange-50 border border-orange-200 rounded-md text-sm text-orange-800">
+                        <AlertCircle className="w-5 h-5 mt-0.5 flex-shrink-0" />
+                        <div>
+                          <span className="font-semibold">
+                            High-risk work detected:
+                          </span>{' '}
+                          This estimate includes items that may require on-site
+                          inspection. Final pricing is subject to confirmation
+                          based on actual site conditions.
+                        </div>
+                      </div>
+                    );
+                  }
+                  return null;
+                })()}
+
                 {pricebookCalculation && (
                   <div className="grid grid-cols-2 gap-4 p-3 bg-white rounded border">
                     <div>

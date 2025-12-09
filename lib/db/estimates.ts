@@ -12,6 +12,7 @@ import {
   logEstimateDeclined,
   createPostEstimateWorkflow,
 } from './activities';
+import { scheduleEstimateFollowUp } from '@/lib/db/automation_triggers';
 
 /**
  * Get all estimates
@@ -155,6 +156,15 @@ export async function sendEstimate(id: string): Promise<Estimate> {
       await createPostEstimateWorkflow(data.id);
     } catch (activityError) {
       console.error('Failed to log estimate sent activity:', activityError);
+    }
+
+    try {
+      await scheduleEstimateFollowUp(data.id);
+    } catch (automationError) {
+      console.error(
+        'Failed to schedule estimate follow-up automation:',
+        automationError
+      );
     }
   }
 

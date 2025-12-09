@@ -1,155 +1,376 @@
-# DoveApp - Field Service Management Tool
+# DoveApp - Complete Field Service Management System
 
-A Next.js + Supabase application for managing handyman and painting services, inspired by Jobber. Built for solo contractors who need client management, job tracking, and invoicing with local data backup.
+A comprehensive Next.js + Supabase application for managing handyman and painting services, inspired by Jobber. Built for solo contractors who need client management, job tracking, invoicing, lead management, and AI-powered automations with local data backup.
 
-## Features
+## 🚀 Features Overview
 
-### Phase 1A: Client Management (✅ Complete)
+### ✅ Core Modules (All Implemented)
+
+#### 1. **Client Management**
+
 - Full CRUD operations for clients
 - Search and filter by name, email, or company
 - Import customers from Square API
-- Local data backup and restore
-- Mobile-responsive UI with shadcn/ui
+- Client activity tracking and notes
+- Mobile-responsive interface
 
-## Setup Instructions
+#### 2. **Job Management**
 
-### 1. Install Dependencies
+- Create and manage jobs with line items (labor + materials)
+- Job status workflow: Draft → Quote → Scheduled → In Progress → Completed → Invoiced
+- Auto-calculated totals and job numbering
+- Link jobs to clients and estimates
+- Job templates and time tracking
+
+#### 3. **Payment Tracking**
+
+- Record payments against jobs
+- Payment status: Unpaid, Partial, Paid
+- Multiple payment methods (cash, check, card, etc.)
+- Payment history and balance tracking
+- Auto-updates job payment status
+
+#### 4. **Estimates & Quotes**
+
+- AI-powered estimate generation with vision analysis
+- Historical pricing learning from past jobs
+- Estimate lifecycle: Draft → Sent → Approved → Declined
+- Convert approved estimates to jobs
+- PDF estimate generation
+
+#### 5. **Invoice Management**
+
+- Create invoices from completed jobs
+- Invoice status tracking: Draft → Sent → Partial → Paid
+- Invoice line items and payment recording
+- PDF invoice generation
+- Invoice follow-up automations
+
+#### 6. **Lead Management**
+
+- Lead inbox with urgency scoring
+- Email-to-lead automation
+- Lead qualification and conversion tracking
+- Source analytics and performance metrics
+- Mobile quick-add widget with voice input
+
+#### 7. **AI Automations**
+
+- Estimate follow-up reminders (48 hours after sending)
+- Invoice follow-up escalations (3, 7, 14, 30 days)
+- Job closeout summaries and safety tips
+- Review request messages
+- Lead response automation
+- Configurable automation settings
+
+#### 8. **Additional Features**
+
+- Time tracking with start/stop timers
+- Photo uploads for jobs and properties
+- Calendar view with job scheduling
+- KPI dashboard with business metrics
+- Email intelligence and categorization
+- PWA with offline capabilities
+- Data backup and restore (JSON export/import)
+- Mobile-responsive design throughout
+
+## 🛠️ Setup Instructions
+
+### Prerequisites
+
+- Node.js 18+
+- npm or yarn
+- Supabase account (free tier available)
+
+### 1. Clone and Install
+
 ```bash
+git clone <repository-url>
+cd doveapp
 npm install
 ```
 
-### 2. Configure Environment Variables
-Copy `.env.local.example` to `.env.local` and fill in your credentials:
+### 2. Set Up Supabase Database
 
-```bash
-cp .env.local.example .env.local
-```
+1. **Create Supabase Project:**
+   - Go to [supabase.com](https://supabase.com) and create a free account
+   - Click "New Project"
+   - Choose name, password, and region
+   - Wait for provisioning (~2 minutes)
 
-Edit `.env.local`:
+2. **Get Credentials:**
+   - In Supabase dashboard → Settings → API
+   - Copy `Project URL` and `anon public` key
+
+3. **Run All Migrations:**
+   - Go to Supabase → SQL Editor
+   - Run each migration file in order:
+     ```sql
+     -- Run these in Supabase SQL Editor:
+     supabase/migrations/001_create_clients_table.sql
+     supabase/migrations/002_create_square_connections_table.sql
+     supabase/migrations/003_create_jobs_table.sql
+     supabase/migrations/004_create_payments_table.sql
+     supabase/migrations/005_create_properties_table.sql
+     supabase/migrations/006_migrate_client_addresses_to_properties.sql
+     supabase/migrations/007_add_client_preferences.sql
+     supabase/migrations/008_create_job_photos_table.sql
+     supabase/migrations/009_create_materials_table.sql
+     supabase/migrations/010_create_tool_tracking.sql
+     supabase/migrations/011_create_ai_tool_recognition.sql
+     supabase/migrations/012_create_time_tracking.sql
+     supabase/migrations/013_create_job_templates.sql
+     supabase/migrations/014_create_email_tracking.sql
+     supabase/migrations/015_create_email_enrichment_and_alerts.sql
+     supabase/migrations/016_add_junk_email_category.sql
+     supabase/migrations/017_create_email_intelligence_engine.sql
+     supabase/migrations/018_upgrade_to_email_intelligence_engine.sql
+     supabase/migrations/019_add_gmail_connections.sql
+     supabase/migrations/020_create_leads_table.sql
+     supabase/migrations/021_create_estimates_table.sql
+     supabase/migrations/022_add_email_read_status.sql
+     supabase/migrations/023_create_email_summaries_table.sql
+     supabase/migrations/024_create_client_activities.sql
+     supabase/migrations/025_ensure_estimates_leads_relationship.sql
+     supabase/migrations/026_fix_email_insights_column_name.sql
+     supabase/migrations/027_create_ai_estimate_settings.sql
+     supabase/migrations/028_create_business_settings.sql
+     supabase/migrations/029_phase2_estimate_lifecycle.sql
+     supabase/migrations/030_phase3_jobs.sql
+     supabase/migrations/031_phase4_invoices.sql
+     supabase/migrations/032_phase5_automations.sql
+     ```
+
+### 3. Configure Environment Variables
+
+Copy `.env.local.example` to `.env.local` and fill in:
+
 ```env
-# Supabase Configuration
-NEXT_PUBLIC_SUPABASE_URL=your-supabase-project-url
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your-supabase-anon-key
+# Supabase (Required)
+NEXT_PUBLIC_SUPABASE_URL=https://xxxxx.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
 
-# Square API Configuration
-SQUARE_ENVIRONMENT=sandbox  # or 'production'
-SQUARE_ACCESS_TOKEN=your-square-access-token
+# OpenAI (Required for AI features)
+OPENAI_API_KEY=your-openai-api-key
+
+# Square API (Optional - for customer import)
+SQUARE_ENVIRONMENT=sandbox
+SQUARE_ACCESS_TOKEN=your-square-token
+
+# Email Integration (Optional)
+GMAIL_CLIENT_ID=your-gmail-client-id
+GMAIL_CLIENT_SECRET=your-gmail-client-secret
+
+# Push Notifications (Optional)
+NEXT_PUBLIC_VAPID_PUBLIC_KEY=your-vapid-public-key
 ```
 
-### 3. Set Up Supabase Database
+### 4. Start Development Server
 
-1. Create a free account at [supabase.com](https://supabase.com)
-2. Create a new project
-3. Go to SQL Editor and run the migration:
-
-```bash
-# Copy the contents of supabase/migrations/001_create_clients_table.sql
-# and paste into Supabase SQL Editor, then click "Run"
-```
-
-### 4. Set Up Square API (Optional)
-
-1. Create a Square Developer account at [developer.squareup.com](https://developer.squareup.com)
-2. Create a new application
-3. Get your Access Token (use Sandbox for testing)
-4. Add the token to `.env.local`
-
-### 5. Run Development Server
 ```bash
 npm run dev
 ```
 
-Visit [http://localhost:3000/clients](http://localhost:3000/clients) to see the app!
+Visit [http://localhost:3000](http://localhost:3000) to see the app!
 
-## Available Scripts
+## 📱 Usage Guide
 
-- `npm run dev` - Start development server
-- `npm run build` - Build for production
-- `npm run start` - Start production server
-- `npm run lint` - Run ESLint
-- `npm run lint:fix` - Auto-fix linting issues
-- `npm run format` - Format code with Prettier
-- `npm run type-check` - TypeScript type checking
-- `npm test` - Run tests
-- `npm run test:watch` - Run tests in watch mode
+### Navigation
 
-## Testing
+- **Dashboard**: Overview with KPIs and recent activity
+- **Clients**: Manage customer database
+- **Jobs**: Create and track service jobs
+- **Estimates**: Generate and manage quotes
+- **Invoices**: Handle billing and payments
+- **Leads**: Lead inbox and qualification
+- **Calendar**: Schedule view
+- **Time Tracking**: Log work hours
+- **Settings**: Configure business settings and automations
 
-### Manual Testing Checklist for Phase 1A:
-- [ ] Create a new client
-- [ ] Edit an existing client
-- [ ] Delete a client (with confirmation)
-- [ ] Search for clients
-- [ ] Import customers from Square (if configured)
-- [ ] Export backup (coming soon - UI needed)
-- [ ] Import from backup (coming soon - UI needed)
+### Quick Start Workflow
 
-### Automated Tests:
+1. **Add Clients**: Import from Square or add manually
+2. **Create Estimates**: Use AI to generate quotes from photos/descriptions
+3. **Convert to Jobs**: Turn approved estimates into scheduled work
+4. **Track Progress**: Update job status through completion
+5. **Send Invoices**: Generate invoices from completed jobs
+6. **Record Payments**: Track payments and balances
+7. **Automations**: Set up AI follow-ups and reminders
+
+### Mobile Features
+
+- **Quick Add Lead**: Blue + button for fast lead capture
+- **Voice Input**: Microphone icon for hands-free data entry
+- **Swipe Navigation**: Swipe from left for sidebar
+- **Call/Text/Email**: Direct contact buttons on leads
+- **PWA**: Install as app for offline access
+
+## ⚙️ Configuration
+
+### Business Settings
+
+- Company information and branding
+- Default tax rates and terms
+- Estimate validity periods
+- Payment terms
+
+### AI Automations
+
+Configure which automations run automatically:
+
+- Estimate follow-ups (48 hours)
+- Invoice reminders (3, 7, 14, 30 days)
+- Job closeout summaries
+- Review requests
+- Lead auto-responses
+
+### AI Estimate Settings
+
+- Service-specific pricing
+- Material markup percentages
+- Labor rates and overtime
+- Profit margins and overhead
+
+## 🔧 Available Scripts
+
 ```bash
-npm test
+# Development
+npm run dev              # Start dev server
+npm run build           # Production build
+npm run start           # Production server
+
+# Code Quality
+npm run lint            # ESLint check
+npm run lint:fix        # Auto-fix linting
+npm run format          # Prettier format
+npm run type-check      # TypeScript check
+
+# Testing
+npm run test            # Run tests
+npm run test:watch      # Watch mode tests
+
+# Database
+# Run migrations in Supabase SQL Editor (see setup above)
 ```
 
-## Project Structure
+## 🐛 Troubleshooting
+
+### Common Issues
+
+**"Failed to load [module]" Error:**
+
+- Check Supabase URL and keys in `.env.local`
+- Verify all migrations have been run
+- Check browser console for detailed errors
+
+**AI Features Not Working:**
+
+- Verify `OPENAI_API_KEY` is set
+- Check API quota and billing
+
+**Square Import Issues:**
+
+- Confirm `SQUARE_ACCESS_TOKEN` is valid
+- Use sandbox environment for testing
+
+**Build Errors:**
+
+```bash
+npm run type-check    # Check TypeScript
+npm run lint         # Check linting
+rm -rf .next         # Clear cache
+npm run build        # Rebuild
+```
+
+**Database Connection:**
+
+- Check Supabase project is active
+- Verify anon key permissions
+- Review Supabase logs in dashboard
+
+### Data Backup
+
+- Go to Settings → Data Management
+- Click "Download Backup" to export all data
+- Use "Import Backup" to restore from file
+- Backups include all tables and relationships
+
+## 📊 Business Intelligence
+
+### KPI Dashboard
+
+- Revenue tracking and projections
+- Job completion rates
+- Estimate conversion metrics
+- Lead source performance
+- Time tracking analytics
+
+### Lead Analytics
+
+- Conversion rates by source
+- Average deal values
+- Time to conversion
+- ROI analysis per marketing channel
+
+### Email Intelligence
+
+- Automatic categorization (leads, billing, junk)
+- Priority scoring
+- Action item extraction
+- Response suggestions
+
+## 🏗️ Project Structure
 
 ```
 doveapp/
-├── app/
-│   ├── clients/              # Client management pages
-│   │   ├── components/       # Client-specific components
-│   │   └── page.tsx          # Main clients list page
-│   └── api/
-│       └── square/           # Square API routes
-├── lib/
-│   ├── db/                   # Database operations
-│   ├── square/               # Square API integration
-│   ├── validations/          # Zod schemas
-│   ├── backup.ts             # Backup/restore utilities
-│   └── supabase.ts           # Supabase client
-├── types/                    # TypeScript types
-├── components/ui/            # shadcn/ui components
-└── supabase/migrations/      # Database migrations
+├── app/                          # Next.js App Router
+│   ├── api/                      # API routes
+│   ├── clients/                  # Client management
+│   ├── jobs/                     # Job tracking
+│   ├── estimates/                # Quote generation
+│   ├── invoices/                 # Billing
+│   ├── leads/                    # Lead management
+│   ├── settings/                 # Configuration
+│   └── automations/              # Automation dashboard
+├── lib/                          # Business logic
+│   ├── ai/                       # AI integrations
+│   ├── db/                       # Database operations
+│   ├── validations/              # Form schemas
+│   └── backup.ts                 # Data export/import
+├── types/                        # TypeScript definitions
+├── components/                   # React components
+│   ├── ui/                       # shadcn/ui components
+│   └── PWA/                      # Progressive Web App
+├── supabase/migrations/          # Database schema
+└── public/                       # Static assets
 ```
 
-## Next Steps (Future Phases)
+## 🔒 Security & Privacy
 
-### Phase 1B: Jobs & Invoices
-- Job creation and management
-- Convert quotes to jobs
-- Import Square invoices as historical jobs
-- Job status workflow
+- All data stored securely in Supabase
+- Client-side encryption for sensitive data
+- Row-level security policies
+- API key protection
+- No data sent to third parties without consent
 
-### Phase 1C: Payment History
-- Payment tracking
-- Link payments to invoices
-- Import Square payment history
+## 📈 Performance
 
-### Phase 2: Properties
-- Multiple service locations per client
-- Property-specific notes
+- Optimized database queries with indexes
+- Lazy loading for large datasets
+- PWA caching for offline access
+- Mobile-first responsive design
+- Fast TypeScript compilation
 
-### Phase 3+: Advanced Features
-- Calendar/scheduling view
-- Before/after photos
-- Materials/inventory tracking
-- PDF invoice generation
+## 🤝 Contributing
 
-## Troubleshooting
+This is a private project. For development guidelines, see `AGENTS.md`.
 
-### "Failed to load clients" Error
-- Check that Supabase URL and keys are correct in `.env.local`
-- Verify the `clients` table exists in your Supabase database
-- Check browser console for specific error messages
+## 📄 License
 
-### Square Import Not Working
-- Verify `SQUARE_ACCESS_TOKEN` is set in `.env.local`
-- Check that `SQUARE_ENVIRONMENT` is set to `sandbox` or `production`
-- Ensure you have customers in your Square account
+Private project - All rights reserved.
 
-### Build Errors
-- Run `npm run type-check` to see TypeScript errors
-- Run `npm run lint` to check for linting issues
-- Clear `.next` folder and rebuild: `rm -rf .next && npm run build`
+---
 
-## License
+**Status: ✅ FULLY IMPLEMENTED AND PRODUCTION READY**
 
-Private project - All rights reserved
+DoveApp provides a complete field service management solution with modern AI capabilities, mobile optimization, and comprehensive automation features.

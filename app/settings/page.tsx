@@ -194,6 +194,39 @@ export default function SettingsPage() {
     const file = event.target.files?.[0];
     if (!file) return;
 
+    // File validation
+    if (!file.name.endsWith('.json')) {
+      toast({
+        title: 'Invalid File Type',
+        description: 'Please select a valid JSON backup file.',
+        variant: 'destructive',
+      });
+      event.target.value = '';
+      return;
+    }
+
+    // File size validation (50MB limit)
+    const maxSize = 50 * 1024 * 1024; // 50MB
+    if (file.size > maxSize) {
+      toast({
+        title: 'File Too Large',
+        description: 'Backup file must be smaller than 50MB.',
+        variant: 'destructive',
+      });
+      event.target.value = '';
+      return;
+    }
+
+    // Confirmation prompt
+    const confirmed = window.confirm(
+      `Are you sure you want to import this backup? This will overwrite existing data.\n\nFile: ${file.name}\nSize: ${(file.size / 1024 / 1024).toFixed(2)} MB`
+    );
+
+    if (!confirmed) {
+      event.target.value = '';
+      return;
+    }
+
     setImportLoading(true);
     try {
       const formDataUpload = new FormData();
@@ -215,7 +248,7 @@ export default function SettingsPage() {
         description: 'Your data has been restored from the backup.',
       });
 
-      // Optionally reload settings or data
+      // Reload settings and potentially redirect to refresh app state
       loadSettings();
     } catch (error: any) {
       console.error('Import failed:', error);

@@ -9,15 +9,10 @@ import {
   deleteClient,
 } from '@/lib/db/clients';
 import {
-  getPropertiesByClient,
   createProperty,
   updateProperty,
   deleteProperty,
-  getAllProperties,
 } from '@/lib/db/properties';
-import { getJobsByClient, getJobs } from '@/lib/db/jobs';
-import { getEstimates } from '@/lib/db/estimates';
-import { getPaymentsByJob, getJobPaymentSummary } from '@/lib/db/payments';
 import { Client, ClientInsert } from '@/types/client';
 import type { Property } from '@/types/property';
 import type { JobWithClient } from '@/types/job';
@@ -117,48 +112,38 @@ export default function NewClientsPage() {
 
   const loadTotalStats = async () => {
     try {
-      const [allClients, allProperties, allJobs] = await Promise.all([
-        getClients(),
-        getAllProperties(),
-        getJobs(),
-      ]);
+      const response = await fetch('/api/dashboard/stats');
+      if (!response.ok) {
+        throw new Error('Failed to load stats');
+      }
+      const stats = await response.json();
       setTotalStats({
-        totalClients: allClients.length,
-        totalProperties: allProperties.length,
-        totalJobs: allJobs.length,
+        totalClients: stats.totalClients,
+        totalProperties: stats.totalProperties,
+        totalJobs: stats.totalJobs,
       });
     } catch (error) {
       console.error('Failed to load total stats:', error);
+      // Set zeros on error to prevent UI issues
+      setTotalStats({
+        totalClients: 0,
+        totalProperties: 0,
+        totalJobs: 0,
+      });
     }
   };
 
   const loadClientDetails = async (clientId: string) => {
     try {
-      const [propertiesData, jobsData, allEstimates] = await Promise.all([
-        getPropertiesByClient(clientId),
-        getJobsByClient(clientId),
-        getEstimates(),
-      ]);
+      const response = await fetch(`/api/clients/${clientId}/details`);
+      if (!response.ok) {
+        throw new Error('Failed to load client details');
+      }
 
-      setProperties(propertiesData);
-
-      const jobsWithPayments = await Promise.all(
-        jobsData.map(async (job) => {
-          const paymentSummary = await getJobPaymentSummary(job.id);
-          return { ...job, paymentSummary };
-        })
-      );
-      setJobs(jobsWithPayments);
-
-      const clientEstimates = allEstimates.filter(
-        (est) => est.client_id === clientId
-      );
-      setEstimates(clientEstimates);
-
-      const allPayments = await Promise.all(
-        jobsData.map((job) => getPaymentsByJob(job.id))
-      );
-      setPayments(allPayments.flat());
+      const data = await response.json();
+      setProperties(data.properties);
+      setJobs(data.jobs);
+      setEstimates(data.estimates);
     } catch (error) {
       console.error('Failed to load client details:', error);
     }

@@ -20,14 +20,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import {
-  getClient,
-  getAllProperties,
-  getJobsByClient,
-  updateClient,
-  createProperty,
-  getJobPaymentSummary,
-} from '@/lib/db';
+import { updateClient, createProperty } from '@/lib/db';
 import { ActivityTimeline } from './ActivityTimeline';
 import type { Client } from '@/types/client';
 import type { PropertyWithClient } from '@/types/property';
@@ -166,47 +159,34 @@ export function ClientDetailModal({
 
     setLoading(true);
     try {
-      const [clientData, allPropertiesData, jobsData] = await Promise.all([
-        getClient(clientId),
-        getAllProperties(),
-        getJobsByClient(clientId),
-      ]);
+      // Use the new batched API for better performance
+      const response = await fetch(`/api/clients/${clientId}/details`);
+      if (!response.ok) {
+        throw new Error('Failed to load client details');
+      }
 
-      // Filter properties for this client
-      const propertiesData = allPropertiesData.filter(
-        (p) => p.client_id === clientId
-      );
+      const data = await response.json();
 
-      setClient(clientData);
+      setClient(data.client);
+      setProperties(data.properties);
+      setJobs(data.jobs);
 
       // Set address data for editing
-      if (clientData) {
+      if (data.client) {
         setAddressData({
-          address_line1: clientData.address_line1 || '',
-          address_line2: clientData.address_line2 || '',
-          city: clientData.city || '',
-          state: clientData.state || '',
-          zip_code: clientData.zip_code || '',
+          address_line1: data.client.address_line1 || '',
+          address_line2: data.client.address_line2 || '',
+          city: data.client.city || '',
+          state: data.client.state || '',
+          zip_code: data.client.zip_code || '',
         });
 
         // Set notes and preferences data
         setNotesData({
-          notes: clientData.notes || '',
-          preferences: clientData.preferences || '',
+          notes: data.client.notes || '',
+          preferences: data.client.preferences || '',
         });
       }
-
-      setProperties(propertiesData);
-
-      // Load payment summaries for jobs
-      const jobsWithPayments = await Promise.all(
-        jobsData.map(async (job) => {
-          const paymentSummary = await getJobPaymentSummary(job.id);
-          return { ...job, paymentSummary };
-        })
-      );
-
-      setJobs(jobsWithPayments);
     } catch (error) {
       console.error('Failed to load client data:', error);
     } finally {

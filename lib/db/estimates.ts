@@ -17,9 +17,9 @@ import { scheduleEstimateFollowUp } from '@/lib/db/automation_triggers';
 /**
  * Get all estimates
  */
-export async function getEstimates(): Promise<EstimateWithRelations[]> {
-  // Try with relationships first
-  let { data, error } = await supabase
+  export async function getEstimates(): Promise<EstimateWithRelations[]> {
+    // Try with relationships first
+    const { data, error } = await supabase
     .from('estimates')
     .select(
       `
@@ -54,7 +54,7 @@ export async function getEstimates(): Promise<EstimateWithRelations[]> {
 export async function getEstimate(
   id: string
 ): Promise<EstimateWithRelations | null> {
-  let { data, error } = await supabase
+    const { data, error } = await supabase
     .from('estimates')
     .select(
       `

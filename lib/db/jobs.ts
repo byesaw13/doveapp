@@ -24,9 +24,9 @@ import { scheduleJobCompletionAutomations } from '@/lib/db/automation_triggers';
 /**
  * Get all jobs with client information
  */
-export async function getJobs(): Promise<JobWithClient[]> {
-  // Try with relationships first
-  let { data, error } = await supabase
+  export async function getJobs(): Promise<JobWithClient[]> {
+    // Try with relationships first
+    const { data, error } = await supabase
     .from('jobs')
     .select(
       `

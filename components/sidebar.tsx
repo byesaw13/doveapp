@@ -158,9 +158,31 @@ export function Sidebar({ className }: SidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(
-    new Set()
-  );
+  const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(() => {
+    if (typeof window === 'undefined') {
+      return new Set();
+    }
+
+    const stored = localStorage.getItem('sidebar-collapsed-groups');
+
+    if (stored) {
+      try {
+        return new Set(JSON.parse(stored));
+      } catch (e) {
+        console.error('Failed to parse collapsed groups:', e);
+        return new Set();
+      }
+    }
+
+    const initialCollapsed = new Set<string>();
+    navigationGroups.forEach((group) => {
+      if (!group.defaultOpen) {
+        initialCollapsed.add(group.name);
+      }
+    });
+
+    return initialCollapsed;
+  });
   const [notifications, setNotifications] = useState<SidebarNotificationCounts>(
     {
       unreadEmails: 0,
@@ -178,27 +200,6 @@ export function Sidebar({ className }: SidebarProps) {
     outstandingInvoices: 0,
     outstandingInvoicesAmount: 0,
   });
-
-  // Load collapsed state from localStorage
-  useEffect(() => {
-    const stored = localStorage.getItem('sidebar-collapsed-groups');
-    if (stored) {
-      try {
-        setCollapsedGroups(new Set(JSON.parse(stored)));
-      } catch (e) {
-        console.error('Failed to parse collapsed groups:', e);
-      }
-    } else {
-      // Set initial collapsed state based on defaultOpen
-      const initialCollapsed = new Set<string>();
-      navigationGroups.forEach((group) => {
-        if (!group.defaultOpen) {
-          initialCollapsed.add(group.name);
-        }
-      });
-      setCollapsedGroups(initialCollapsed);
-    }
-  }, []);
 
   // Save collapsed state to localStorage
   useEffect(() => {
@@ -236,12 +237,17 @@ export function Sidebar({ className }: SidebarProps) {
 
   // Initial load and refresh every 30 seconds
   useEffect(() => {
-    fetchNotifications();
-    fetchPerformance();
+    const runFetches = async () => {
+      await fetchNotifications();
+      await fetchPerformance();
+    };
+
+    void runFetches();
+
     const interval = setInterval(() => {
-      fetchNotifications();
-      fetchPerformance();
+      void runFetches();
     }, 30000);
+
     return () => clearInterval(interval);
   }, [fetchNotifications, fetchPerformance]);
 

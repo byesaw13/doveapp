@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -31,54 +31,42 @@ interface PWAStatus {
 
 export function PWARegistration() {
   const { toast } = useToast();
-  const [status, setStatus] = useState<PWAStatus>({
-    isOnline: navigator.onLine,
-    isInstalled: false,
+  const [status, setStatus] = useState<PWAStatus>(() => ({
+    isOnline: typeof navigator !== 'undefined' ? navigator.onLine : true,
+    isInstalled:
+      typeof window !== 'undefined'
+        ? window.matchMedia('(display-mode: standalone)').matches ||
+          ((window.navigator as any).standalone === true ?? false)
+        : false,
     canInstall: false,
-    hasNotifications: false,
+    hasNotifications:
+      typeof window !== 'undefined' &&
+      'Notification' in window &&
+      Notification.permission === 'granted',
     serviceWorkerStatus: null,
     syncStatus: 'idle',
-  });
+  }));
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
   const [registration, setRegistration] =
     useState<ServiceWorkerRegistration | null>(null);
 
-  useEffect(() => {
-    // Check if already installed
-    const isStandalone = window.matchMedia(
-      '(display-mode: standalone)'
-    ).matches;
-    const isInWebAppiOS = (window.navigator as any).standalone === true;
+  // Helper function for VAPID key conversion
+  const urlBase64ToUint8Array = (base64String: string) => {
+    const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
+    const base64 = (base64String + padding)
+      .replace(/-/g, '+')
+      .replace(/_/g, '/');
 
-    setStatus((prev) => ({
-      ...prev,
-      isInstalled: isStandalone || isInWebAppiOS,
-      hasNotifications:
-        'Notification' in window && Notification.permission === 'granted',
-    }));
+    const rawData = window.atob(base64);
+    const outputArray = new Uint8Array(rawData.length);
 
-    // Register service worker
-    registerServiceWorker();
+    for (let i = 0; i < rawData.length; ++i) {
+      outputArray[i] = rawData.charCodeAt(i);
+    }
+    return outputArray;
+  };
 
-    // Listen for install prompt
-    window.addEventListener('beforeinstallprompt', handleInstallPrompt);
-
-    // Listen for online/offline
-    window.addEventListener('online', handleOnlineStatus);
-    window.addEventListener('offline', handleOfflineStatus);
-
-    // Listen for app installed
-    window.addEventListener('appinstalled', handleAppInstalled);
-
-    return () => {
-      window.removeEventListener('beforeinstallprompt', handleInstallPrompt);
-      window.removeEventListener('online', handleOnlineStatus);
-      window.removeEventListener('offline', handleOfflineStatus);
-      window.removeEventListener('appinstalled', handleAppInstalled);
-    };
-  }, []);
-
-  const registerServiceWorker = async () => {
+  const registerServiceWorker = useCallback(async () => {
     // Only register service worker in secure contexts (HTTPS or localhost)
     if (
       'serviceWorker' in navigator &&
@@ -126,15 +114,15 @@ export function PWARegistration() {
         setStatus((prev) => ({ ...prev, serviceWorkerStatus: 'error' }));
       }
     }
-  };
+  }, [toast]);
 
-  const handleInstallPrompt = (e: Event) => {
+  const handleInstallPrompt = useCallback((e: Event) => {
     e.preventDefault();
     setDeferredPrompt(e);
     setStatus((prev) => ({ ...prev, canInstall: true }));
-  };
+  }, []);
 
-  const handleInstallClick = async () => {
+  const handleInstallClick = useCallback(async () => {
     if (!deferredPrompt) return;
 
     deferredPrompt.prompt();
@@ -146,9 +134,9 @@ export function PWARegistration() {
 
     setDeferredPrompt(null);
     setStatus((prev) => ({ ...prev, canInstall: false }));
-  };
+  }, [deferredPrompt]);
 
-  const handleOnlineStatus = () => {
+  const handleOnlineStatus = useCallback(() => {
     setStatus((prev) => ({ ...prev, isOnline: true }));
     toast({
       title: 'Back Online',
@@ -161,9 +149,9 @@ export function PWARegistration() {
       registration.sync.register('sync-time-entries');
       registration.sync.register('sync-clients');
     }
-  };
+  }, [registration, toast]);
 
-  const handleOfflineStatus = () => {
+  const handleOfflineStatus = useCallback(() => {
     setStatus((prev) => ({ ...prev, isOnline: false }));
     toast({
       title: 'Offline Mode',
@@ -171,17 +159,41 @@ export function PWARegistration() {
         'You can continue working. Data will sync when connection is restored.',
       variant: 'destructive',
     });
-  };
+  }, [toast]);
 
-  const handleAppInstalled = () => {
+  const handleAppInstalled = useCallback(() => {
     setStatus((prev) => ({ ...prev, isInstalled: true, canInstall: false }));
     toast({
       title: 'App Installed!',
       description: 'DoveApp has been installed on your device.',
     });
-  };
+  }, [toast]);
 
-  const requestNotificationPermission = async () => {
+  const subscribeToPushNotifications = useCallback(async () => {
+    if (!registration) return;
+
+    try {
+      const subscription = await registration.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(
+          process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || ''
+        ),
+      });
+
+      // Send subscription to server
+      await fetch('/api/push-subscription', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(subscription),
+      });
+
+      console.log('Push subscription created:', subscription);
+    } catch (error) {
+      console.error('Push subscription failed:', error);
+    }
+  }, [registration]);
+
+  const requestNotificationPermission = useCallback(async () => {
     if (!('Notification' in window)) {
       toast({
         title: 'Not Supported',
@@ -218,33 +230,9 @@ export function PWARegistration() {
         variant: 'destructive',
       });
     }
-  };
+  }, [subscribeToPushNotifications, toast]);
 
-  const subscribeToPushNotifications = async () => {
-    if (!registration) return;
-
-    try {
-      const subscription = await registration.pushManager.subscribe({
-        userVisibleOnly: true,
-        applicationServerKey: urlBase64ToUint8Array(
-          process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || ''
-        ),
-      });
-
-      // Send subscription to server
-      await fetch('/api/push-subscription', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(subscription),
-      });
-
-      console.log('Push subscription created:', subscription);
-    } catch (error) {
-      console.error('Push subscription failed:', error);
-    }
-  };
-
-  const manualSync = async () => {
+  const manualSync = useCallback(async () => {
     if (!registration) return;
 
     setStatus((prev) => ({ ...prev, syncStatus: 'syncing' }));
@@ -274,24 +262,38 @@ export function PWARegistration() {
         variant: 'destructive',
       });
     }
-  };
+  }, [registration, toast]);
 
-  // Helper function for VAPID key conversion
-  const urlBase64ToUint8Array = (base64String: string) => {
-    const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
-    const base64 = (base64String + padding)
-      .replace(/-/g, '+')
-      .replace(/_/g, '/');
+  useEffect(() => {
+    // Register service worker
+    const registrationTimeout = window.setTimeout(() => {
+      void registerServiceWorker();
+    }, 0);
 
-    const rawData = window.atob(base64);
-    const outputArray = new Uint8Array(rawData.length);
+    // Listen for install prompt
+    window.addEventListener('beforeinstallprompt', handleInstallPrompt);
 
-    for (let i = 0; i < rawData.length; ++i) {
-      outputArray[i] = rawData.charCodeAt(i);
-    }
-    return outputArray;
-  };
+    // Listen for online/offline
+    window.addEventListener('online', handleOnlineStatus);
+    window.addEventListener('offline', handleOfflineStatus);
 
+    // Listen for app installed
+    window.addEventListener('appinstalled', handleAppInstalled);
+
+    return () => {
+      window.clearTimeout(registrationTimeout);
+      window.removeEventListener('beforeinstallprompt', handleInstallPrompt);
+      window.removeEventListener('online', handleOnlineStatus);
+      window.removeEventListener('offline', handleOfflineStatus);
+      window.removeEventListener('appinstalled', handleAppInstalled);
+    };
+  }, [
+    handleAppInstalled,
+    handleInstallPrompt,
+    handleOfflineStatus,
+    handleOnlineStatus,
+    registerServiceWorker,
+  ]);
   return (
     <Card className="w-full max-w-md">
       <CardHeader>

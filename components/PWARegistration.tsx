@@ -31,18 +31,16 @@ interface PWAStatus {
 
 export function PWARegistration() {
   const { toast } = useToast();
+  const [mounted, setMounted] = useState(false);
   const [status, setStatus] = useState<PWAStatus>(() => ({
     isOnline: typeof navigator !== 'undefined' ? navigator.onLine : true,
     isInstalled:
       typeof window !== 'undefined'
         ? window.matchMedia('(display-mode: standalone)').matches ||
-          ((window.navigator as any).standalone === true ?? false)
+          (window.navigator as any).standalone === true
         : false,
     canInstall: false,
-    hasNotifications:
-      typeof window !== 'undefined' &&
-      'Notification' in window &&
-      Notification.permission === 'granted',
+    hasNotifications: false, // Start with false, update after mount
     serviceWorkerStatus: null,
     syncStatus: 'idle',
   }));
@@ -96,12 +94,7 @@ export function PWARegistration() {
                 toast({
                   title: 'Update Available',
                   description:
-                    'A new version of DoveApp is available. Refresh to update.',
-                  action: (
-                    <Button size="sm" onClick={() => window.location.reload()}>
-                      Refresh
-                    </Button>
-                  ),
+                    'A new version of DoveApp is available. Please refresh the page.',
                 });
               }
             });
@@ -144,10 +137,10 @@ export function PWARegistration() {
     });
 
     // Trigger background sync
-    if (registration) {
-      registration.sync.register('sync-jobs');
-      registration.sync.register('sync-time-entries');
-      registration.sync.register('sync-clients');
+    if (registration && 'sync' in registration) {
+      (registration as any).sync.register('sync-jobs');
+      (registration as any).sync.register('sync-time-entries');
+      (registration as any).sync.register('sync-clients');
     }
   }, [registration, toast]);
 
@@ -238,9 +231,11 @@ export function PWARegistration() {
     setStatus((prev) => ({ ...prev, syncStatus: 'syncing' }));
 
     try {
-      await registration.sync.register('sync-jobs');
-      await registration.sync.register('sync-time-entries');
-      await registration.sync.register('sync-clients');
+      if ('sync' in registration) {
+        await (registration as any).sync.register('sync-jobs');
+        await (registration as any).sync.register('sync-time-entries');
+        await (registration as any).sync.register('sync-clients');
+      }
 
       setStatus((prev) => ({ ...prev, syncStatus: 'completed' }));
 
@@ -265,6 +260,17 @@ export function PWARegistration() {
   }, [registration, toast]);
 
   useEffect(() => {
+    setMounted(true);
+
+    // Update notification status after mount
+    if ('Notification' in window && Notification.permission === 'granted') {
+      setStatus((prev) => ({ ...prev, hasNotifications: true }));
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!mounted) return;
+
     // Register service worker
     const registrationTimeout = window.setTimeout(() => {
       void registerServiceWorker();
@@ -288,6 +294,7 @@ export function PWARegistration() {
       window.removeEventListener('appinstalled', handleAppInstalled);
     };
   }, [
+    mounted,
     handleAppInstalled,
     handleInstallPrompt,
     handleOfflineStatus,
@@ -370,19 +377,27 @@ export function PWARegistration() {
         {/* Notifications */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            {status.hasNotifications ? (
-              <Bell className="h-4 w-4 text-green-600" />
+            {mounted ? (
+              status.hasNotifications ? (
+                <Bell className="h-4 w-4 text-green-600" />
+              ) : (
+                <BellOff className="h-4 w-4 text-gray-400" />
+              )
             ) : (
-              <BellOff className="h-4 w-4 text-gray-400" />
+              <div className="h-4 w-4 bg-gray-200 rounded animate-pulse" />
             )}
             <span className="text-sm">Notifications</span>
           </div>
-          {status.hasNotifications ? (
-            <Badge variant="default">Enabled</Badge>
+          {mounted ? (
+            status.hasNotifications ? (
+              <Badge variant="default">Enabled</Badge>
+            ) : (
+              <Button size="sm" onClick={requestNotificationPermission}>
+                Enable
+              </Button>
+            )
           ) : (
-            <Button size="sm" onClick={requestNotificationPermission}>
-              Enable
-            </Button>
+            <div className="h-6 w-16 bg-gray-200 rounded animate-pulse" />
           )}
         </div>
 

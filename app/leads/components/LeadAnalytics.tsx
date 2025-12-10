@@ -9,19 +9,14 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import {
-  Phone,
-  Mail,
-  Globe,
-  Share2,
-  UserPlus,
-  Users,
   TrendingUp,
   DollarSign,
-  Target,
   Clock,
   CheckCircle,
+  Target,
 } from 'lucide-react';
 import type { LeadSource } from '@/types/lead';
+import { getSourceIcon, getSourceGradient } from '@/lib/lead-utils';
 
 interface SourceStats {
   source: LeadSource;
@@ -50,34 +45,6 @@ export default function LeadAnalyticsPage() {
     } finally {
       setLoading(false);
     }
-  };
-
-  const getSourceIcon = (source: LeadSource) => {
-    const icons = {
-      phone: Phone,
-      email: Mail,
-      website: Globe,
-      social_media: Share2,
-      referral: UserPlus,
-      walk_in: Users,
-      advertisement: TrendingUp,
-      other: Target,
-    };
-    return icons[source];
-  };
-
-  const getSourceColor = (source: LeadSource) => {
-    const colors = {
-      phone: 'from-blue-500 to-blue-600',
-      email: 'from-purple-500 to-purple-600',
-      website: 'from-green-500 to-green-600',
-      social_media: 'from-pink-500 to-pink-600',
-      referral: 'from-orange-500 to-orange-600',
-      walk_in: 'from-indigo-500 to-indigo-600',
-      advertisement: 'from-amber-500 to-amber-600',
-      other: 'from-gray-500 to-gray-600',
-    };
-    return colors[source];
   };
 
   const totalLeads = stats.reduce((sum, s) => sum + s.total, 0);
@@ -155,7 +122,7 @@ export default function LeadAnalyticsPage() {
           .sort((a, b) => b.total - a.total)
           .map((source) => {
             const Icon = getSourceIcon(source.source);
-            const gradientColor = getSourceColor(source.source);
+            const gradientColor = getSourceGradient(source.source);
 
             return (
               <Card

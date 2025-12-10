@@ -21,8 +21,7 @@ import {
 import type { LeadStats } from '@/types/lead';
 
 // Import the individual components
-import LeadInboxContent from './inbox/page';
-import LeadAnalyticsContent from './analytics/page';
+import LeadAnalyticsContent from './components/LeadAnalytics';
 import LeadListContent from './components/LeadList';
 
 export default function LeadsPage() {
@@ -33,6 +32,7 @@ export default function LeadsPage() {
   const [activeTab, setActiveTab] = useState(
     searchParams.get('tab') || 'inbox'
   );
+  const [statusFilter, setStatusFilter] = useState<string | null>(null);
 
   useEffect(() => {
     loadStats();
@@ -74,23 +74,19 @@ export default function LeadsPage() {
                 <Inbox className="h-4 w-4 mr-2" />
                 Lead Inbox
               </Button>
-              <Button
-                onClick={() => {
-                  const event = new CustomEvent('openQuickAddLead');
-                  window.dispatchEvent(event);
-                }}
-                className="bg-emerald-500 hover:bg-emerald-600 text-white shadow-lg"
-              >
-                <Plus className="h-4 w-4 mr-2" />
-                Quick Add Lead
-              </Button>
             </div>
           </div>
 
-          {/* Quick Stats Bar */}
+          {/* Quick Stats Bar - Now Clickable! */}
           {stats && !loading && (
             <div className="mt-6 grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4 border border-white/20">
+              <button
+                onClick={() => {
+                  setActiveTab('all');
+                  setStatusFilter(null);
+                }}
+                className="bg-white/10 backdrop-blur-sm rounded-lg p-4 border border-white/20 hover:bg-white/20 transition-all hover:scale-105 cursor-pointer text-left"
+              >
                 <div className="flex items-center gap-3">
                   <div className="p-2 bg-white/20 rounded-lg">
                     <Users className="h-5 w-5 text-white" />
@@ -102,9 +98,15 @@ export default function LeadsPage() {
                     <div className="text-xs text-blue-100">Total Leads</div>
                   </div>
                 </div>
-              </div>
+              </button>
 
-              <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4 border border-white/20">
+              <button
+                onClick={() => {
+                  setActiveTab('all');
+                  setStatusFilter('new');
+                }}
+                className="bg-white/10 backdrop-blur-sm rounded-lg p-4 border border-white/20 hover:bg-white/20 transition-all hover:scale-105 cursor-pointer text-left"
+              >
                 <div className="flex items-center gap-3">
                   <div className="p-2 bg-white/20 rounded-lg">
                     <AlertCircle className="h-5 w-5 text-white" />
@@ -116,9 +118,14 @@ export default function LeadsPage() {
                     <div className="text-xs text-blue-100">New Leads</div>
                   </div>
                 </div>
-              </div>
+              </button>
 
-              <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4 border border-white/20">
+              <button
+                onClick={() => {
+                  setActiveTab('analytics');
+                }}
+                className="bg-white/10 backdrop-blur-sm rounded-lg p-4 border border-white/20 hover:bg-white/20 transition-all hover:scale-105 cursor-pointer text-left"
+              >
                 <div className="flex items-center gap-3">
                   <div className="p-2 bg-white/20 rounded-lg">
                     <CheckCircle className="h-5 w-5 text-white" />
@@ -130,9 +137,15 @@ export default function LeadsPage() {
                     <div className="text-xs text-blue-100">Conversion</div>
                   </div>
                 </div>
-              </div>
+              </button>
 
-              <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4 border border-white/20">
+              <button
+                onClick={() => {
+                  setActiveTab('all');
+                  setStatusFilter('qualified');
+                }}
+                className="bg-white/10 backdrop-blur-sm rounded-lg p-4 border border-white/20 hover:bg-white/20 transition-all hover:scale-105 cursor-pointer text-left"
+              >
                 <div className="flex items-center gap-3">
                   <div className="p-2 bg-white/20 rounded-lg">
                     <DollarSign className="h-5 w-5 text-white" />
@@ -144,7 +157,7 @@ export default function LeadsPage() {
                     <div className="text-xs text-blue-100">Pipeline Value</div>
                   </div>
                 </div>
-              </div>
+              </button>
             </div>
           )}
         </div>
@@ -203,28 +216,17 @@ export default function LeadsPage() {
                   etc.) prioritized by urgency and value. Respond fast to win
                   more customers.
                 </p>
-                <div className="flex flex-wrap gap-3">
-                  <Button
-                    onClick={() => router.push('/leads/inbox')}
-                    className="bg-blue-500 hover:bg-blue-600"
-                  >
-                    Open Full Inbox
-                  </Button>
-                  <Button
-                    variant="outline"
-                    onClick={() => {
-                      window.open('/LEAD_MANAGEMENT_GUIDE.md', '_blank');
-                    }}
-                  >
-                    View Guide
-                  </Button>
-                </div>
               </div>
             </div>
           </div>
 
-          {/* Preview of inbox */}
-          <LeadInboxContent />
+          {/* Inbox view with urgency sorting */}
+          <LeadListContent
+            onStatsUpdate={loadStats}
+            sortByUrgency={true}
+            autoRefresh={true}
+            showUrgencyIndicators={true}
+          />
         </TabsContent>
 
         {/* All Leads Tab */}
@@ -246,7 +248,10 @@ export default function LeadsPage() {
             </div>
           </div>
 
-          <LeadListContent onStatsUpdate={loadStats} />
+          <LeadListContent
+            onStatsUpdate={loadStats}
+            statusFilter={statusFilter}
+          />
         </TabsContent>
 
         {/* Analytics Tab */}

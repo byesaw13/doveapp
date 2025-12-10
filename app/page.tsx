@@ -12,7 +12,6 @@ import {
   MapPin,
   CheckCircle,
   Clock,
-  Mail,
   ArrowRight,
   AlertCircle,
 } from 'lucide-react';
@@ -219,19 +218,6 @@ export default async function Dashboard() {
             </div>
           </Link>
 
-          <Link href="/properties" className="group">
-            <div className="bg-white rounded-xl border border-slate-200 p-5 hover:shadow-lg transition-all hover:border-emerald-300 hover:bg-emerald-50">
-              <div className="flex flex-col items-center gap-3">
-                <div className="p-3 bg-emerald-100 group-hover:bg-emerald-500 rounded-xl transition-colors">
-                  <MapPin className="h-6 w-6 text-emerald-600 group-hover:text-white transition-colors" />
-                </div>
-                <span className="text-sm font-semibold text-slate-700 group-hover:text-emerald-700">
-                  Properties
-                </span>
-              </div>
-            </div>
-          </Link>
-
           <Link href="/time-tracking" className="group">
             <div className="bg-white rounded-xl border border-slate-200 p-5 hover:shadow-lg transition-all hover:border-emerald-300 hover:bg-emerald-50">
               <div className="flex flex-col items-center gap-3">
@@ -244,139 +230,71 @@ export default async function Dashboard() {
               </div>
             </div>
           </Link>
-
-          <Link href="/emails" className="group">
-            <div className="bg-white rounded-xl border border-slate-200 p-5 hover:shadow-lg transition-all hover:border-emerald-300 hover:bg-emerald-50">
-              <div className="flex flex-col items-center gap-3">
-                <div className="p-3 bg-emerald-100 group-hover:bg-emerald-500 rounded-xl transition-colors">
-                  <Mail className="h-6 w-6 text-emerald-600 group-hover:text-white transition-colors" />
-                </div>
-                <span className="text-sm font-semibold text-slate-700 group-hover:text-emerald-700">
-                  Email
-                </span>
-              </div>
-            </div>
-          </Link>
         </div>
       </div>
 
-      {/* Recent Jobs and Upcoming - Two column layout */}
-      <div className="grid gap-6 lg:grid-cols-2">
-        {/* Recent Jobs */}
-        <div className="bg-white rounded-xl border border-slate-200 shadow-md">
-          <div className="px-6 py-5 border-b border-slate-200 bg-gradient-to-r from-slate-50 to-white">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-purple-100 rounded-lg">
-                  <Briefcase className="h-5 w-5 text-purple-600" />
-                </div>
-                <h2 className="text-lg font-bold text-slate-900">
-                  Recent Jobs
-                </h2>
+      {/* Recent Jobs */}
+      <div className="bg-white rounded-xl border border-slate-200 shadow-md">
+        <div className="px-6 py-5 border-b border-slate-200 bg-gradient-to-r from-slate-50 to-white">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-purple-100 rounded-lg">
+                <Briefcase className="h-5 w-5 text-purple-600" />
               </div>
-              <Link
-                href="/jobs"
-                className="px-3 py-2 text-sm font-medium text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors inline-flex items-center"
-              >
-                View all
-                <ArrowRight className="ml-1 h-4 w-4" />
-              </Link>
+              <h2 className="text-lg font-bold text-slate-900">Recent Jobs</h2>
             </div>
-          </div>
-          <div className="p-6">
-            <div className="space-y-3">
-              {stats.recentJobs?.slice(0, 5).map((job: any) => (
-                <Link
-                  key={job.id}
-                  href={`/jobs/${job.id}`}
-                  className="block p-4 rounded-xl hover:bg-slate-50 transition-all border border-slate-100 hover:border-emerald-200 hover:shadow-md"
-                >
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-slate-900 truncate">
-                        {job.title}
-                      </p>
-                      <p className="text-xs text-slate-600 mt-1">
-                        {job.client?.first_name} {job.client?.last_name}
-                      </p>
-                    </div>
-                    <span className={getStatusBadge(job.status).className}>
-                      {getStatusBadge(job.status).label}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-4 mt-2 text-xs text-slate-500">
-                    <span className="flex items-center gap-1">
-                      <Calendar className="h-3 w-3" />
-                      {formatDate(job.created_at)}
-                    </span>
-                    <span className="font-medium text-slate-700">
-                      {formatCurrency(job.total || 0)}
-                    </span>
-                  </div>
-                </Link>
-              ))}
-              {(!stats.recentJobs || stats.recentJobs.length === 0) && (
-                <div className="text-center py-8 text-slate-500">
-                  <Briefcase className="h-12 w-12 mx-auto mb-2 text-slate-300" />
-                  <p className="text-sm">No jobs yet</p>
-                  <Link href="/jobs/new">
-                    <button className="mt-3 px-3 py-1.5 text-sm bg-emerald-500 hover:bg-emerald-600 text-white font-medium rounded-lg transition-colors">
-                      Create your first job
-                    </button>
-                  </Link>
-                </div>
-              )}
-            </div>
+            <Link
+              href="/jobs"
+              className="px-3 py-2 text-sm font-medium text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors inline-flex items-center"
+            >
+              View all
+              <ArrowRight className="ml-1 h-4 w-4" />
+            </Link>
           </div>
         </div>
-
-        {/* Properties Summary */}
-        <div className="bg-white rounded-xl border border-slate-200 shadow-md">
-          <div className="px-6 py-5 border-b border-slate-200 bg-gradient-to-r from-slate-50 to-white">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-purple-100 rounded-lg">
-                  <MapPin className="h-5 w-5 text-purple-600" />
-                </div>
-                <h2 className="text-lg font-bold text-slate-900">Properties</h2>
-              </div>
+        <div className="p-6">
+          <div className="space-y-3">
+            {stats.recentJobs?.slice(0, 5).map((job: any) => (
               <Link
-                href="/properties"
-                className="px-3 py-2 text-sm font-medium text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors inline-flex items-center"
+                key={job.id}
+                href={`/jobs/${job.id}`}
+                className="block p-4 rounded-xl hover:bg-slate-50 transition-all border border-slate-100 hover:border-emerald-200 hover:shadow-md"
               >
-                View all
-                <ArrowRight className="ml-1 h-4 w-4" />
-              </Link>
-            </div>
-          </div>
-          <div className="p-6">
-            <div className="space-y-4">
-              <div className="flex items-center justify-between p-6 bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl border border-purple-200">
-                <div className="flex items-center gap-4">
-                  <div className="p-3 bg-purple-500 rounded-xl shadow-md">
-                    <MapPin className="h-7 w-7 text-white" />
-                  </div>
-                  <div>
-                    <p className="text-3xl font-bold text-purple-900">
-                      {stats.totalProperties}
+                <div className="flex items-start justify-between">
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-slate-900 truncate">
+                      {job.title}
                     </p>
-                    <p className="text-sm font-medium text-purple-700 mt-1">
-                      Service Locations
+                    <p className="text-xs text-slate-600 mt-1">
+                      {job.client?.first_name} {job.client?.last_name}
                     </p>
                   </div>
+                  <span className={getStatusBadge(job.status).className}>
+                    {getStatusBadge(job.status).label}
+                  </span>
                 </div>
-              </div>
-              <div className="text-center py-6 px-4">
-                <p className="text-sm text-slate-600 mb-4">
-                  Track and manage all your service locations
-                </p>
-                <Link href="/properties">
-                  <button className="px-4 py-2 border-2 border-purple-200 text-purple-700 hover:bg-purple-50 hover:border-purple-300 font-semibold rounded-lg transition-all">
-                    View All Properties
+                <div className="flex items-center gap-4 mt-2 text-xs text-slate-500">
+                  <span className="flex items-center gap-1">
+                    <Calendar className="h-3 w-3" />
+                    {formatDate(job.created_at)}
+                  </span>
+                  <span className="font-medium text-slate-700">
+                    {formatCurrency(job.total || 0)}
+                  </span>
+                </div>
+              </Link>
+            ))}
+            {(!stats.recentJobs || stats.recentJobs.length === 0) && (
+              <div className="text-center py-8 text-slate-500">
+                <Briefcase className="h-12 w-12 mx-auto mb-2 text-slate-300" />
+                <p className="text-sm">No jobs yet</p>
+                <Link href="/jobs/new">
+                  <button className="mt-3 px-3 py-1.5 text-sm bg-emerald-500 hover:bg-emerald-600 text-white font-medium rounded-lg transition-colors">
+                    Create your first job
                   </button>
                 </Link>
               </div>
-            </div>
+            )}
           </div>
         </div>
       </div>

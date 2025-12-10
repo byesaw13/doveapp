@@ -1,17 +1,10 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/components/ui/toast';
 import type { BusinessSettings } from '@/types/business-settings';
 import type { AutomationSettings } from '@/types/automation';
 import { DEFAULT_AUTOMATION_SETTINGS } from '@/types/automation';
-import { Save, Loader2, Download, Upload } from 'lucide-react';
 
 const automationDescriptions: Record<keyof AutomationSettings, string> = {
   estimate_followups:
@@ -268,10 +261,31 @@ export default function SettingsPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mb-4"></div>
-          <div className="text-gray-600 font-medium">Loading settings...</div>
+          <div className="inline-flex items-center px-4 py-2 font-semibold leading-6 text-sm shadow rounded-md text-gray-700 bg-white transition ease-in-out duration-150">
+            <svg
+              className="animate-spin -ml-1 mr-3 h-5 w-5 text-gray-600"
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+            >
+              <circle
+                className="opacity-25"
+                cx="12"
+                cy="12"
+                r="10"
+                stroke="currentColor"
+                strokeWidth="4"
+              ></circle>
+              <path
+                className="opacity-75"
+                fill="currentColor"
+                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+              ></path>
+            </svg>
+            Loading settings...
+          </div>
         </div>
       </div>
     );
@@ -280,142 +294,225 @@ export default function SettingsPage() {
   return (
     <div className="min-h-screen bg-slate-50">
       {/* Header */}
-      <div className="bg-gradient-to-r from-blue-600 to-blue-700 rounded-xl shadow-lg p-6 text-white mb-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold">Business Settings</h1>
-            <p className="mt-2 text-blue-100">
-              Configure your company information and default settings
-            </p>
+      <div className="bg-gradient-to-r from-emerald-600 to-emerald-700 shadow-lg">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="py-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <h1 className="text-2xl font-bold text-white sm:text-3xl">
+                  Settings
+                </h1>
+                <p className="mt-1 text-sm text-emerald-100">
+                  Manage your business information, preferences, and automations
+                </p>
+              </div>
+            </div>
           </div>
         </div>
       </div>
 
-      <div className="max-w-4xl mx-auto space-y-6">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Company Information */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Company Information</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="col-span-2">
-                <Label htmlFor="company_name">Company Name *</Label>
-                <Input
+        <div className="bg-white shadow-sm rounded-lg border border-gray-200">
+          <div className="px-6 py-4 border-b border-gray-200 bg-gray-50">
+            <h3 className="text-lg font-medium text-gray-900">
+              Company Information
+            </h3>
+            <p className="mt-1 text-sm text-gray-600">
+              Basic details about your business
+            </p>
+          </div>
+          <div className="px-6 py-6">
+            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+              <div className="sm:col-span-2">
+                <label
+                  htmlFor="company_name"
+                  className="block text-sm font-medium text-gray-700"
+                >
+                  Company Name *
+                </label>
+                <input
+                  type="text"
                   id="company_name"
                   value={formData.company_name}
                   onChange={(e) =>
                     handleInputChange('company_name', e.target.value)
                   }
                   placeholder="Your Company Name"
+                  className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm"
+                  required
                 />
               </div>
-              <div className="col-span-2">
-                <Label htmlFor="company_address">Address</Label>
-                <Input
+              <div className="sm:col-span-2">
+                <label
+                  htmlFor="company_address"
+                  className="block text-sm font-medium text-gray-700"
+                >
+                  Address
+                </label>
+                <input
+                  type="text"
                   id="company_address"
                   value={formData.company_address}
                   onChange={(e) =>
                     handleInputChange('company_address', e.target.value)
                   }
                   placeholder="123 Main Street"
+                  className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm"
                 />
               </div>
               <div>
-                <Label htmlFor="company_city">City</Label>
-                <Input
+                <label
+                  htmlFor="company_city"
+                  className="block text-sm font-medium text-gray-700"
+                >
+                  City
+                </label>
+                <input
+                  type="text"
                   id="company_city"
                   value={formData.company_city}
                   onChange={(e) =>
                     handleInputChange('company_city', e.target.value)
                   }
                   placeholder="Anytown"
+                  className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm"
                 />
               </div>
               <div>
-                <Label htmlFor="company_state">State</Label>
-                <Input
+                <label
+                  htmlFor="company_state"
+                  className="block text-sm font-medium text-gray-700"
+                >
+                  State
+                </label>
+                <input
+                  type="text"
                   id="company_state"
                   value={formData.company_state}
                   onChange={(e) =>
                     handleInputChange('company_state', e.target.value)
                   }
                   placeholder="ST"
+                  className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm"
                 />
               </div>
               <div>
-                <Label htmlFor="company_zip">ZIP Code</Label>
-                <Input
+                <label
+                  htmlFor="company_zip"
+                  className="block text-sm font-medium text-gray-700"
+                >
+                  ZIP Code
+                </label>
+                <input
+                  type="text"
                   id="company_zip"
                   value={formData.company_zip}
                   onChange={(e) =>
                     handleInputChange('company_zip', e.target.value)
                   }
                   placeholder="12345"
+                  className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm"
                 />
               </div>
               <div>
-                <Label htmlFor="company_phone">Phone</Label>
-                <Input
+                <label
+                  htmlFor="company_phone"
+                  className="block text-sm font-medium text-gray-700"
+                >
+                  Phone
+                </label>
+                <input
+                  type="tel"
                   id="company_phone"
                   value={formData.company_phone}
                   onChange={(e) =>
                     handleInputChange('company_phone', e.target.value)
                   }
                   placeholder="(555) 123-4567"
+                  className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm"
                 />
               </div>
               <div>
-                <Label htmlFor="company_email">Email</Label>
-                <Input
+                <label
+                  htmlFor="company_email"
+                  className="block text-sm font-medium text-gray-700"
+                >
+                  Email
+                </label>
+                <input
+                  type="email"
                   id="company_email"
                   value={formData.company_email}
                   onChange={(e) =>
                     handleInputChange('company_email', e.target.value)
                   }
                   placeholder="info@company.com"
+                  className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm"
                 />
               </div>
               <div>
-                <Label htmlFor="company_website">Website</Label>
-                <Input
+                <label
+                  htmlFor="company_website"
+                  className="block text-sm font-medium text-gray-700"
+                >
+                  Website
+                </label>
+                <input
+                  type="url"
                   id="company_website"
                   value={formData.company_website}
                   onChange={(e) =>
                     handleInputChange('company_website', e.target.value)
                   }
                   placeholder="https://www.company.com"
+                  className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm"
                 />
               </div>
-              <div className="col-span-2">
-                <Label htmlFor="logo_url">Logo URL</Label>
-                <Input
+              <div className="sm:col-span-2">
+                <label
+                  htmlFor="logo_url"
+                  className="block text-sm font-medium text-gray-700"
+                >
+                  Logo URL
+                </label>
+                <input
+                  type="url"
                   id="logo_url"
                   value={formData.logo_url}
                   onChange={(e) =>
                     handleInputChange('logo_url', e.target.value)
                   }
                   placeholder="https://example.com/logo.png"
+                  className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm"
                 />
               </div>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
         {/* Default Settings */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Default Settings</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
+        <div className="bg-white shadow-sm rounded-lg border border-gray-200">
+          <div className="px-6 py-4 border-b border-gray-200 bg-gray-50">
+            <h3 className="text-lg font-medium text-gray-900">
+              Default Settings
+            </h3>
+            <p className="mt-1 text-sm text-gray-600">
+              Configure default values for estimates and invoices
+            </p>
+          </div>
+          <div className="px-6 py-6 space-y-6">
+            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
               <div>
-                <Label htmlFor="default_estimate_validity_days">
+                <label
+                  htmlFor="default_estimate_validity_days"
+                  className="block text-sm font-medium text-gray-700"
+                >
                   Estimate Validity (Days)
-                </Label>
-                <Input
-                  id="default_estimate_validity_days"
+                </label>
+                <input
                   type="number"
+                  id="default_estimate_validity_days"
                   min="1"
                   value={formData.default_estimate_validity_days}
                   onChange={(e) =>
@@ -424,13 +521,19 @@ export default function SettingsPage() {
                       parseInt(e.target.value) || 30
                     )
                   }
+                  className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm"
                 />
               </div>
               <div>
-                <Label htmlFor="default_tax_rate">Default Tax Rate (%)</Label>
-                <Input
-                  id="default_tax_rate"
+                <label
+                  htmlFor="default_tax_rate"
+                  className="block text-sm font-medium text-gray-700"
+                >
+                  Default Tax Rate (%)
+                </label>
+                <input
                   type="number"
+                  id="default_tax_rate"
                   step="0.01"
                   min="0"
                   max="100"
@@ -441,38 +544,51 @@ export default function SettingsPage() {
                       parseFloat(e.target.value) || 0
                     )
                   }
+                  className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm"
                 />
               </div>
             </div>
 
             <div>
-              <Label htmlFor="default_payment_terms">
+              <label
+                htmlFor="default_payment_terms"
+                className="block text-sm font-medium text-gray-700"
+              >
                 Default Payment Terms
-              </Label>
-              <Textarea
+              </label>
+              <textarea
                 id="default_payment_terms"
                 value={formData.default_payment_terms}
                 onChange={(e) =>
                   handleInputChange('default_payment_terms', e.target.value)
                 }
                 placeholder="Payment due within 30 days"
-                rows={2}
+                rows={3}
+                className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm"
               />
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
         {/* Default Terms */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Default Terms & Conditions</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
+        <div className="bg-white shadow-sm rounded-lg border border-gray-200">
+          <div className="px-6 py-4 border-b border-gray-200 bg-gray-50">
+            <h3 className="text-lg font-medium text-gray-900">
+              Default Terms & Conditions
+            </h3>
+            <p className="mt-1 text-sm text-gray-600">
+              Set default legal terms for estimates and invoices
+            </p>
+          </div>
+          <div className="px-6 py-6 space-y-6">
             <div>
-              <Label htmlFor="default_estimate_terms">
+              <label
+                htmlFor="default_estimate_terms"
+                className="block text-sm font-medium text-gray-700"
+              >
                 Default Estimate Terms
-              </Label>
-              <Textarea
+              </label>
+              <textarea
                 id="default_estimate_terms"
                 value={formData.default_estimate_terms}
                 onChange={(e) =>
@@ -480,14 +596,18 @@ export default function SettingsPage() {
                 }
                 placeholder="Terms that appear on estimates"
                 rows={4}
+                className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm"
               />
             </div>
 
             <div>
-              <Label htmlFor="default_invoice_terms">
+              <label
+                htmlFor="default_invoice_terms"
+                className="block text-sm font-medium text-gray-700"
+              >
                 Default Invoice Terms
-              </Label>
-              <Textarea
+              </label>
+              <textarea
                 id="default_invoice_terms"
                 value={formData.default_invoice_terms}
                 onChange={(e) =>
@@ -495,70 +615,141 @@ export default function SettingsPage() {
                 }
                 placeholder="Terms that appear on invoices"
                 rows={4}
+                className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm"
               />
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
         {/* AI Automations */}
-        <Card>
-          <CardHeader>
-            <CardTitle>AI Automations</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {(
-              Object.keys(formData.ai_automation) as Array<
-                keyof AutomationSettings
-              >
-            ).map((key) => (
-              <div
-                key={key}
-                className="flex items-center justify-between rounded-lg border border-slate-200 p-4"
-              >
-                <div>
-                  <Label className="capitalize">
-                    {key.split('_').join(' ')}
-                  </Label>
-                  <p className="text-sm text-slate-600 mt-1">
-                    {automationDescriptions[key]}
-                  </p>
+        <div className="bg-white shadow-sm rounded-lg border border-gray-200">
+          <div className="px-6 py-4 border-b border-gray-200 bg-gray-50">
+            <h3 className="text-lg font-medium text-gray-900">
+              AI Automations
+            </h3>
+            <p className="mt-1 text-sm text-gray-600">
+              Configure automated follow-ups and responses
+            </p>
+          </div>
+          <div className="px-6 py-6">
+            <div className="space-y-4">
+              {(
+                Object.keys(formData.ai_automation) as Array<
+                  keyof AutomationSettings
+                >
+              ).map((key) => (
+                <div
+                  key={key}
+                  className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+                >
+                  <div className="flex-1">
+                    <h4 className="text-sm font-medium text-gray-900 capitalize">
+                      {key.split('_').join(' ')}
+                    </h4>
+                    <p className="text-sm text-gray-600 mt-1">
+                      {automationDescriptions[key]}
+                    </p>
+                  </div>
+                  <div className="ml-4">
+                    <button
+                      type="button"
+                      onClick={() => handleAutomationToggle(key)}
+                      className={`${
+                        formData.ai_automation[key]
+                          ? 'bg-emerald-600'
+                          : 'bg-gray-200'
+                      } relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-emerald-600 focus:ring-offset-2`}
+                      role="switch"
+                      aria-checked={formData.ai_automation[key]}
+                    >
+                      <span
+                        aria-hidden="true"
+                        className={`${
+                          formData.ai_automation[key]
+                            ? 'translate-x-5'
+                            : 'translate-x-0'
+                        } pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out`}
+                      />
+                    </button>
+                  </div>
                 </div>
-                <Switch
-                  checked={formData.ai_automation[key]}
-                  onCheckedChange={() => handleAutomationToggle(key)}
-                />
-              </div>
-            ))}
-          </CardContent>
-        </Card>
+              ))}
+            </div>
+          </div>
+        </div>
 
         {/* Data Management */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Data Management</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-center justify-between rounded-lg border border-slate-200 p-4">
-              <div>
-                <Label>Download Backup</Label>
-                <p className="text-sm text-slate-600 mt-1">
+        <div className="bg-white shadow-sm rounded-lg border border-gray-200">
+          <div className="px-6 py-4 border-b border-gray-200 bg-gray-50">
+            <h3 className="text-lg font-medium text-gray-900">
+              Data Management
+            </h3>
+            <p className="mt-1 text-sm text-gray-600">
+              Backup and restore your business data
+            </p>
+          </div>
+          <div className="px-6 py-6 space-y-6">
+            <div className="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
+              <div className="flex-1">
+                <h4 className="text-sm font-medium text-gray-900">
+                  Download Backup
+                </h4>
+                <p className="text-sm text-gray-600 mt-1">
                   Export all your data to a JSON file for safe keeping.
                 </p>
               </div>
-              <Button onClick={handleDownloadBackup} disabled={backupLoading}>
+              <button
+                onClick={handleDownloadBackup}
+                disabled={backupLoading}
+                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-emerald-600 hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
                 {backupLoading ? (
-                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                  <svg
+                    className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                  >
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                    ></circle>
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                    ></path>
+                  </svg>
                 ) : (
-                  <Download className="h-4 w-4 mr-2" />
+                  <svg
+                    className="-ml-1 mr-2 h-4 w-4"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                    />
+                  </svg>
                 )}
                 Download
-              </Button>
+              </button>
             </div>
 
-            <div className="flex items-center justify-between rounded-lg border border-slate-200 p-4">
-              <div>
-                <Label>Import Backup</Label>
-                <p className="text-sm text-slate-600 mt-1">
+            <div className="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
+              <div className="flex-1">
+                <h4 className="text-sm font-medium text-gray-900">
+                  Import Backup
+                </h4>
+                <p className="text-sm text-gray-600 mt-1">
                   Restore data from a previously exported backup file.
                 </p>
               </div>
@@ -571,36 +762,107 @@ export default function SettingsPage() {
                   id="backup-upload"
                   disabled={importLoading}
                 />
-                <Button asChild disabled={importLoading}>
-                  <label htmlFor="backup-upload" className="cursor-pointer">
-                    {importLoading ? (
-                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                    ) : (
-                      <Upload className="h-4 w-4 mr-2" />
-                    )}
-                    Upload
-                  </label>
-                </Button>
+                <label
+                  htmlFor="backup-upload"
+                  className={`inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-emerald-600 hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 cursor-pointer ${
+                    importLoading ? 'opacity-50 cursor-not-allowed' : ''
+                  }`}
+                >
+                  {importLoading ? (
+                    <svg
+                      className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                    >
+                      <circle
+                        className="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                      ></circle>
+                      <path
+                        className="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                      ></path>
+                    </svg>
+                  ) : (
+                    <svg
+                      className="-ml-1 mr-2 h-4 w-4"
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
+                      />
+                    </svg>
+                  )}
+                  Upload
+                </label>
               </div>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
         {/* Save Button */}
-        <div className="flex justify-end">
-          <Button onClick={handleSave} disabled={saving} size="lg">
+        <div className="flex justify-end pt-6 border-t border-gray-200">
+          <button
+            onClick={handleSave}
+            disabled={saving}
+            className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-emerald-600 hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
             {saving ? (
               <>
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                <svg
+                  className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                >
+                  <circle
+                    className="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                  ></circle>
+                  <path
+                    className="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                  ></path>
+                </svg>
                 Saving...
               </>
             ) : (
               <>
-                <Save className="w-4 h-4 mr-2" />
+                <svg
+                  className="-ml-1 mr-3 h-5 w-5"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M5 13l4 4L19 7"
+                  />
+                </svg>
                 Save Settings
               </>
             )}
-          </Button>
+          </button>
         </div>
       </div>
     </div>

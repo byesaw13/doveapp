@@ -37,7 +37,6 @@ import {
   Phone,
   Mail,
   MapPin,
-  Calendar,
   Users,
   Target,
   AlertCircle,
@@ -48,16 +47,34 @@ import {
   PhoneCall,
   MessageSquare,
   Send,
+  RefreshCw,
 } from 'lucide-react';
-import { format } from 'date-fns';
+import {
+  handleCallLead as callLead,
+  handleTextLead as textLead,
+  handleEmailLead as emailLead,
+  sortLeadsByUrgency,
+  calculateUrgencyScore,
+} from '@/lib/lead-utils';
 
 interface LeadListProps {
   onStatsUpdate?: () => void;
+  statusFilter?: string | null;
+  sortByUrgency?: boolean;
+  autoRefresh?: boolean;
+  showUrgencyIndicators?: boolean;
 }
 
-export default function LeadListContent({ onStatsUpdate }: LeadListProps) {
+export default function LeadListContent({
+  onStatsUpdate,
+  statusFilter,
+  sortByUrgency = false,
+  autoRefresh = false,
+  showUrgencyIndicators = false,
+}: LeadListProps) {
   const { toast } = useToast();
   const [leads, setLeads] = useState<Lead[]>([]);
+  const [filteredLeads, setFilteredLeads] = useState<Lead[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
@@ -90,6 +107,31 @@ export default function LeadListContent({ onStatsUpdate }: LeadListProps) {
   useEffect(() => {
     loadLeads();
   }, []);
+
+  // Auto-refresh if enabled
+  useEffect(() => {
+    if (autoRefresh) {
+      const interval = setInterval(loadLeads, 30000); // Every 30 seconds
+      return () => clearInterval(interval);
+    }
+  }, [autoRefresh]);
+
+  // Filter and sort leads when statusFilter or sortByUrgency changes
+  useEffect(() => {
+    let result = [...leads];
+
+    // Apply status filter
+    if (statusFilter) {
+      result = result.filter((lead) => lead.status === statusFilter);
+    }
+
+    // Apply urgency sorting
+    if (sortByUrgency) {
+      result = sortLeadsByUrgency(result);
+    }
+
+    setFilteredLeads(result);
+  }, [leads, statusFilter, sortByUrgency]);
 
   const loadLeads = async () => {
     try {
@@ -242,15 +284,46 @@ export default function LeadListContent({ onStatsUpdate }: LeadListProps) {
   };
 
   const handleCallLead = (lead: Lead) => {
-    window.location.href = `tel:${lead.phone}`;
+    callLead(lead.phone);
   };
 
   const handleTextLead = (lead: Lead) => {
-    window.location.href = `sms:${lead.phone}`;
+    textLead(lead.phone);
   };
 
   const handleEmailLead = (lead: Lead) => {
-    window.location.href = `mailto:${lead.email}`;
+    emailLead(lead.email || '');
+  };
+
+  const handleQuickStatusChange = async (lead: Lead, newStatus: string) => {
+    try {
+      const response = await fetch(`/api/leads/${lead.id}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ status: newStatus }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update status');
+      }
+
+      toast({
+        title: 'Status Updated',
+        description: `Lead status changed to ${newStatus.replace('_', ' ')}`,
+      });
+
+      loadLeads();
+      if (onStatsUpdate) onStatsUpdate();
+    } catch (error) {
+      console.error('Failed to update status:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to update lead status',
+        variant: 'destructive',
+      });
+    }
   };
 
   const getStatusIcon = (status: string) => {
@@ -306,13 +379,42 @@ export default function LeadListContent({ onStatsUpdate }: LeadListProps) {
         </Button>
       </div>
 
+      {/* Status Filter Indicator */}
+      {statusFilter && (
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <AlertCircle className="h-5 w-5 text-blue-600" />
+            <span className="text-sm font-medium text-blue-900">
+              Filtering by status:{' '}
+              <span className="font-bold capitalize">
+                {statusFilter.replace('_', ' ')}
+              </span>
+            </span>
+          </div>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => (window.location.href = '/leads')}
+            className="text-blue-600 border-blue-300 hover:bg-blue-100"
+          >
+            Clear Filter
+          </Button>
+        </div>
+      )}
+
       {/* Leads Grid */}
       <div className="grid gap-4">
-        {leads.length > 0 ? (
-          leads.map((lead) => (
+        {filteredLeads.length > 0 ? (
+          filteredLeads.map((lead) => (
             <div
               key={lead.id}
-              className="bg-white rounded-lg border border-slate-200 p-6 shadow-sm hover:shadow-lg hover:border-slate-300 transition-all cursor-pointer"
+              className={`bg-white rounded-lg border border-slate-200 p-6 shadow-sm hover:shadow-xl hover:border-blue-300 hover:-translate-y-1 transition-all duration-200 cursor-pointer group ${
+                showUrgencyIndicators && calculateUrgencyScore(lead) > 100
+                  ? 'border-l-4 border-l-red-500'
+                  : showUrgencyIndicators && lead.status === 'new'
+                    ? 'border-l-4 border-l-blue-500'
+                    : ''
+              }`}
               onClick={() => setSelectedLead(lead)}
             >
               <div className="flex items-start justify-between gap-4">
@@ -321,28 +423,49 @@ export default function LeadListContent({ onStatsUpdate }: LeadListProps) {
                     <h3 className="text-xl font-bold text-slate-900">
                       {lead.first_name} {lead.last_name}
                     </h3>
-                    <Badge
-                      className={
-                        lead.status === 'new'
-                          ? 'bg-blue-100 text-blue-800'
-                          : lead.status === 'contacted'
-                            ? 'bg-purple-100 text-purple-800'
-                            : lead.status === 'qualified'
-                              ? 'bg-green-100 text-green-800'
-                              : lead.status === 'proposal_sent'
-                                ? 'bg-yellow-100 text-yellow-800'
-                                : lead.status === 'negotiating'
-                                  ? 'bg-orange-100 text-orange-800'
-                                  : lead.status === 'converted'
-                                    ? 'bg-emerald-100 text-emerald-800'
-                                    : 'bg-red-100 text-red-800'
-                      }
+                    <Select
+                      value={lead.status}
+                      onValueChange={(value) => {
+                        handleQuickStatusChange(lead, value);
+                      }}
                     >
-                      {getStatusIcon(lead.status)}
-                      <span className="ml-1">
-                        {lead.status.replace('_', ' ')}
-                      </span>
-                    </Badge>
+                      <SelectTrigger
+                        className={`w-auto h-auto border-0 p-0 ${
+                          lead.status === 'new'
+                            ? 'bg-blue-100 text-blue-800'
+                            : lead.status === 'contacted'
+                              ? 'bg-purple-100 text-purple-800'
+                              : lead.status === 'qualified'
+                                ? 'bg-green-100 text-green-800'
+                                : lead.status === 'proposal_sent'
+                                  ? 'bg-yellow-100 text-yellow-800'
+                                  : lead.status === 'negotiating'
+                                    ? 'bg-orange-100 text-orange-800'
+                                    : lead.status === 'converted'
+                                      ? 'bg-emerald-100 text-emerald-800'
+                                      : 'bg-red-100 text-red-800'
+                        } rounded-full px-2.5 py-1 text-xs font-medium hover:opacity-80 transition-opacity`}
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <div className="flex items-center gap-1">
+                          {getStatusIcon(lead.status)}
+                          <span className="capitalize">
+                            {lead.status.replace('_', ' ')}
+                          </span>
+                        </div>
+                      </SelectTrigger>
+                      <SelectContent onClick={(e) => e.stopPropagation()}>
+                        <SelectItem value="new">New</SelectItem>
+                        <SelectItem value="contacted">Contacted</SelectItem>
+                        <SelectItem value="qualified">Qualified</SelectItem>
+                        <SelectItem value="proposal_sent">
+                          Proposal Sent
+                        </SelectItem>
+                        <SelectItem value="negotiating">Negotiating</SelectItem>
+                        <SelectItem value="converted">Converted</SelectItem>
+                        <SelectItem value="lost">Lost</SelectItem>
+                      </SelectContent>
+                    </Select>
                     <Badge
                       className={
                         lead.priority === 'low'
@@ -389,7 +512,7 @@ export default function LeadListContent({ onStatsUpdate }: LeadListProps) {
                   <div className="flex flex-wrap gap-2">
                     <Button
                       size="sm"
-                      className="bg-green-500 hover:bg-green-600"
+                      className="bg-green-500 hover:bg-green-600 text-white shadow-sm hover:shadow-md transition-all"
                       onClick={(e) => {
                         e.stopPropagation();
                         handleCallLead(lead);
@@ -401,6 +524,7 @@ export default function LeadListContent({ onStatsUpdate }: LeadListProps) {
                     <Button
                       size="sm"
                       variant="outline"
+                      className="hover:bg-blue-50 hover:border-blue-300 transition-all"
                       onClick={(e) => {
                         e.stopPropagation();
                         handleTextLead(lead);
@@ -412,6 +536,7 @@ export default function LeadListContent({ onStatsUpdate }: LeadListProps) {
                     <Button
                       size="sm"
                       variant="outline"
+                      className="hover:bg-purple-50 hover:border-purple-300 transition-all"
                       onClick={(e) => {
                         e.stopPropagation();
                         handleEmailLead(lead);
@@ -422,7 +547,7 @@ export default function LeadListContent({ onStatsUpdate }: LeadListProps) {
                     </Button>
                     <Button
                       size="sm"
-                      className="bg-emerald-500 hover:bg-emerald-600"
+                      className="bg-purple-500 hover:bg-purple-600 text-white shadow-sm hover:shadow-md transition-all"
                       onClick={(e) => {
                         e.stopPropagation();
                         handleCreateEstimate(lead);
@@ -431,6 +556,19 @@ export default function LeadListContent({ onStatsUpdate }: LeadListProps) {
                       <FileText className="h-4 w-4 mr-1" />
                       Estimate
                     </Button>
+                    {lead.status !== 'converted' && (
+                      <Button
+                        size="sm"
+                        className="bg-emerald-500 hover:bg-emerald-600 text-white shadow-sm hover:shadow-md transition-all"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleConvertToClient(lead);
+                        }}
+                      >
+                        <Users className="h-4 w-4 mr-1" />
+                        Convert
+                      </Button>
+                    )}
                   </div>
                 </div>
 

@@ -4,7 +4,6 @@ import { supabase } from '@/lib/supabase';
 export const dynamic = 'force-dynamic';
 
 export interface SidebarNotificationCounts {
-  unreadEmails: number;
   pendingEstimates: number;
   overdueJobs: number;
   newLeads: number;
@@ -14,52 +13,40 @@ export interface SidebarNotificationCounts {
 export async function GET(): Promise<NextResponse> {
   try {
     // Parallel queries for all notification counts
-    const [
-      emailsResult,
-      estimatesResult,
-      jobsResult,
-      leadsResult,
-      inventoryResult,
-    ] = await Promise.all([
-      // Unread emails
-      supabase
-        .from('email_messages')
-        .select('id', { count: 'exact', head: true })
-        .eq('is_read', false),
+    const [estimatesResult, jobsResult, leadsResult, inventoryResult] =
+      await Promise.all([
+        // Pending estimates (sent more than 7 days ago, not accepted/declined)
+        supabase
+          .from('estimates')
+          .select('id', { count: 'exact', head: true })
+          .in('status', ['sent', 'viewed'])
+          .lt(
+            'sent_date',
+            new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()
+          ),
 
-      // Pending estimates (sent more than 7 days ago, not accepted/declined)
-      supabase
-        .from('estimates')
-        .select('id', { count: 'exact', head: true })
-        .in('status', ['sent', 'viewed'])
-        .lt(
-          'sent_date',
-          new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()
-        ),
+        // Overdue jobs (scheduled before today, not completed/cancelled)
+        supabase
+          .from('jobs')
+          .select('id', { count: 'exact', head: true })
+          .in('status', ['scheduled', 'in_progress'])
+          .lt('service_date', new Date().toISOString().split('T')[0]),
 
-      // Overdue jobs (scheduled before today, not completed/cancelled)
-      supabase
-        .from('jobs')
-        .select('id', { count: 'exact', head: true })
-        .in('status', ['scheduled', 'in_progress'])
-        .lt('service_date', new Date().toISOString().split('T')[0]),
+        // New leads (created in last 7 days, status is 'new')
+        supabase
+          .from('leads')
+          .select('id', { count: 'exact', head: true })
+          .eq('status', 'new')
+          .gte(
+            'created_at',
+            new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()
+          ),
 
-      // New leads (created in last 7 days, status is 'new')
-      supabase
-        .from('leads')
-        .select('id', { count: 'exact', head: true })
-        .eq('status', 'new')
-        .gte(
-          'created_at',
-          new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()
-        ),
-
-      // Low inventory items (quantity < reorder_level)
-      supabase.rpc('get_low_inventory_count'),
-    ]);
+        // Low inventory items (quantity < reorder_level)
+        supabase.rpc('get_low_inventory_count'),
+      ]);
 
     const counts: SidebarNotificationCounts = {
-      unreadEmails: emailsResult.count || 0,
       pendingEstimates: estimatesResult.count || 0,
       overdueJobs: jobsResult.count || 0,
       newLeads: leadsResult.count || 0,
@@ -75,7 +62,6 @@ export async function GET(): Promise<NextResponse> {
     console.error('Error fetching sidebar notification counts:', error);
     return NextResponse.json(
       {
-        unreadEmails: 0,
         pendingEstimates: 0,
         overdueJobs: 0,
         newLeads: 0,

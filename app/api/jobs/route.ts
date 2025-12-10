@@ -1,5 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getJobs, getJobsByClient, listJobsWithFilters } from '@/lib/db/jobs';
+import {
+  getJobs,
+  getJobsByClient,
+  listJobsWithFilters,
+  createJob,
+} from '@/lib/db/jobs';
 import type { JobStatus } from '@/types/job';
 
 // GET /api/jobs - Get all jobs with optional filtering
@@ -33,5 +38,38 @@ export async function GET(request: NextRequest) {
     console.error('Error fetching jobs:', error);
     // Return empty array to prevent app crash, error logged above
     return NextResponse.json([]);
+  }
+}
+
+// POST /api/jobs - Create a new job
+export async function POST(request: NextRequest) {
+  try {
+    const body = await request.json();
+
+    // Create job with empty line items array
+    const job = await createJob(
+      {
+        client_id: body.client_id,
+        property_id: body.property_id || null,
+        title: body.title,
+        description: body.description || null,
+        status: body.status || 'scheduled',
+        service_date: body.service_date,
+        scheduled_time: body.scheduled_time || null,
+        notes: body.notes || null,
+        subtotal: body.subtotal || 0,
+        tax: body.tax || 0,
+        total: body.total || 0,
+      },
+      body.line_items || []
+    );
+
+    return NextResponse.json(job, { status: 201 });
+  } catch (error) {
+    console.error('Error creating job:', error);
+    return NextResponse.json(
+      { error: 'Failed to create job' },
+      { status: 500 }
+    );
   }
 }

@@ -1,6 +1,13 @@
 'use client';
 
-import { useState } from 'react';
+// Quick Add Components - Multi-action floating button with dialogs
+// Version: 3.1 - Added job dialog
+
+import { useState, useEffect, useRef } from 'react';
+import { QuickAddClient } from './quick-add-client';
+import { QuickAddEstimate } from './quick-add-estimate';
+import { QuickAddInvoice } from './quick-add-invoice';
+import { QuickAddJob } from './quick-add-job';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -19,13 +26,31 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { useToast } from '@/components/ui/toast';
-import { Plus, Phone, Mic, Check, X } from 'lucide-react';
+import {
+  Plus,
+  Mic,
+  Check,
+  X,
+  Users,
+  FileText,
+  Receipt,
+  Target,
+  Briefcase,
+} from 'lucide-react';
 
 export function QuickAddLead() {
   const { toast } = useToast();
+  const menuRef = useRef<HTMLDivElement>(null);
+  const [showMenu, setShowMenu] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isListening, setIsListening] = useState(false);
+
+  // Dialog states for other components
+  const [showClientDialog, setShowClientDialog] = useState(false);
+  const [showJobDialog, setShowJobDialog] = useState(false);
+  const [showEstimateDialog, setShowEstimateDialog] = useState(false);
+  const [showInvoiceDialog, setShowInvoiceDialog] = useState(false);
 
   const [formData, setFormData] = useState({
     first_name: '',
@@ -36,6 +61,23 @@ export function QuickAddLead() {
     priority: 'medium',
     service_description: '',
   });
+
+  // Close menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setShowMenu(false);
+      }
+    };
+
+    if (showMenu) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showMenu]);
 
   const handleVoiceInput = () => {
     // Check if browser supports speech recognition
@@ -135,13 +177,78 @@ export function QuickAddLead() {
     }
   };
 
+  const quickActions = [
+    {
+      label: 'Add Lead',
+      icon: Target,
+      action: () => {
+        setShowMenu(false);
+        setIsOpen(true);
+      },
+      color: 'from-blue-500 to-blue-600',
+    },
+    {
+      label: 'Add Customer',
+      icon: Users,
+      action: () => {
+        setShowMenu(false);
+        setShowClientDialog(true);
+      },
+      color: 'from-green-500 to-green-600',
+    },
+    {
+      label: 'Add Job',
+      icon: Briefcase,
+      action: () => {
+        setShowMenu(false);
+        setShowJobDialog(true);
+      },
+      color: 'from-indigo-500 to-indigo-600',
+    },
+    {
+      label: 'Add Estimate',
+      icon: FileText,
+      action: () => {
+        setShowMenu(false);
+        setShowEstimateDialog(true);
+      },
+      color: 'from-purple-500 to-purple-600',
+    },
+    {
+      label: 'Add Invoice',
+      icon: Receipt,
+      action: () => {
+        setShowMenu(false);
+        setShowInvoiceDialog(true);
+      },
+      color: 'from-orange-500 to-orange-600',
+    },
+  ];
+
   return (
     <>
-      {/* Floating Action Button - Mobile Optimized */}
+      {/* Quick Actions Menu */}
+      {showMenu && (
+        <div ref={menuRef} className="fixed bottom-24 right-6 z-50 space-y-3">
+          {quickActions.map((action, index) => (
+            <button
+              key={action.label}
+              onClick={action.action}
+              className={`flex items-center gap-3 w-48 p-3 bg-gradient-to-r ${action.color} hover:opacity-90 text-white rounded-lg shadow-lg transition-all hover:scale-105 animate-in slide-in-from-bottom-2`}
+              style={{ animationDelay: `${index * 50}ms` }}
+            >
+              <action.icon className="h-5 w-5" />
+              <span className="font-medium">{action.label}</span>
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* Floating Action Button */}
       <button
-        onClick={() => setIsOpen(true)}
-        className="fixed bottom-6 right-6 z-40 w-16 h-16 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white rounded-full shadow-2xl flex items-center justify-center transition-all hover:scale-110 active:scale-95 lg:hidden"
-        aria-label="Quick add lead"
+        onClick={() => setShowMenu(!showMenu)}
+        className={`fixed bottom-6 right-6 z-40 w-16 h-16 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white rounded-full shadow-2xl flex items-center justify-center transition-all hover:scale-110 active:scale-95 ${showMenu ? 'rotate-45' : ''}`}
+        aria-label="Quick actions"
       >
         <Plus className="h-8 w-8" />
       </button>
@@ -151,8 +258,8 @@ export function QuickAddLead() {
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-xl">
-              <Phone className="h-5 w-5 text-blue-600" />
-              Quick Add Lead
+              <Target className="h-5 w-5 text-blue-600" />
+              Add New Lead
             </DialogTitle>
             <DialogDescription>
               Capture lead info while on the phone
@@ -327,6 +434,21 @@ export function QuickAddLead() {
           </form>
         </DialogContent>
       </Dialog>
+
+      {/* Other Quick Add Dialogs */}
+      <QuickAddClient
+        open={showClientDialog}
+        onOpenChange={setShowClientDialog}
+      />
+      <QuickAddJob open={showJobDialog} onOpenChange={setShowJobDialog} />
+      <QuickAddEstimate
+        open={showEstimateDialog}
+        onOpenChange={setShowEstimateDialog}
+      />
+      <QuickAddInvoice
+        open={showInvoiceDialog}
+        onOpenChange={setShowInvoiceDialog}
+      />
     </>
   );
 }

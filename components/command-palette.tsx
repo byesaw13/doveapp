@@ -1,5 +1,8 @@
 'use client';
 
+// Command Palette Component - Updated to remove Mail import
+// Version: 1.1 - Force cache reload
+
 import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import {
@@ -19,7 +22,6 @@ import {
   Calendar,
   Package,
   Clock,
-  Mail,
   BarChart3,
   Target,
   FileText,
@@ -108,12 +110,7 @@ export function CommandPalette() {
       action: () => navigate('/clients'),
       keywords: ['customers', 'contacts'],
     },
-    {
-      label: 'Email',
-      icon: Mail,
-      action: () => navigate('/emails'),
-      keywords: ['messages', 'inbox'],
-    },
+
     {
       label: 'Inventory',
       icon: Package,

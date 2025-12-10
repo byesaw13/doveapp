@@ -49,7 +49,6 @@ A comprehensive Next.js + Supabase application for managing handyman and paintin
 #### 6. **Lead Management**
 
 - Lead inbox with urgency scoring
-- Email-to-lead automation
 - Lead qualification and conversion tracking
 - Source analytics and performance metrics
 - Mobile quick-add widget with voice input
@@ -60,7 +59,6 @@ A comprehensive Next.js + Supabase application for managing handyman and paintin
 - Invoice follow-up escalations (3, 7, 14, 30 days)
 - Job closeout summaries and safety tips
 - Review request messages
-- Lead response automation
 - Configurable automation settings
 
 #### 8. **Additional Features**
@@ -69,7 +67,6 @@ A comprehensive Next.js + Supabase application for managing handyman and paintin
 - Photo uploads for jobs and properties
 - Calendar view with job scheduling
 - KPI dashboard with business metrics
-- Email intelligence and categorization
 - PWA with offline capabilities
 - Data backup and restore (JSON export/import)
 - Mobile-responsive design throughout
@@ -119,18 +116,10 @@ npm install
      supabase/migrations/010_create_tool_tracking.sql
      supabase/migrations/011_create_ai_tool_recognition.sql
      supabase/migrations/012_create_time_tracking.sql
-     supabase/migrations/013_create_job_templates.sql
-     supabase/migrations/014_create_email_tracking.sql
-     supabase/migrations/015_create_email_enrichment_and_alerts.sql
-     supabase/migrations/016_add_junk_email_category.sql
-     supabase/migrations/017_create_email_intelligence_engine.sql
-     supabase/migrations/018_upgrade_to_email_intelligence_engine.sql
-     supabase/migrations/019_add_gmail_connections.sql
-     supabase/migrations/020_create_leads_table.sql
-     supabase/migrations/021_create_estimates_table.sql
-     supabase/migrations/022_add_email_read_status.sql
-     supabase/migrations/023_create_email_summaries_table.sql
-     supabase/migrations/024_create_client_activities.sql
+      supabase/migrations/013_create_job_templates.sql
+      supabase/migrations/020_create_leads_table.sql
+      supabase/migrations/021_create_estimates_table.sql
+      supabase/migrations/024_create_client_activities.sql
      supabase/migrations/025_ensure_estimates_leads_relationship.sql
      supabase/migrations/026_fix_email_insights_column_name.sql
      supabase/migrations/027_create_ai_estimate_settings.sql

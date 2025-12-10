@@ -1,4 +1,7 @@
 import type { Metadata, Viewport } from 'next';
+// Layout Component - Force cache reload
+// Version: 1.1
+
 import { Geist, Geist_Mono } from 'next/font/google';
 import { Sidebar } from '@/components/sidebar';
 import { CommandPalette } from '@/components/command-palette';

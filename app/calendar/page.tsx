@@ -18,8 +18,7 @@ import { format, parseISO, endOfDay } from 'date-fns';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
 import 'react-big-calendar/lib/addons/dragAndDrop/styles.css';
 
-import { getJobs, updateJob, createJob } from '@/lib/db/jobs';
-import { getClients } from '@/lib/db/clients';
+import { updateJob, createJob } from '@/lib/db/jobs';
 import { JobWithClient } from '@/types/job';
 import type { Client } from '@/types/client';
 
@@ -178,10 +177,20 @@ export default function CalendarPage() {
   const loadJobs = async () => {
     try {
       setLoading(true);
-      const [jobsData, clientsData] = await Promise.all([
-        getJobs(),
-        getClients(),
+      const [jobsRes, clientsRes] = await Promise.all([
+        fetch('/api/jobs'),
+        fetch('/api/clients'),
       ]);
+
+      if (!jobsRes.ok || !clientsRes.ok) {
+        throw new Error('Failed to fetch data');
+      }
+
+      const [jobsData, clientsData] = await Promise.all([
+        jobsRes.json(),
+        clientsRes.json(),
+      ]);
+
       setJobs(jobsData);
       setClients(clientsData);
     } catch (error) {

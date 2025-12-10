@@ -24,14 +24,14 @@ import { scheduleJobCompletionAutomations } from '@/lib/db/automation_triggers';
 /**
  * Get all jobs with client information
  */
-  export async function getJobs(): Promise<JobWithClient[]> {
-    // Try with relationships first
-    const { data, error } = await supabase
+export async function getJobs(): Promise<JobWithClient[]> {
+  // Try with relationships first - specify the foreign key to use
+  const { data, error } = await supabase
     .from('jobs')
     .select(
       `
       *,
-      client:clients (
+      client:clients!jobs_client_id_fkey (
         id,
         first_name,
         last_name,
@@ -58,8 +58,7 @@ import { scheduleJobCompletionAutomations } from '@/lib/db/automation_triggers';
 
   if (error) {
     console.error('Error fetching jobs:', error);
-    // Return empty array to prevent app crash
-    return [];
+    throw error; // Throw error instead of returning empty array
   }
 
   return data || [];
@@ -75,7 +74,7 @@ export async function getJob(id: string): Promise<JobWithDetails | null> {
       `
       *,
       line_items:job_line_items (*),
-      client:clients (
+      client:clients!jobs_client_id_fkey (
         id,
         first_name,
         last_name,
@@ -368,7 +367,7 @@ export async function getJobsByClient(
     .select(
       `
       *,
-      client:clients (
+      client:clients!jobs_client_id_fkey (
         id,
         first_name,
         last_name,
@@ -686,7 +685,7 @@ export async function getJobByIdWithRelations(
     .select(
       `
       *,
-      client:clients (
+      client:clients!jobs_client_id_fkey (
         id,
         first_name,
         last_name,
@@ -726,7 +725,7 @@ export async function listJobsWithFilters(filters: {
     .select(
       `
       *,
-      client:clients (
+      client:clients!jobs_client_id_fkey (
         id,
         first_name,
         last_name,

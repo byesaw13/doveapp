@@ -10,7 +10,6 @@ import {
   Calendar,
   Package,
   Clock,
-  Mail,
   Menu,
   X,
   BarChart3,
@@ -63,17 +62,11 @@ const navigationGroups: NavGroup[] = [
     defaultOpen: true,
     items: [
       {
-        name: 'Lead Inbox',
-        href: '/leads/inbox',
-        icon: Target,
-        badge: 'newLeads',
-        shortcut: 'L',
-      },
-      {
-        name: 'All Leads',
+        name: 'Leads',
         href: '/leads',
         icon: Users,
-        shortcut: 'A',
+        badge: 'newLeads',
+        shortcut: 'L',
       },
       {
         name: 'Estimates',
@@ -112,16 +105,7 @@ const navigationGroups: NavGroup[] = [
   {
     name: 'Relationships',
     defaultOpen: true,
-    items: [
-      { name: 'Clients', href: '/clients', icon: Users, shortcut: 'U' },
-      {
-        name: 'Email',
-        href: '/emails',
-        icon: Mail,
-        badge: 'unreadEmails',
-        shortcut: 'M',
-      },
-    ],
+    items: [{ name: 'Clients', href: '/clients', icon: Users, shortcut: 'U' }],
   },
   {
     name: 'Resources',
@@ -158,19 +142,27 @@ export function Sidebar({ className }: SidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(() => {
+  const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(
+    new Set()
+  );
+  const [mounted, setMounted] = useState(false);
+
+  // Initialize collapsed groups after mount to avoid hydration mismatch
+  useEffect(() => {
+    setMounted(true);
+
     if (typeof window === 'undefined') {
-      return new Set();
+      return;
     }
 
     const stored = localStorage.getItem('sidebar-collapsed-groups');
 
     if (stored) {
       try {
-        return new Set(JSON.parse(stored));
+        setCollapsedGroups(new Set(JSON.parse(stored)));
+        return;
       } catch (e) {
         console.error('Failed to parse collapsed groups:', e);
-        return new Set();
       }
     }
 
@@ -181,11 +173,10 @@ export function Sidebar({ className }: SidebarProps) {
       }
     });
 
-    return initialCollapsed;
-  });
+    setCollapsedGroups(initialCollapsed);
+  }, []);
   const [notifications, setNotifications] = useState<SidebarNotificationCounts>(
     {
-      unreadEmails: 0,
       pendingEstimates: 0,
       overdueJobs: 0,
       newLeads: 0,
@@ -407,7 +398,9 @@ export function Sidebar({ className }: SidebarProps) {
           {/* Navigation - Grouped */}
           <nav className="flex-1 px-3 py-4 space-y-3 overflow-y-auto">
             {navigationGroups.map((group) => {
-              const isCollapsed = collapsedGroups.has(group.name);
+              const isCollapsed = mounted
+                ? collapsedGroups.has(group.name)
+                : !group.defaultOpen;
               return (
                 <div key={group.name} className="space-y-1">
                   <button

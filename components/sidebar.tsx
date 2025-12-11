@@ -27,6 +27,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ThemeToggle } from '@/components/theme-toggle';
+
 import type { SidebarNotificationCounts } from '@/app/api/sidebar/notifications/route';
 import type { SidebarPerformanceData } from '@/app/api/sidebar/performance/route';
 
@@ -534,9 +535,11 @@ export function Sidebar({ className }: SidebarProps) {
 
           {/* Footer - Monday.com style */}
           <div className="p-4 border-t border-border bg-muted/50">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between mb-3">
               <div className="text-xs text-muted-foreground space-y-1">
-                <div className="font-semibold text-foreground">DoveApp</div>
+                <div className="font-semibold text-foreground">
+                  FieldOps Pro
+                </div>
                 <div>Field Service Management</div>
                 <div className="text-[10px] text-muted-foreground/70 pt-1">
                   v0.1.0
@@ -544,6 +547,18 @@ export function Sidebar({ className }: SidebarProps) {
               </div>
               <ThemeToggle />
             </div>
+
+            {/* Logout Button - TODO: Implement proper logout */}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                window.location.href = '/auth/login';
+              }}
+              className="w-full text-sm"
+            >
+              Sign Out
+            </Button>
           </div>
         </div>
       </div>

@@ -17,13 +17,8 @@ export default async function PortalLayout({
     redirect('/auth/login');
   }
 
-  // For customer portal, we might allow both registered users and magic-link access
-  // For now, we'll assume authenticated users can access
-  const hasPortalAccess = true; // TODO: Implement proper customer validation
-
-  if (!hasPortalAccess) {
-    redirect('/');
-  }
+  // For demo purposes, allow all authenticated users to access customer portal
+  // In production, you'd validate customer access here
 
   return (
     <div className="min-h-screen bg-background">

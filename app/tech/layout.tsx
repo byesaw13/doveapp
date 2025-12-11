@@ -17,13 +17,8 @@ export default async function TechLayout({
     redirect('/auth/login');
   }
 
-  // For now, we'll assume the user has tech access
-  // In production, you'd check account membership here
-  const hasTechAccess = true; // TODO: Implement proper role checking
-
-  if (!hasTechAccess) {
-    redirect('/');
-  }
+  // For demo purposes, allow all authenticated users to access tech portal
+  // In production, you'd check account membership and roles here
 
   return (
     <div className="min-h-screen bg-background">

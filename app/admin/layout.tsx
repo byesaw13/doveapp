@@ -1,6 +1,5 @@
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase-server';
-import { canManageAdmin } from '@/lib/auth-guards';
 
 export default async function AdminLayout({
   children,
@@ -18,13 +17,8 @@ export default async function AdminLayout({
     redirect('/auth/login');
   }
 
-  // For now, we'll assume the user has admin access
-  // In production, you'd check account membership here
-  const hasAdminAccess = true; // TODO: Implement proper role checking
-
-  if (!hasAdminAccess) {
-    redirect('/');
-  }
+  // For demo purposes, allow all authenticated users to access admin
+  // In production, you'd check account membership and roles here
 
   return (
     <div className="min-h-screen bg-background">

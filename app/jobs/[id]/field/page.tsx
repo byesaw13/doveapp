@@ -132,7 +132,7 @@ export default function JobFieldViewPage() {
     return colors[status] || 'bg-gray-100 text-gray-700';
   };
 
-  const formatScheduledTime = (dateString: string | null) => {
+  const formatScheduledTime = (dateString: string | null | undefined) => {
     if (!dateString) return 'Not scheduled';
     const date = new Date(dateString);
     return (
@@ -241,8 +241,8 @@ export default function JobFieldViewPage() {
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              {job.job_line_items && job.job_line_items.length > 0 ? (
-                job.job_line_items.map((item: any, index: number) => (
+              {job.line_items && job.line_items.length > 0 ? (
+                job.line_items.map((item: any, index: number) => (
                   <div
                     key={index}
                     className="border-b border-gray-200 pb-3 last:border-b-0 last:pb-0"

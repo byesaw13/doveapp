@@ -26,6 +26,7 @@ import {
 import { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { ThemeToggle } from '@/components/theme-toggle';
 import type { SidebarNotificationCounts } from '@/app/api/sidebar/notifications/route';
 import type { SidebarPerformanceData } from '@/app/api/sidebar/performance/route';
 
@@ -337,19 +338,21 @@ export function Sidebar({ className }: SidebarProps) {
       {/* Sidebar - Jobber style */}
       <div
         className={cn(
-          'fixed inset-y-0 left-0 z-50 w-64 bg-white border-r border-slate-200 transform transition-transform duration-200 ease-in-out lg:translate-x-0 lg:static lg:inset-0 shadow-xl lg:shadow-none',
+          'fixed inset-y-0 left-0 z-50 w-64 bg-card border-r border-border transform transition-transform duration-200 ease-in-out lg:translate-x-0 lg:static lg:inset-0 shadow-xl lg:shadow-none',
           isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full',
           className
         )}
       >
         <div className="flex flex-col h-full">
-          {/* Logo - Jobber style with green accent */}
-          <div className="flex items-center px-6 h-16 border-b border-slate-200 bg-gradient-to-r from-emerald-50 to-white">
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-emerald-500 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-lg">D</span>
+          {/* Logo - Monday.com style with blue accent */}
+          <div className="flex items-center px-6 h-16 border-b border-border bg-gradient-to-r from-primary/5 to-background">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center shadow-sm">
+                <span className="text-primary-foreground font-bold text-lg">
+                  D
+                </span>
               </div>
-              <h1 className="text-xl font-bold text-slate-900">DoveApp</h1>
+              <h1 className="text-xl font-bold text-foreground">DoveApp</h1>
             </div>
           </div>
 
@@ -428,8 +431,8 @@ export function Sidebar({ className }: SidebarProps) {
                             className={cn(
                               'flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-lg transition-all duration-150 group',
                               isActive
-                                ? 'bg-emerald-50 text-emerald-700 shadow-sm border border-emerald-100'
-                                : 'text-slate-700 hover:bg-slate-50 hover:text-slate-900'
+                                ? 'bg-primary/10 text-primary shadow-sm border border-primary/20'
+                                : 'text-muted-foreground hover:bg-muted hover:text-foreground'
                             )}
                             onClick={() => setIsMobileMenuOpen(false)}
                             title={
@@ -442,8 +445,8 @@ export function Sidebar({ className }: SidebarProps) {
                               className={cn(
                                 'h-5 w-5 transition-colors flex-shrink-0',
                                 isActive
-                                  ? 'text-emerald-600'
-                                  : 'text-slate-400 group-hover:text-slate-600'
+                                  ? 'text-primary'
+                                  : 'text-muted-foreground/60 group-hover:text-foreground'
                               )}
                             />
                             <span className="flex-1 truncate">{item.name}</span>
@@ -453,15 +456,15 @@ export function Sidebar({ className }: SidebarProps) {
                                 className={cn(
                                   'h-5 min-w-5 px-1.5 text-xs',
                                   isActive
-                                    ? 'bg-emerald-600 text-white'
-                                    : 'bg-red-100 text-red-700'
+                                    ? 'bg-primary text-primary-foreground'
+                                    : 'bg-destructive/10 text-destructive'
                                 )}
                               >
                                 {badgeCount > 99 ? '99+' : badgeCount}
                               </Badge>
                             )}
                             {isActive && (
-                              <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full"></div>
+                              <div className="w-1.5 h-1.5 bg-primary rounded-full"></div>
                             )}
                           </Link>
                         );
@@ -474,49 +477,49 @@ export function Sidebar({ className }: SidebarProps) {
           </nav>
 
           {/* Performance Widget */}
-          <div className="px-3 pb-3 border-t border-slate-100">
-            <div className="bg-gradient-to-br from-emerald-50 to-blue-50 rounded-lg p-3 mt-3 space-y-2">
+          <div className="px-3 pb-3 border-t border-border">
+            <div className="bg-gradient-to-br from-primary/5 to-accent/5 rounded-lg p-3 mt-3 space-y-2 border border-border/50">
               <div className="flex items-center justify-between text-xs">
-                <span className="font-semibold text-slate-700">
+                <span className="font-semibold text-foreground">
                   Today&apos;s Jobs
                 </span>
-                <span className="text-emerald-600 font-bold">
+                <span className="text-primary font-bold">
                   {performance.todayJobsScheduled}/{performance.todayJobsCount}
                 </span>
               </div>
               <div className="space-y-1">
                 <div className="flex items-center justify-between text-xs">
-                  <span className="text-slate-600 flex items-center gap-1">
+                  <span className="text-muted-foreground flex items-center gap-1">
                     <TrendingUp className="h-3 w-3" />
                     Week Revenue
                   </span>
-                  <span className="font-semibold text-slate-700">
+                  <span className="font-semibold text-foreground">
                     {formatCurrency(performance.weekRevenue)}
                   </span>
                 </div>
-                <div className="w-full bg-slate-200 rounded-full h-1.5">
+                <div className="w-full bg-muted rounded-full h-1.5">
                   <div
-                    className="bg-emerald-500 h-1.5 rounded-full transition-all duration-300"
+                    className="bg-primary h-1.5 rounded-full transition-all duration-300"
                     style={{ width: `${getProgressPercentage()}%` }}
                   />
                 </div>
-                <div className="text-[10px] text-slate-500 text-right">
+                <div className="text-[10px] text-muted-foreground text-right">
                   Target: {formatCurrency(performance.weekRevenueTarget)}
                 </div>
               </div>
               {performance.outstandingInvoices > 0 && (
-                <div className="flex items-center justify-between text-xs pt-1 border-t border-slate-200">
-                  <span className="text-slate-600 flex items-center gap-1">
+                <div className="flex items-center justify-between text-xs pt-1 border-t border-border">
+                  <span className="text-muted-foreground flex items-center gap-1">
                     <DollarSign className="h-3 w-3" />
                     Outstanding
                   </span>
-                  <span className="font-semibold text-orange-600">
+                  <span className="font-semibold text-chart-3">
                     {formatCurrency(performance.outstandingInvoicesAmount)}
                   </span>
                 </div>
               )}
               {notifications.overdueJobs > 0 && (
-                <div className="flex items-center gap-1 text-xs text-red-600 pt-1">
+                <div className="flex items-center gap-1 text-xs text-destructive pt-1">
                   <AlertCircle className="h-3 w-3" />
                   <span className="font-medium">
                     {notifications.overdueJobs} overdue job
@@ -527,12 +530,17 @@ export function Sidebar({ className }: SidebarProps) {
             </div>
           </div>
 
-          {/* Footer - Jobber style */}
-          <div className="p-4 border-t border-slate-200 bg-slate-50">
-            <div className="text-xs text-slate-500 space-y-1">
-              <div className="font-semibold text-slate-700">DoveApp</div>
-              <div>Field Service Management</div>
-              <div className="text-[10px] text-slate-400 pt-1">v0.1.0</div>
+          {/* Footer - Monday.com style */}
+          <div className="p-4 border-t border-border bg-muted/50">
+            <div className="flex items-center justify-between">
+              <div className="text-xs text-muted-foreground space-y-1">
+                <div className="font-semibold text-foreground">DoveApp</div>
+                <div>Field Service Management</div>
+                <div className="text-[10px] text-muted-foreground/70 pt-1">
+                  v0.1.0
+                </div>
+              </div>
+              <ThemeToggle />
             </div>
           </div>
         </div>

@@ -26,7 +26,8 @@ interface JobTableProps {
   onStatusChange: (jobId: string, newStatus: JobWithClient['status']) => void;
 }
 
-const statusColors = {
+const statusColors: Record<JobWithClient['status'], string> = {
+  draft: 'bg-gray-100 text-gray-800',
   quote: 'bg-gray-100 text-gray-800',
   scheduled: 'bg-blue-100 text-blue-800',
   in_progress: 'bg-yellow-100 text-yellow-800',
@@ -35,7 +36,8 @@ const statusColors = {
   cancelled: 'bg-red-100 text-red-800',
 };
 
-const statusLabels = {
+const statusLabels: Record<JobWithClient['status'], string> = {
+  draft: 'Draft',
   quote: 'Quote',
   scheduled: 'Scheduled',
   in_progress: 'In Progress',
@@ -101,6 +103,7 @@ export function JobTable({
                     </SelectValue>
                   </SelectTrigger>
                   <SelectContent>
+                    <SelectItem value="draft">Draft</SelectItem>
                     <SelectItem value="quote">Quote</SelectItem>
                     <SelectItem value="scheduled">Scheduled</SelectItem>
                     <SelectItem value="in_progress">In Progress</SelectItem>

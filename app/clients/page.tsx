@@ -22,6 +22,7 @@ import { ImportCSVDialog } from './components/ImportCSVDialog';
 import { ActivityTimeline } from './components/ActivityTimeline';
 import { logEmailSent, logCall, logNote } from '@/lib/db/activities';
 import { validateClientData, detectDuplicates } from '@/lib/validation';
+import { exportClientsToCSV } from '@/lib/csv-export';
 
 interface JobWithPayment extends JobWithClient {
   paymentSummary: {
@@ -164,7 +165,16 @@ export default function NewClientsPage() {
     if (!selectedClient || !editedClient) return;
 
     // Validate client data
-    const validation = validateClientData(editedClient);
+    const validation = validateClientData({
+      first_name: editedClient.first_name || '',
+      last_name: editedClient.last_name || '',
+      email: editedClient.email || undefined,
+      phone: editedClient.phone || undefined,
+      address_line1: editedClient.address_line1 || undefined,
+      city: editedClient.city || undefined,
+      state: editedClient.state || undefined,
+      zip_code: editedClient.zip_code || undefined,
+    });
 
     if (!validation.isValid) {
       setValidationErrors(validation.errors);
@@ -217,7 +227,16 @@ export default function NewClientsPage() {
 
   const handleCreateClient = async () => {
     // Validate client data
-    const validation = validateClientData(editedClient);
+    const validation = validateClientData({
+      first_name: editedClient.first_name || '',
+      last_name: editedClient.last_name || '',
+      email: editedClient.email || undefined,
+      phone: editedClient.phone || undefined,
+      address_line1: editedClient.address_line1 || undefined,
+      city: editedClient.city || undefined,
+      state: editedClient.state || undefined,
+      zip_code: editedClient.zip_code || undefined,
+    });
 
     if (!validation.isValid) {
       setValidationErrors(validation.errors);
@@ -404,7 +423,12 @@ export default function NewClientsPage() {
       if (activityType === 'email') {
         await logEmailSent(selectedClient.id, activityDescription);
       } else if (activityType === 'call') {
-        await logCall(selectedClient.id, activityDescription);
+        await logCall(
+          selectedClient.id,
+          'outgoing',
+          undefined,
+          activityDescription
+        );
       } else if (activityType === 'note') {
         await logNote(selectedClient.id, activityDescription);
       }
@@ -521,6 +545,13 @@ export default function NewClientsPage() {
               className="px-4 py-2 bg-white text-emerald-700 font-semibold rounded-lg shadow-md hover:shadow-lg transition-all duration-200 hover:-translate-y-0.5"
             >
               Import CSV
+            </button>
+            <button
+              onClick={() => exportClientsToCSV(clients)}
+              disabled={clients.length === 0}
+              className="px-4 py-2 bg-white text-emerald-700 font-semibold rounded-lg shadow-md hover:shadow-lg transition-all duration-200 hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Export CSV
             </button>
             <button
               onClick={handleNewClient}

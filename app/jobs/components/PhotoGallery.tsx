@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Image from 'next/image';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -178,13 +179,16 @@ export function PhotoGallery({ photos, onPhotoDeleted }: PhotoGalleryProps) {
                     </div>
                     <div className="aspect-video bg-gray-100 rounded-lg overflow-hidden border-2 border-dashed border-gray-300">
                       {comparePhotos[index] ? (
-                        <img
+                        <Image
                           src={comparePhotos[index]!.file_path}
                           alt={
                             comparePhotos[index]!.caption || 'Comparison photo'
                           }
+                          width={400}
+                          height={225}
                           className="w-full h-full object-cover cursor-pointer"
                           onClick={() => setSelectedPhoto(comparePhotos[index])}
+                          loading="lazy"
                         />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center text-muted-foreground">
@@ -247,10 +251,13 @@ export function PhotoGallery({ photos, onPhotoDeleted }: PhotoGalleryProps) {
                     }}
                   >
                     <div className="aspect-square bg-gray-100">
-                      <img
+                      <Image
                         src={photo.file_path}
                         alt={photo.caption || 'Job photo'}
+                        width={200}
+                        height={200}
                         className="w-full h-full object-cover"
+                        loading="lazy"
                       />
                     </div>
 
@@ -318,9 +325,11 @@ export function PhotoGallery({ photos, onPhotoDeleted }: PhotoGalleryProps) {
           {selectedPhoto && (
             <div className="space-y-4">
               <div className="relative">
-                <img
+                <Image
                   src={selectedPhoto.file_path}
                   alt={selectedPhoto.caption || 'Job photo'}
+                  width={800}
+                  height={600}
                   className="w-full max-h-96 object-contain rounded-lg"
                 />
               </div>

@@ -3,6 +3,7 @@ import {
   getJobs,
   getJobsByClient,
   listJobsWithFilters,
+  listJobsWithAdvancedFilters,
   createJob,
 } from '@/lib/db/jobs';
 import type { JobStatus } from '@/types/job';
@@ -12,8 +13,17 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const clientId = searchParams.get('client_id');
-    const status = searchParams.get('status') as JobStatus | null;
+    const statusParam = searchParams.get('status');
+    const status = statusParam as JobStatus | null;
     const search = searchParams.get('search');
+
+    // Advanced filter parameters
+    const dateFrom = searchParams.get('dateFrom');
+    const dateTo = searchParams.get('dateTo');
+    const minAmount = searchParams.get('minAmount');
+    const maxAmount = searchParams.get('maxAmount');
+    const statuses = searchParams.get('statuses');
+    const clientIds = searchParams.get('clients');
 
     // Legacy support for client_id filter
     if (clientId) {
@@ -21,10 +31,35 @@ export async function GET(request: NextRequest) {
       return NextResponse.json(jobs);
     }
 
-    // New filtering support
+    // Advanced filtering support
+    const hasAdvancedFilters =
+      dateFrom || dateTo || minAmount || maxAmount || statuses || clientIds;
+
+    if (hasAdvancedFilters) {
+      const filters = {
+        status:
+          statusParam && statusParam !== 'all'
+            ? (statusParam as JobStatus)
+            : undefined,
+        search: search || undefined,
+        dateFrom: dateFrom || undefined,
+        dateTo: dateTo || undefined,
+        minAmount: minAmount ? parseFloat(minAmount) : undefined,
+        maxAmount: maxAmount ? parseFloat(maxAmount) : undefined,
+        statuses: statuses ? statuses.split(',') : undefined,
+        clientIds: clientIds ? clientIds.split(',') : undefined,
+      };
+      const jobs = await listJobsWithAdvancedFilters(filters);
+      return NextResponse.json(jobs);
+    }
+
+    // Basic filtering support
     if (status || search) {
       const filters = {
-        status: status && status !== 'all' ? status : undefined,
+        status:
+          statusParam && statusParam !== 'all'
+            ? (statusParam as JobStatus)
+            : undefined,
         search: search || undefined,
       };
       const jobs = await listJobsWithFilters(filters);

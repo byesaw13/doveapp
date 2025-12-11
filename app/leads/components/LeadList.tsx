@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -48,6 +49,7 @@ import {
   MessageSquare,
   Send,
   RefreshCw,
+  Download,
 } from 'lucide-react';
 import {
   handleCallLead as callLead,
@@ -56,6 +58,7 @@ import {
   sortLeadsByUrgency,
   calculateUrgencyScore,
 } from '@/lib/lead-utils';
+import { exportLeadsToCSV } from '@/lib/csv-export';
 
 interface LeadListProps {
   onStatsUpdate?: () => void;
@@ -72,6 +75,7 @@ export default function LeadListContent({
   autoRefresh = false,
   showUrgencyIndicators = false,
 }: LeadListProps) {
+  const router = useRouter();
   const { toast } = useToast();
   const [leads, setLeads] = useState<Lead[]>([]);
   const [filteredLeads, setFilteredLeads] = useState<Lead[]>([]);
@@ -222,7 +226,7 @@ export default function LeadListContent({
         estimated_value: lead.estimated_value,
       })
     );
-    window.location.href = '/estimates';
+    router.push('/estimates');
   };
 
   const handleConvertToClient = async (lead: Lead) => {
@@ -371,6 +375,15 @@ export default function LeadListContent({
           Search
         </Button>
         <Button
+          onClick={() => exportLeadsToCSV(filteredLeads)}
+          variant="outline"
+          className="h-12"
+          disabled={filteredLeads.length === 0}
+        >
+          <Download className="h-4 w-4 mr-2" />
+          Export CSV
+        </Button>
+        <Button
           onClick={() => setShowNewLeadDialog(true)}
           className="h-12 bg-emerald-500 hover:bg-emerald-600"
         >
@@ -394,7 +407,7 @@ export default function LeadListContent({
           <Button
             size="sm"
             variant="outline"
-            onClick={() => (window.location.href = '/leads')}
+            onClick={() => router.push('/leads')}
             className="text-blue-600 border-blue-300 hover:bg-blue-100"
           >
             Clear Filter

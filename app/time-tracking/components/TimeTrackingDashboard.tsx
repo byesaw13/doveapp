@@ -146,7 +146,7 @@ export function TimeTrackingDashboard({
   useEffect(() => {
     // Set hydration flag after mount
     setIsHydrated(true);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, []);
 
   useEffect(() => {

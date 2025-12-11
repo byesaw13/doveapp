@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
+import dynamic from 'next/dynamic';
 import { Badge } from '@/components/ui/badge';
 import type { KPIDashboard, KPIMetric, KPIPeriod } from '@/types/kpi';
 import {
@@ -19,6 +20,48 @@ import {
   Download,
   Calendar,
 } from 'lucide-react';
+// Lazy load chart components
+const LineChart = dynamic(
+  () =>
+    import('@/components/charts/LineChart').then((mod) => ({
+      default: mod.LineChart,
+    })),
+  {
+    loading: () => (
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+      </div>
+    ),
+  }
+);
+
+const BarChart = dynamic(
+  () =>
+    import('@/components/charts/BarChart').then((mod) => ({
+      default: mod.BarChart,
+    })),
+  {
+    loading: () => (
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+      </div>
+    ),
+  }
+);
+
+const DoughnutChart = dynamic(
+  () =>
+    import('@/components/charts/DoughnutChart').then((mod) => ({
+      default: mod.DoughnutChart,
+    })),
+  {
+    loading: () => (
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+      </div>
+    ),
+  }
+);
 
 export default function KPIPage() {
   const [dashboard, setDashboard] = useState<KPIDashboard | null>(null);
@@ -307,47 +350,6 @@ export default function KPIPage() {
                 ? 'All Time'
                 : p.charAt(0).toUpperCase() + p.slice(1)}
             </button>
-          ))}
-        </div>
-      </div>
-      {/* Header */}
-      <div className="mb-8">
-        <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 mb-6">
-          <div>
-            <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-              Key Performance Indicators
-            </h1>
-            <p className="text-gray-600 mt-2">
-              Track your business metrics and performance goals
-            </p>
-          </div>
-          <div className="flex gap-2">
-            <Button variant="outline" size="sm">
-              <Download className="w-4 h-4 mr-2" />
-              Export Report
-            </Button>
-            <Button onClick={loadKPIs} size="sm">
-              <RefreshCw className="w-4 h-4 mr-2" />
-              Refresh
-            </Button>
-          </div>
-        </div>
-
-        {/* Period Selector */}
-        <div className="flex flex-wrap gap-2">
-          {(
-            ['day', 'week', 'month', 'quarter', 'year', 'all'] as KPIPeriod[]
-          ).map((p) => (
-            <Button
-              key={p}
-              variant={period === p ? 'default' : 'outline'}
-              size="sm"
-              onClick={() => setPeriod(p)}
-              className="capitalize"
-            >
-              <Calendar className="w-4 h-4 mr-2" />
-              {p === 'all' ? 'All Time' : p}
-            </Button>
           ))}
         </div>
       </div>

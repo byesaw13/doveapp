@@ -19,14 +19,14 @@ export async function GET(request: NextRequest) {
     if (error) {
       console.error('OAuth error:', error);
       return NextResponse.redirect(
-        new URL('/emails?error=oauth_failed', request.url)
+        new URL('/inbox?error=oauth_failed', request.url)
       );
     }
 
     if (!code) {
       console.error('No authorization code received');
       return NextResponse.redirect(
-        new URL('/emails?error=no_code', request.url)
+        new URL('/inbox?error=no_code', request.url)
       );
     }
 
@@ -48,7 +48,7 @@ export async function GET(request: NextRequest) {
     if (!tokenResponse.ok) {
       console.error('Token exchange failed:', await tokenResponse.text());
       return NextResponse.redirect(
-        new URL('/emails?error=token_exchange_failed', request.url)
+        new URL('/inbox?error=token_exchange_failed', request.url)
       );
     }
 
@@ -67,70 +67,61 @@ export async function GET(request: NextRequest) {
     if (!profileResponse.ok) {
       console.error('Profile fetch failed:', await profileResponse.text());
       return NextResponse.redirect(
-        new URL('/emails?error=profile_fetch_failed', request.url)
+        new URL('/inbox?error=profile_fetch_failed', request.url)
       );
     }
 
     const profile = await profileResponse.json();
 
-    // Store Gmail connection in database for persistence
+    // Store Gmail connection in gmail_connections table.
+    // This table holds OAuth credentials that will be used by a future Gmail sync worker to:
+    //   1. Periodically fetch new emails from Gmail API
+    //   2. Parse email content (sender, subject, body, attachments)
+    //   3. POST to /api/email/intake to add emails to the unified inbox
+    // The worker will need to refresh the access_token using refresh_token when it expires.
     console.log('Gmail OAuth successful for:', profile.email);
+
+    // Calculate token expiration timestamp (Google typically returns expires_in: 3600 seconds)
+    const expiresAt = tokenData.expires_in
+      ? new Date(Date.now() + tokenData.expires_in * 1000).toISOString()
+      : new Date(Date.now() + 3600 * 1000).toISOString(); // Default to 1 hour
 
     const connectionData = {
       email_address: profile.email,
       access_token: tokenData.access_token,
-      refresh_token: tokenData.refresh_token,
-      token_expires_at: new Date(
-        Date.now() + tokenData.expires_in * 1000
-      ).toISOString(),
+      refresh_token: tokenData.refresh_token || null,
+      token_expires_at: expiresAt,
       is_active: true,
+      updated_at: new Date().toISOString(),
     };
 
-    // Check if connection already exists
-    const { data: existingConnection } = await supabase
+    // Use upsert to insert or update based on unique email_address constraint.
+    // If the email already exists, update the tokens; otherwise create new row.
+    const { error: upsertError } = await supabase
       .from('gmail_connections')
-      .select('id')
-      .eq('email_address', profile.email)
-      .single();
+      .upsert(connectionData, {
+        onConflict: 'email_address',
+        ignoreDuplicates: false,
+      });
 
-    if (existingConnection) {
-      // Update existing connection
-      const { error: updateError } = await supabase
-        .from('gmail_connections')
-        .update(connectionData)
-        .eq('id', existingConnection.id);
-
-      if (updateError) {
-        console.error('Error updating Gmail connection:', updateError);
-        return NextResponse.redirect(
-          new URL('/emails?error=connection_update_failed', request.url)
-        );
-      }
-      console.log('Updated existing Gmail connection');
-    } else {
-      // Create new connection
-      const { error: insertError } = await supabase
-        .from('gmail_connections')
-        .insert([connectionData]);
-
-      if (insertError) {
-        console.error('Error creating Gmail connection:', insertError);
-        return NextResponse.redirect(
-          new URL('/emails?error=connection_create_failed', request.url)
-        );
-      }
-      console.log('Created new Gmail connection');
+    if (upsertError) {
+      console.error('Error upserting Gmail connection:', upsertError);
+      return NextResponse.redirect(
+        new URL('/inbox?error=gmail_connection_failed', request.url)
+      );
     }
 
-    // Redirect back to emails page with success
-    console.log('Redirecting to emails page with success');
+    console.log('Gmail connection stored successfully for:', profile.email);
+
+    // Redirect to unified inbox with success flag.
+    // TODO: Future enhancement - build a dedicated /emails page to manage Gmail connections.
     return NextResponse.redirect(
-      new URL('/emails?success=connected', request.url)
+      new URL('/inbox?gmail=connected', request.url)
     );
   } catch (error) {
     console.error('OAuth callback error:', error);
     return NextResponse.redirect(
-      new URL('/emails?error=server_error', request.url)
+      new URL('/inbox?error=server_error', request.url)
     );
   }
 }

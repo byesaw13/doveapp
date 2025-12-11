@@ -97,7 +97,7 @@ export async function getUnsyncedData(
     const index = store.index('synced');
 
     return new Promise<OfflineData[]>((resolve, reject) => {
-      const request = index.getAll(false); // Get all where synced = false
+      const request = index.getAll(IDBKeyRange.only(false)); // Get all where synced = false
       request.onsuccess = () => resolve(request.result);
       request.onerror = () => reject(request.error);
     });
@@ -240,7 +240,7 @@ export async function offlineAwareFetch(
         options,
         timestamp: Date.now(),
         retries: 0,
-        error: error.message,
+        error: error instanceof Error ? error.message : String(error),
       };
 
       await storeOfflineData(

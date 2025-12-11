@@ -1,8 +1,16 @@
 import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
+import { memoryCache } from '@/lib/utils';
 
 export async function GET() {
   try {
+    // Check cache first (5 minute TTL for dashboard stats)
+    const cacheKey = 'dashboard-stats';
+    const cached = memoryCache.get(cacheKey);
+    if (cached) {
+      return NextResponse.json(cached);
+    }
+
     // Get counts in parallel for better performance
     const [
       clientsResult,
@@ -41,13 +49,18 @@ export async function GET() {
       });
     }
 
-    return NextResponse.json({
+    const stats = {
       totalClients: clientsResult.count || 0,
       totalProperties: propertiesResult.count || 0,
       totalJobs: jobsResult.count || 0,
       totalEstimates: estimatesResult.count || 0,
       totalLeads: leadsResult.count || 0,
-    });
+    };
+
+    // Cache the result for 5 minutes
+    memoryCache.set(cacheKey, stats, 5 * 60 * 1000);
+
+    return NextResponse.json(stats);
   } catch (error) {
     console.error('Failed to fetch dashboard stats:', error);
     return NextResponse.json(

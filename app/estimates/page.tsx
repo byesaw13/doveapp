@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import dynamic from 'next/dynamic';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -49,13 +50,24 @@ import {
 } from '@/lib/validations/estimate';
 import { sendEstimate } from '@/lib/db/estimates';
 import { getPendingTasks } from '@/lib/db/activities';
-import AIEstimateGenerator from '@/components/ai-estimate-generator';
 import {
   reviewEstimateWithAI,
   quickEstimateValidation,
 } from '@/lib/ai/estimate-review';
 import type { EstimateReviewResult } from '@/lib/ai/estimate-review';
 import SKUPicker from '@/components/estimates/SKUPicker';
+
+// Lazy load AI Estimate Generator
+const AIEstimateGenerator = dynamic(
+  () => import('@/components/ai-estimate-generator'),
+  {
+    loading: () => (
+      <div className="px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-semibold rounded-lg transition-colors disabled:cursor-not-allowed">
+        Loading AI Generator...
+      </div>
+    ),
+  }
+);
 import {
   Plus,
   Search,
@@ -75,8 +87,19 @@ import {
   Sparkles,
   Loader2,
   AlertCircle,
+  Download,
 } from 'lucide-react';
+import { exportEstimatesToCSV } from '@/lib/csv-export';
 import { format } from 'date-fns';
+
+// Lazy load KanbanBoard component
+const KanbanBoard = dynamic(() => import('@/components/kanban/KanbanBoard'), {
+  loading: () => (
+    <div className="flex items-center justify-center h-64">
+      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+    </div>
+  ),
+}) as any;
 import estimateDisclaimers from '@/data/pricebook/estimate_disclaimers.json';
 
 export default function EstimatesPage() {
@@ -99,6 +122,7 @@ export default function EstimatesPage() {
   const [aiReview, setAiReview] = useState<EstimateReviewResult | null>(null);
   const [isReviewing, setIsReviewing] = useState(false);
   const [showReview, setShowReview] = useState(false);
+  const [viewMode, setViewMode] = useState<'list' | 'kanban'>('list');
 
   // Pricebook integration
   const [showSKUPicker, setShowSKUPicker] = useState(false);
@@ -674,6 +698,21 @@ export default function EstimatesPage() {
       tier: item.tier || 'standard', // Default to standard for backwards compatibility
     }));
 
+    const allowedStatuses = [
+      'draft',
+      'sent',
+      'viewed',
+      'accepted',
+      'declined',
+      'expired',
+      'revised',
+    ] as const;
+    const safeStatus = allowedStatuses.includes(
+      estimate.status as (typeof allowedStatuses)[number]
+    )
+      ? (estimate.status as (typeof allowedStatuses)[number])
+      : 'draft';
+
     form.reset({
       client_id: estimate.client_id || '',
       lead_id: estimate.lead_id || '',
@@ -699,7 +738,7 @@ export default function EstimatesPage() {
         : '',
       payment_terms: estimate.payment_terms || '',
       terms_and_conditions: estimate.terms_and_conditions || '',
-      status: estimate.status,
+      status: safeStatus,
     });
     setSelectedEstimate(null);
     setShowNewDialog(true);
@@ -839,6 +878,144 @@ export default function EstimatesPage() {
     );
   }
 
+  // Kanban helper functions
+  const getKanbanColumns = () => {
+    const filteredEstimates = estimates.filter((estimate) => {
+      if (!searchQuery) return true;
+      const searchLower = searchQuery.toLowerCase();
+      const clientName = estimate.client
+        ? `${estimate.client.first_name} ${estimate.client.last_name}`.toLowerCase()
+        : '';
+      const leadName = estimate.lead
+        ? `${estimate.lead.first_name} ${estimate.lead.last_name}`.toLowerCase()
+        : '';
+      return (
+        estimate.title.toLowerCase().includes(searchLower) ||
+        estimate.estimate_number.toString().includes(searchLower) ||
+        clientName.includes(searchLower) ||
+        leadName.includes(searchLower)
+      );
+    });
+
+    return [
+      {
+        id: 'draft',
+        title: 'Draft',
+        items: filteredEstimates.filter((est) => est.status === 'draft'),
+        color: 'border-slate-400',
+      },
+      {
+        id: 'sent',
+        title: 'Sent',
+        items: filteredEstimates.filter((est) => est.status === 'sent'),
+        color: 'border-blue-400',
+      },
+      {
+        id: 'approved',
+        title: 'Approved',
+        items: filteredEstimates.filter((est) => est.status === 'approved'),
+        color: 'border-green-400',
+      },
+      {
+        id: 'declined',
+        title: 'Declined',
+        items: filteredEstimates.filter((est) => est.status === 'declined'),
+        color: 'border-red-400',
+      },
+      {
+        id: 'expired',
+        title: 'Expired',
+        items: filteredEstimates.filter((est) => est.status === 'expired'),
+        color: 'border-gray-400',
+      },
+    ];
+  };
+
+  const handleStatusChange = async (estimateId: string, newStatus: string) => {
+    try {
+      const response = await fetch(`/api/estimates/${estimateId}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ status: newStatus }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update estimate status');
+      }
+
+      toast({
+        title: 'Status Updated',
+        description: `Estimate moved to ${newStatus}`,
+      });
+
+      loadEstimates();
+      loadStats();
+    } catch (error) {
+      console.error('Failed to update status:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to update estimate status',
+        variant: 'destructive',
+      });
+      throw error; // Re-throw to let KanbanBoard handle the error
+    }
+  };
+
+  const renderKanbanCard = (estimate: EstimateWithRelations) => {
+    const workflowStatus = getEstimateWorkflowStatus(estimate);
+    const clientName = estimate.client
+      ? `${estimate.client.first_name} ${estimate.client.last_name}`
+      : estimate.lead
+        ? `${estimate.lead.first_name} ${estimate.lead.last_name}`
+        : 'No Client';
+
+    return (
+      <div className="bg-white rounded-lg border border-slate-200 p-4 shadow-sm hover:shadow-md transition-all cursor-pointer">
+        <div className="flex items-start justify-between mb-3">
+          <div className="flex-1 min-w-0">
+            <h4 className="font-semibold text-slate-900 text-sm truncate">
+              #{estimate.estimate_number}
+            </h4>
+            <p className="text-slate-600 text-sm truncate mt-1">
+              {estimate.title}
+            </p>
+          </div>
+          <Badge className={`text-xs ml-2 ${getStatusColor(workflowStatus)}`}>
+            {workflowStatus === 'followup_pending'
+              ? 'Follow-up'
+              : workflowStatus === 'sent_no_followup'
+                ? 'Sent'
+                : estimate.status.charAt(0).toUpperCase() +
+                  estimate.status.slice(1)}
+          </Badge>
+        </div>
+
+        <div className="space-y-2">
+          <div className="flex items-center justify-between text-sm">
+            <span className="text-slate-600 truncate">{clientName}</span>
+            <span className="font-semibold text-emerald-600">
+              ${estimate.total.toLocaleString()}
+            </span>
+          </div>
+
+          {estimate.sent_date && (
+            <div className="text-xs text-slate-500">
+              Sent {format(new Date(estimate.sent_date), 'MMM d')}
+            </div>
+          )}
+
+          {estimate.valid_until && (
+            <div className="text-xs text-slate-500">
+              Expires {format(new Date(estimate.valid_until), 'MMM d')}
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  };
+
   return (
     <>
       <div className="min-h-screen bg-slate-50">
@@ -852,6 +1029,36 @@ export default function EstimatesPage() {
               </p>
             </div>
             <div className="flex gap-3">
+              <button
+                onClick={() => exportEstimatesToCSV(estimates)}
+                disabled={estimates.length === 0}
+                className="px-4 py-2 bg-white text-emerald-700 font-semibold rounded-lg shadow-md hover:shadow-lg transition-all duration-200 hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <Download className="w-4 h-4 mr-2" />
+                Export CSV
+              </button>
+              <div className="flex bg-white/20 rounded-lg p-1">
+                <button
+                  onClick={() => setViewMode('list')}
+                  className={`px-3 py-1 rounded-md text-sm font-medium transition-colors ${
+                    viewMode === 'list'
+                      ? 'bg-white text-emerald-700'
+                      : 'text-white hover:bg-white/10'
+                  }`}
+                >
+                  List
+                </button>
+                <button
+                  onClick={() => setViewMode('kanban')}
+                  className={`px-3 py-1 rounded-md text-sm font-medium transition-colors ${
+                    viewMode === 'kanban'
+                      ? 'bg-white text-emerald-700'
+                      : 'text-white hover:bg-white/10'
+                  }`}
+                >
+                  Kanban
+                </button>
+              </div>
               <AIEstimateGenerator onEstimateCreated={loadEstimates} />
               <button
                 onClick={() => setShowNewDialog(true)}
@@ -945,7 +1152,16 @@ export default function EstimatesPage() {
 
           {/* Main Content */}
           <div className="flex-1 bg-white rounded-xl border border-slate-200 shadow-lg overflow-hidden">
-            {selectedEstimate ? (
+            {viewMode === 'kanban' ? (
+              <div className="p-6 h-full">
+                <KanbanBoard
+                  columns={getKanbanColumns()}
+                  onItemMove={handleStatusChange}
+                  renderCard={renderKanbanCard}
+                  loading={loading}
+                />
+              </div>
+            ) : selectedEstimate ? (
               <div className="overflow-y-auto h-full">
                 {/* Estimate Header */}
                 <div className="bg-gradient-to-r from-slate-50 to-slate-100 border-b border-slate-200 p-6 mb-6">

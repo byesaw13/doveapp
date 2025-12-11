@@ -19,7 +19,8 @@ export async function GET(
     const pdfBuffer = await generateInvoicePdf({ invoiceId });
 
     // Return PDF with proper headers
-    return new NextResponse(pdfBuffer, {
+    // NextResponse expects BodyInit; wrap the Node Buffer in a Uint8Array for compatibility.
+    return new NextResponse(new Uint8Array(pdfBuffer), {
       status: 200,
       headers: {
         'Content-Type': 'application/pdf',

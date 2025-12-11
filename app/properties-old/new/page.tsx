@@ -346,6 +346,7 @@ export default function NewPropertyPage() {
                           <FormControl>
                             <Input
                               {...field}
+                              value={field.value ?? ''}
                               placeholder="Street address"
                               className="bg-white border-slate-300"
                             />
@@ -366,6 +367,7 @@ export default function NewPropertyPage() {
                           <FormControl>
                             <Input
                               {...field}
+                              value={field.value ?? ''}
                               placeholder="Apartment, suite, etc."
                               className="bg-white border-slate-300"
                             />
@@ -387,6 +389,7 @@ export default function NewPropertyPage() {
                             <FormControl>
                               <Input
                                 {...field}
+                                value={field.value ?? ''}
                                 placeholder="City"
                                 className="bg-white border-slate-300"
                               />
@@ -407,6 +410,7 @@ export default function NewPropertyPage() {
                             <FormControl>
                               <Input
                                 {...field}
+                                value={field.value ?? ''}
                                 placeholder="State"
                                 className="bg-white border-slate-300"
                               />
@@ -427,6 +431,7 @@ export default function NewPropertyPage() {
                             <FormControl>
                               <Input
                                 {...field}
+                                value={field.value ?? ''}
                                 placeholder="ZIP Code"
                                 className="bg-white border-slate-300"
                               />
@@ -470,6 +475,7 @@ export default function NewPropertyPage() {
                         <FormControl>
                           <textarea
                             {...field}
+                            value={field.value ?? ''}
                             rows={4}
                             placeholder="Special instructions, access codes, property details, etc."
                             className="w-full px-3 py-2 border border-slate-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"

@@ -758,6 +758,82 @@ export async function listJobsWithFilters(filters: {
 }
 
 /**
+ * List jobs with advanced filters
+ */
+export async function listJobsWithAdvancedFilters(filters: {
+  status?: JobStatus | 'all';
+  search?: string;
+  dateFrom?: string;
+  dateTo?: string;
+  minAmount?: number;
+  maxAmount?: number;
+  statuses?: string[];
+  clientIds?: string[];
+}): Promise<JobWithClient[]> {
+  let query = supabase
+    .from('jobs')
+    .select(
+      `
+      *,
+      client:clients!jobs_client_id_fkey (
+        id,
+        first_name,
+        last_name,
+        email,
+        phone
+      )
+    `
+    )
+    .order('created_at', { ascending: false });
+
+  // Basic filters
+  if (filters.status && filters.status !== 'all') {
+    query = query.eq('status', filters.status);
+  }
+
+  if (filters.search) {
+    // Search by job number or client name
+    query = query.or(
+      `job_number.ilike.%${filters.search}%,client.first_name.ilike.%${filters.search}%,client.last_name.ilike.%${filters.search}%`
+    );
+  }
+
+  // Advanced filters
+  if (filters.dateFrom) {
+    query = query.gte('service_date', filters.dateFrom);
+  }
+
+  if (filters.dateTo) {
+    query = query.lte('service_date', filters.dateTo);
+  }
+
+  if (filters.minAmount !== undefined) {
+    query = query.gte('total', filters.minAmount);
+  }
+
+  if (filters.maxAmount !== undefined) {
+    query = query.lte('total', filters.maxAmount);
+  }
+
+  if (filters.statuses && filters.statuses.length > 0) {
+    query = query.in('status', filters.statuses);
+  }
+
+  if (filters.clientIds && filters.clientIds.length > 0) {
+    query = query.in('client_id', filters.clientIds);
+  }
+
+  const { data, error } = await query;
+
+  if (error) {
+    console.error('Error fetching jobs with advanced filters:', error);
+    throw new Error('Failed to fetch jobs');
+  }
+
+  return data || [];
+}
+
+/**
  * Update job scheduling
  */
 export async function updateJobScheduling(

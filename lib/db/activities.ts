@@ -432,7 +432,12 @@ export async function getSmartNotifications(): Promise<
     link?: string;
   }>
 > {
-  const notifications = [];
+  const notifications: Array<{
+    type: 'urgent' | 'warning' | 'info' | 'success';
+    message: string;
+    action?: string;
+    link?: string;
+  }> = [];
 
   try {
     // Overdue invoices

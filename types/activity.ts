@@ -3,6 +3,7 @@ export type ActivityType =
   | 'email_sent'
   | 'email_received'
   | 'call'
+  | 'task'
   | 'meeting'
   | 'sms'
   | 'job_created'
@@ -28,6 +29,7 @@ export interface ClientActivity {
   activity_type: ActivityType;
   title: string;
   description?: string;
+   due_date?: string | null;
   metadata?: Record<string, any>;
   related_id?: string;
   related_type?: string;
@@ -41,6 +43,7 @@ export interface ClientActivityInsert {
   activity_type: ActivityType;
   title: string;
   description?: string;
+   due_date?: string | null;
   metadata?: Record<string, any>;
   related_id?: string;
   related_type?: string;

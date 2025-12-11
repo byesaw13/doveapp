@@ -7,6 +7,7 @@ import { Sidebar } from '@/components/sidebar';
 import { CommandPalette } from '@/components/command-palette';
 import { QuickAddLead } from '@/components/quick-add-lead';
 import { ToastProvider } from '@/components/ui/toast';
+import { ThemeProvider } from '@/lib/theme-context';
 import { RegisterServiceWorker } from './register-sw';
 import './globals.css';
 
@@ -45,7 +46,7 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 5,
   userScalable: true,
-  themeColor: '#10b981', // Emerald 500 - Jobber green
+  themeColor: '#0073ea', // Monday blue
 };
 
 export default function RootLayout({
@@ -65,22 +66,26 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <RegisterServiceWorker />
-        <ToastProvider>
-          <CommandPalette />
-          <QuickAddLead />
-          <div className="flex h-screen bg-slate-50">
-            <Sidebar />
-            <main className="flex-1 overflow-auto">
-              {/* Jobber-style main content area */}
-              <div className="min-h-full">
-                <div className="px-4 py-6 lg:px-8 lg:py-8 max-w-[1600px] mx-auto">
-                  {children}
+        <ThemeProvider defaultTheme="system" storageKey="doveapp-theme">
+          <RegisterServiceWorker />
+          <ToastProvider>
+            <CommandPalette />
+            <QuickAddLead />
+            <div
+              className={`flex h-screen bg-background ${typeof window !== 'undefined' && document.documentElement.classList.contains('dark') ? 'bg-red-900' : 'bg-blue-50'}`}
+            >
+              <Sidebar />
+              <main className="flex-1 overflow-auto">
+                {/* Jobber-style main content area */}
+                <div className="min-h-full">
+                  <div className="px-4 py-6 lg:px-8 lg:py-8 max-w-[1600px] mx-auto">
+                    {children}
+                  </div>
                 </div>
-              </div>
-            </main>
-          </div>
-        </ToastProvider>
+              </main>
+            </div>
+          </ToastProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

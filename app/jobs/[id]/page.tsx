@@ -18,7 +18,7 @@ import { getJobPhotos } from '@/lib/db/job-photos';
 import { RecordPaymentDialog } from '@/app/jobs/components/RecordPaymentDialog';
 import { PhotoUpload } from '@/app/jobs/components/PhotoUpload';
 import { PhotoGallery } from '@/app/jobs/components/PhotoGallery';
-import type { JobWithDetails, LineItemInsert } from '@/types/job';
+import type { JobStatus, JobWithDetails, LineItemInsert } from '@/types/job';
 import type { Payment } from '@/types/payment';
 import type { PaymentFormData } from '@/lib/validations/payment';
 import type { JobPhoto } from '@/types/job-photo';
@@ -75,7 +75,7 @@ export default function JobDetailPage() {
     }
   };
 
-  const handleStatusChange = async (newStatus: string) => {
+  const handleStatusChange = async (newStatus: JobStatus) => {
     if (!job) return;
 
     try {
@@ -197,7 +197,8 @@ export default function JobDetailPage() {
     );
   }
 
-  const statusColors = {
+  const statusColors: Record<JobStatus, string> = {
+    draft: 'bg-gray-100 text-gray-800',
     quote: 'bg-gray-100 text-gray-800',
     scheduled: 'bg-blue-100 text-blue-800',
     in_progress: 'bg-yellow-100 text-yellow-800',

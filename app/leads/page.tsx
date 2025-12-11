@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -24,7 +24,7 @@ import type { LeadStats } from '@/types/lead';
 import LeadAnalyticsContent from './components/LeadAnalytics';
 import LeadListContent from './components/LeadList';
 
-export default function LeadsPage() {
+function LeadsPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [stats, setStats] = useState<LeadStats | null>(null);
@@ -327,5 +327,13 @@ export default function LeadsPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function LeadsPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <LeadsPageContent />
+    </Suspense>
   );
 }

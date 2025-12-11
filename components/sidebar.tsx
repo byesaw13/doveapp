@@ -349,10 +349,12 @@ export function Sidebar({ className }: SidebarProps) {
             <div className="flex items-center gap-3">
               <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center shadow-sm">
                 <span className="text-primary-foreground font-bold text-lg">
-                  D
+                  H
                 </span>
               </div>
-              <h1 className="text-xl font-bold text-foreground">DoveApp</h1>
+              <h1 className="text-xl font-bold text-foreground">
+                FieldOps Pro
+              </h1>
             </div>
           </div>
 

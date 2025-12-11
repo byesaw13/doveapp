@@ -46,7 +46,7 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 5,
   userScalable: true,
-  themeColor: '#0073ea', // Monday blue
+  themeColor: '#0066cc', // Housecall Pro blue
 };
 
 export default function RootLayout({

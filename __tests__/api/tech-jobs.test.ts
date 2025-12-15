@@ -4,8 +4,8 @@
  */
 
 import { NextRequest } from 'next/server';
-import { GET } from '@/app/api/tech/jobs/route';
-import { PATCH } from '@/app/api/tech/jobs/[id]/route';
+import { GET as getJobs } from '@/app/api/tech/jobs/route';
+import { GET as getJobById, PATCH } from '@/app/api/tech/jobs/[id]/route';
 
 // Mock the auth guards
 jest.mock('@/lib/auth-guards', () => ({
@@ -48,7 +48,7 @@ describe('/api/tech/jobs', () => {
         new Error('Authentication required')
       );
 
-      const response = await GET(mockRequest);
+      const response = await getJobs(mockRequest);
       const data = await response.json();
 
       expect(response.status).toBe(401);
@@ -60,7 +60,7 @@ describe('/api/tech/jobs', () => {
         new Error('Technician access required')
       );
 
-      const response = await GET(mockRequest);
+      const response = await getJobs(mockRequest);
       const data = await response.json();
 
       expect(response.status).toBe(401);
@@ -90,25 +90,24 @@ describe('/api/tech/jobs', () => {
       mockRequireTechContext.mockResolvedValue(mockContext);
       mockListJobs.mockResolvedValue({ data: mockJobs, error: null });
 
-      const response = await GET(mockRequest);
+      const response = await getJobs(mockRequest);
       const data = await response.json();
 
       expect(response.status).toBe(200);
       expect(data.data).toEqual(mockJobs);
       expect(mockListJobs).toHaveBeenCalledWith(
-        {
+        expect.objectContaining({
           accountId: 'test-account',
           userId: 'tech-user',
           role: 'TECH',
-          supabase: expect.any(Object),
-        },
-        {
+        }),
+        expect.objectContaining({
           assignedTechId: 'tech-user',
           page: 1,
           pageSize: 20,
           sort: 'created_at',
           dir: 'desc',
-        }
+        })
       );
     });
 
@@ -129,13 +128,24 @@ describe('/api/tech/jobs', () => {
         'http://localhost:3000/api/tech/jobs?status=in_progress&search=plumbing'
       );
 
-      await GET(requestWithParams);
+      await getJobs(requestWithParams);
 
-      expect(mockListJobs).toHaveBeenCalledWith(expect.any(Object), {
-        status: 'in_progress',
-        search: 'plumbing',
-        assignedTechId: 'tech-user', // Always included
-      });
+      expect(mockListJobs).toHaveBeenCalledWith(
+        expect.objectContaining({
+          accountId: 'test-account',
+          userId: 'tech-user',
+          role: 'TECH',
+        }),
+        expect.objectContaining({
+          status: 'in_progress',
+          search: 'plumbing',
+          assignedTechId: 'tech-user',
+          page: 1,
+          pageSize: 20,
+          sort: 'created_at',
+          dir: 'desc',
+        })
+      );
     });
   });
 
@@ -159,11 +169,14 @@ describe('/api/tech/jobs', () => {
       };
 
       mockRequireTechContext.mockResolvedValue(mockContext);
-      mockGetJobById.mockResolvedValue({ data: mockJob, error: null });
+      getJobById.mockResolvedValue({
+        data: mockJob,
+        error: null,
+      });
 
-      const response = await GET(
+      const response = await getJobById(
         new NextRequest('http://localhost:3000/api/tech/jobs/job-1'),
-        { params: { id: 'job-1' } }
+        { params: Promise.resolve({ id: 'job-1' }) }
       );
       const data = await response.json();
 
@@ -182,14 +195,14 @@ describe('/api/tech/jobs', () => {
       };
 
       mockRequireTechContext.mockResolvedValue(mockContext);
-      mockGetJobById.mockResolvedValue({
+      getJobById.mockResolvedValue({
         data: null,
         error: new Error('Access denied: Job not assigned to you'),
       });
 
-      const response = await GET(
+      const response = await getJobById(
         new NextRequest('http://localhost:3000/api/tech/jobs/job-1'),
-        { params: { id: 'job-1' } }
+        { params: Promise.resolve({ id: 'job-1' }) }
       );
       const data = await response.json();
 

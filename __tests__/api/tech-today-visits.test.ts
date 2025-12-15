@@ -11,38 +11,39 @@ jest.mock('@/lib/api-helpers', () => ({
   createAuthenticatedClient: jest.fn(),
 }));
 
+// Mock the visits service
+jest.mock('@/lib/api/visits', () => ({
+  listTodayVisits: jest.fn(),
+}));
+
 import { requireTechContext } from '@/lib/auth-guards';
 import { createAuthenticatedClient } from '@/lib/api-helpers';
+import { listTodayVisits } from '@/lib/api/visits';
 
 const mockRequireTechContext = requireTechContext as jest.MockedFunction<
   typeof requireTechContext
 >;
 const mockCreateAuthenticatedClient = createAuthenticatedClient as jest.Mock;
+const mockListTodayVisits = listTodayVisits as jest.Mock;
 
 describe('/api/tech/today-visits', () => {
-  let mockSupabase: any;
-
   beforeEach(() => {
     jest.resetAllMocks();
 
-    mockSupabase = {
-      from: jest.fn().mockReturnThis(),
-      select: jest.fn().mockReturnThis(),
-      eq: jest.fn().mockReturnThis(),
-      gte: jest.fn().mockReturnThis(),
-      lt: jest.fn().mockReturnThis(),
-      order: jest.fn().mockResolvedValue({
-        data: [],
-        error: null,
-      }),
-    };
-
-    mockCreateAuthenticatedClient.mockReturnValue(mockSupabase);
+    mockCreateAuthenticatedClient.mockReturnValue({});
 
     mockRequireTechContext.mockResolvedValue({
       accountId: '6785bba1-553c-4886-9638-460033ad6b01',
       userId: 'demo-tech-user',
       role: 'TECH',
+    });
+
+    mockListTodayVisits.mockResolvedValue({
+      data: [],
+      page: 1,
+      pageSize: 20,
+      total: 0,
+      error: null,
     });
   });
 
@@ -89,14 +90,17 @@ describe('/api/tech/today-visits', () => {
               last_name: 'Doe',
               address_line1: '123 Main St',
               city: 'Springfield',
-              phone: '555-1234',
+              phone: '555-0101',
             },
           },
         },
       ];
 
-      mockSupabase.order.mockResolvedValue({
+      mockListTodayVisits.mockResolvedValue({
         data: mockVisits,
+        page: 1,
+        pageSize: 20,
+        total: 1,
         error: null,
       });
 
@@ -105,16 +109,25 @@ describe('/api/tech/today-visits', () => {
 
       expect(response.status).toBe(200);
       expect(data.data).toEqual(mockVisits);
-      expect(mockSupabase.from).toHaveBeenCalledWith('visits');
-      expect(mockSupabase.eq).toHaveBeenCalledWith(
-        'technician_id',
-        'demo-tech-user'
+      expect(data.page).toBe(1);
+      expect(data.pageSize).toBe(20);
+      expect(data.total).toBe(1);
+      expect(mockListTodayVisits).toHaveBeenCalledWith(
+        expect.objectContaining({
+          accountId: '6785bba1-553c-4886-9638-460033ad6b01',
+          userId: 'demo-tech-user',
+          supabase: expect.any(Object),
+        }),
+        { page: 1, pageSize: 20 }
       );
     });
 
     it('should return empty list when no visits', async () => {
-      mockSupabase.order.mockResolvedValue({
+      mockListTodayVisits.mockResolvedValue({
         data: [],
+        page: 1,
+        pageSize: 20,
+        total: 0,
         error: null,
       });
 
@@ -123,28 +136,33 @@ describe('/api/tech/today-visits', () => {
 
       expect(response.status).toBe(200);
       expect(data.data).toEqual([]);
+      expect(data.page).toBe(1);
+      expect(data.pageSize).toBe(20);
+      expect(data.total).toBe(0);
     });
 
     it('should only return visits assigned to the tech', async () => {
-      const mockVisits = [
-        {
-          accountId: '6785bba1-553c-4886-9638-460033ad6b01',
-          userId: 'demo-tech-user',
-          role: 'TECH',
-          supabase: expect.any(Object),
-        },
-      ];
-
-      mockSupabase.order.mockResolvedValue({
-        data: mockVisits,
-        error: null,
-      });
-
       const response = await GET(mockRequest);
 
-      expect(mockSupabase.eq).toHaveBeenCalledWith(
-        'technician_id',
-        'demo-tech-user'
+      expect(mockListTodayVisits).toHaveBeenCalledWith(
+        expect.objectContaining({
+          accountId: '6785bba1-553c-4886-9638-460033ad6b01',
+          userId: 'demo-tech-user',
+        }),
+        expect.any(Object)
+      );
+    });
+
+    it('should support date parameter', async () => {
+      const requestWithDate = new NextRequest(
+        'http://localhost:3000/api/tech/today-visits?date=2024-01-15'
+      );
+
+      const response = await GET(requestWithDate);
+
+      expect(mockListTodayVisits).toHaveBeenCalledWith(
+        expect.any(Object),
+        expect.objectContaining({ date: '2024-01-15' })
       );
     });
   });

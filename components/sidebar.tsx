@@ -53,11 +53,11 @@ const navigationGroups: NavGroup[] = [
     items: [
       {
         name: 'Dashboard',
-        href: '/',
+        href: '/admin/dashboard',
         icon: LayoutDashboard,
         shortcut: 'D',
       },
-      { name: 'KPI', href: '/kpi', icon: BarChart3, shortcut: 'K' },
+      { name: 'KPI', href: '/admin/kpi', icon: BarChart3, shortcut: 'K' },
     ],
   },
   {
@@ -66,14 +66,14 @@ const navigationGroups: NavGroup[] = [
     items: [
       {
         name: 'Leads',
-        href: '/leads',
+        href: '/admin/leads',
         icon: Users,
         badge: 'newLeads',
         shortcut: 'L',
       },
       {
         name: 'Estimates',
-        href: '/estimates',
+        href: '/admin/estimates',
         icon: FileText,
         badge: 'pendingEstimates',
         shortcut: 'E',
@@ -86,20 +86,20 @@ const navigationGroups: NavGroup[] = [
     items: [
       {
         name: 'Calendar',
-        href: '/calendar',
+        href: '/admin/schedule',
         icon: Calendar,
         shortcut: 'C',
       },
       {
         name: 'Jobs',
-        href: '/jobs',
+        href: '/admin/jobs',
         icon: Briefcase,
         badge: 'overdueJobs',
         shortcut: 'J',
       },
       {
         name: 'Time Tracking',
-        href: '/time-tracking',
+        href: '/admin/time-tracking',
         icon: Clock,
         shortcut: 'T',
       },
@@ -109,8 +109,8 @@ const navigationGroups: NavGroup[] = [
     name: 'Relationships',
     defaultOpen: true,
     items: [
-      { name: 'Clients', href: '/clients', icon: Users, shortcut: 'U' },
-      { name: 'Help', href: '/help', icon: HelpCircle, shortcut: 'H' },
+      { name: 'Clients', href: '/admin/clients', icon: Users, shortcut: 'U' },
+      { name: 'Help', href: '/admin/help', icon: HelpCircle, shortcut: 'H' },
     ],
   },
   {
@@ -119,7 +119,7 @@ const navigationGroups: NavGroup[] = [
     items: [
       {
         name: 'Inventory',
-        href: '/inventory',
+        href: '/admin/inventory',
         icon: Package,
         badge: 'lowInventoryItems',
         shortcut: 'I',
@@ -132,7 +132,7 @@ const navigationGroups: NavGroup[] = [
     items: [
       {
         name: 'Settings',
-        href: '/settings',
+        href: '/admin/settings',
         icon: Settings,
         shortcut: 'S',
       },

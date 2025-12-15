@@ -5,7 +5,10 @@
 
 import { NextRequest } from 'next/server';
 import { GET as getJobs } from '@/app/api/tech/jobs/route';
-import { GET as getJobById, PATCH } from '@/app/api/tech/jobs/[id]/route';
+import {
+  GET as getJobByIdHandler,
+  PATCH,
+} from '@/app/api/tech/jobs/[id]/route';
 
 // Mock the auth guards
 jest.mock('@/lib/auth-guards', () => ({
@@ -169,12 +172,12 @@ describe('/api/tech/jobs', () => {
       };
 
       mockRequireTechContext.mockResolvedValue(mockContext);
-      getJobById.mockResolvedValue({
+      mockGetJobById.mockResolvedValue({
         data: mockJob,
         error: null,
       });
 
-      const response = await getJobById(
+      const response = await getJobByIdHandler(
         new NextRequest('http://localhost:3000/api/tech/jobs/job-1'),
         { params: Promise.resolve({ id: 'job-1' }) }
       );
@@ -195,12 +198,12 @@ describe('/api/tech/jobs', () => {
       };
 
       mockRequireTechContext.mockResolvedValue(mockContext);
-      getJobById.mockResolvedValue({
+      mockGetJobById.mockResolvedValue({
         data: null,
         error: new Error('Access denied: Job not assigned to you'),
       });
 
-      const response = await getJobById(
+      const response = await getJobByIdHandler(
         new NextRequest('http://localhost:3000/api/tech/jobs/job-1'),
         { params: Promise.resolve({ id: 'job-1' }) }
       );

@@ -39,10 +39,20 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
 
     return NextResponse.json({ data: data || [], page, pageSize, total });
   } catch (error: any) {
-    console.error('Error in GET /api/admin/jobs:', error);
+    const isAuthError =
+      error.message?.includes('required') || error.message?.includes('access');
+    if (!isAuthError) {
+      console.error('Error in GET /api/admin/jobs:', error);
+    }
     return NextResponse.json(
       { error: error.message || 'Authentication required' },
-      { status: error.message?.includes('required') ? 401 : 500 }
+      {
+        status: isAuthError
+          ? error.message?.includes('required')
+            ? 401
+            : 403
+          : 500,
+      }
     );
   }
 }
@@ -88,10 +98,20 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
     return NextResponse.json(data, { status: 201 });
   } catch (error: any) {
-    console.error('Error in POST /api/admin/jobs:', error);
+    const isAuthError =
+      error.message?.includes('required') || error.message?.includes('access');
+    if (!isAuthError) {
+      console.error('Error in POST /api/admin/jobs:', error);
+    }
     return NextResponse.json(
       { error: error.message || 'Authentication required' },
-      { status: error.message?.includes('required') ? 401 : 500 }
+      {
+        status: isAuthError
+          ? error.message?.includes('required')
+            ? 401
+            : 403
+          : 500,
+      }
     );
   }
 }

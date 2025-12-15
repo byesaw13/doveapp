@@ -1,12 +1,20 @@
 import { redirect } from 'next/navigation';
-import { createClient } from '@/lib/supabase-server';
+import {
+  createAuthClient,
+  getCurrentAccountContext,
+} from '@/lib/supabase-auth';
+import { ToastProvider } from '@/components/ui/toast';
+import { AdminClockBanner } from '@/components/admin/AdminClockBanner';
+import { AdminPortalSidebar } from './AdminPortalSidebar';
+import { CommandPalette } from '@/components/command-palette';
+import { QuickAddLead } from '@/components/quick-add-lead';
 
 export default async function AdminLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const supabase = createClient();
+  const supabase = await createAuthClient();
 
   // Check authentication
   const {
@@ -17,79 +25,46 @@ export default async function AdminLayout({
     redirect('/auth/login');
   }
 
-  // For demo purposes, allow all authenticated users to access admin
-  // In production, you'd check account membership and roles here
+  // Get account context and validate admin access
+  const context = await getCurrentAccountContext();
+
+  if (!context) {
+    redirect('/auth/login?error=no_account');
+  }
+
+  // Enforce admin/owner role
+  if (context.role !== 'OWNER' && context.role !== 'ADMIN') {
+    redirect('/auth/login?error=insufficient_permissions');
+  }
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Admin Header - Housecall Pro Style */}
-      <header className="border-b border-border bg-card shadow-sm">
-        <div className="flex h-16 items-center px-6">
-          <div className="flex items-center gap-4">
-            <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center shadow-sm">
-              <span className="text-primary-foreground font-bold text-lg">
-                A
-              </span>
-            </div>
-            <div>
-              <h1 className="text-xl font-bold text-foreground">
-                Admin Portal
-              </h1>
-              <p className="text-sm text-muted-foreground">
-                Field Service Management
-              </p>
+    <ToastProvider>
+      <CommandPalette />
+      <QuickAddLead />
+      <div className="flex h-screen bg-background">
+        <AdminPortalSidebar
+          userName={
+            context.user.full_name || context.user.email || 'Admin User'
+          }
+          userRole={context.role}
+          accountName={context.account.name}
+        />
+        <main className="flex-1 overflow-auto">
+          {/* Admin Clock Banner */}
+          <div className="border-b border-border bg-card px-6 py-3 sticky top-0 z-10">
+            <AdminClockBanner
+              technicianName={
+                context.user.full_name || context.user.email || 'Admin User'
+              }
+            />
+          </div>
+          <div className="min-h-full">
+            <div className="px-4 py-6 lg:px-8 lg:py-8 max-w-[1600px] mx-auto">
+              {children}
             </div>
           </div>
-          <div className="ml-auto flex items-center gap-4">
-            <div className="text-sm text-muted-foreground">
-              Account:{' '}
-              <span className="font-medium text-foreground">Demo Account</span>{' '}
-              | Role: <span className="font-medium text-primary">ADMIN</span>
-            </div>
-          </div>
-        </div>
-      </header>
-
-      <div className="flex">
-        {/* Admin Sidebar - Housecall Pro Style */}
-        <aside className="w-64 border-r border-border bg-card min-h-[calc(100vh-4rem)]">
-          <nav className="p-4 space-y-2">
-            <a
-              href="/admin/dashboard"
-              className="flex items-center gap-3 px-3 py-3 text-sm font-medium rounded-lg hover:bg-muted transition-colors border border-transparent hover:border-border"
-            >
-              📊 Dashboard
-            </a>
-            <a
-              href="/admin/schedule"
-              className="flex items-center gap-3 px-3 py-3 text-sm font-medium rounded-lg hover:bg-muted transition-colors border border-transparent hover:border-border"
-            >
-              📅 Schedule
-            </a>
-            <a
-              href="/admin/jobs"
-              className="flex items-center gap-3 px-3 py-3 text-sm font-medium rounded-lg hover:bg-muted transition-colors border border-transparent hover:border-border"
-            >
-              🔧 Jobs
-            </a>
-            <a
-              href="/admin/customers"
-              className="flex items-center gap-3 px-3 py-3 text-sm font-medium rounded-lg hover:bg-muted transition-colors border border-transparent hover:border-border"
-            >
-              👥 Customers
-            </a>
-            <a
-              href="/admin/team"
-              className="flex items-center gap-3 px-3 py-3 text-sm font-medium rounded-lg hover:bg-muted transition-colors border border-transparent hover:border-border"
-            >
-              👷 Team
-            </a>
-          </nav>
-        </aside>
-
-        {/* Main Content */}
-        <main className="flex-1 p-6 bg-muted/20">{children}</main>
+        </main>
       </div>
-    </div>
+    </ToastProvider>
   );
 }

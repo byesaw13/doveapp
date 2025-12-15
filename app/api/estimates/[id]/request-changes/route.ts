@@ -48,7 +48,6 @@ export async function POST(
     };
 
     // TODO: Send email notification to business about change request
-    console.log('Change request for estimate', estimateId, changeRequest);
 
     // For now, just log - in production, send email to business
     // await sendEmailToBusiness(estimate, body.description);

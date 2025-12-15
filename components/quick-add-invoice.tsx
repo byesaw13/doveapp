@@ -40,7 +40,11 @@ export function QuickAddInvoice({
       fetch('/api/jobs?status=completed')
         .then((res) => res.json())
         .then((data) =>
-          setJobs(data.filter((job: any) => job.status === 'completed'))
+          setJobs(
+            Array.isArray(data)
+              ? data.filter((job: any) => job.status === 'completed')
+              : []
+          )
         )
         .catch((error) => console.error('Failed to load jobs:', error));
     }

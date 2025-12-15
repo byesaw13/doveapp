@@ -6,6 +6,8 @@ import type {
 import type { AutomationSettings } from '@/types/automation';
 import { DEFAULT_AUTOMATION_SETTINGS } from '@/types/automation';
 
+type SupabaseClient = typeof supabase;
+
 const applyAutomationDefaults = (
   settings: BusinessSettings
 ): BusinessSettings => ({
@@ -25,11 +27,17 @@ const mergeAutomationSettings = (
   ...(updates || {}),
 });
 
+const getClient = (client?: SupabaseClient) => client || supabase;
+
 /**
  * Get business settings (returns the first/only record)
  */
-export async function getBusinessSettings(): Promise<BusinessSettings | null> {
-  const { data, error } = await supabase
+export async function getBusinessSettings(
+  client?: SupabaseClient
+): Promise<BusinessSettings | null> {
+  const sb = getClient(client);
+
+  const { data, error } = await sb
     .from('business_settings')
     .select('*')
     .single();
@@ -50,9 +58,11 @@ export async function getBusinessSettings(): Promise<BusinessSettings | null> {
  * Update business settings
  */
 export async function updateBusinessSettings(
-  updates: BusinessSettingsUpdate
+  updates: BusinessSettingsUpdate,
+  client?: SupabaseClient
 ): Promise<BusinessSettings> {
-  const current = await getOrCreateBusinessSettings();
+  const sb = getClient(client);
+  const current = await getOrCreateBusinessSettings(sb);
   const payload: BusinessSettingsUpdate = { ...updates };
 
   if (updates.ai_automation || current.ai_automation) {
@@ -62,7 +72,7 @@ export async function updateBusinessSettings(
     );
   }
 
-  const { data, error } = await supabase
+  const { data, error } = await sb
     .from('business_settings')
     .update(payload)
     .eq('id', current.id)
@@ -76,8 +86,12 @@ export async function updateBusinessSettings(
 /**
  * Create default business settings if none exist
  */
-export async function createDefaultBusinessSettings(): Promise<BusinessSettings> {
-  const { data, error } = await supabase
+export async function createDefaultBusinessSettings(
+  client?: SupabaseClient
+): Promise<BusinessSettings> {
+  const sb = getClient(client);
+
+  const { data, error } = await sb
     .from('business_settings')
     .insert({
       company_name: 'Your Company Name',
@@ -100,10 +114,13 @@ export async function createDefaultBusinessSettings(): Promise<BusinessSettings>
 /**
  * Get or create business settings
  */
-export async function getOrCreateBusinessSettings(): Promise<BusinessSettings> {
-  const settings = await getBusinessSettings();
+export async function getOrCreateBusinessSettings(
+  client?: SupabaseClient
+): Promise<BusinessSettings> {
+  const sb = getClient(client);
+  const settings = await getBusinessSettings(sb);
   if (!settings) {
-    return createDefaultBusinessSettings();
+    return createDefaultBusinessSettings(sb);
   }
   return settings;
 }

@@ -3,11 +3,19 @@ import {
   getOrCreateBusinessSettings,
   updateBusinessSettings,
 } from '@/lib/db/business-settings';
+import { requireAccountContext, canManageAdmin } from '@/lib/auth-guards';
+import { createAuthenticatedClient } from '@/lib/api-helpers';
 
 // GET /api/settings - Get business settings
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
-    const settings = await getOrCreateBusinessSettings();
+    const context = await requireAccountContext(request);
+    if (!canManageAdmin(context.role)) {
+      return NextResponse.json({ error: 'Admin access required' }, { status: 403 });
+    }
+
+    const supabase = createAuthenticatedClient(request);
+    const settings = await getOrCreateBusinessSettings(supabase);
     return NextResponse.json(settings);
   } catch (error) {
     console.error('Error fetching business settings:', error);
@@ -21,8 +29,14 @@ export async function GET() {
 // PUT /api/settings - Update business settings
 export async function PUT(request: NextRequest) {
   try {
+    const context = await requireAccountContext(request);
+    if (!canManageAdmin(context.role)) {
+      return NextResponse.json({ error: 'Admin access required' }, { status: 403 });
+    }
+
+    const supabase = createAuthenticatedClient(request);
     const updates = await request.json();
-    const settings = await updateBusinessSettings(updates);
+    const settings = await updateBusinessSettings(updates, supabase);
     return NextResponse.json(settings);
   } catch (error) {
     console.error('Error updating business settings:', error);

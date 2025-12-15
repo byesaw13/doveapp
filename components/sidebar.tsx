@@ -22,6 +22,7 @@ import {
   DollarSign,
   AlertCircle,
   Settings,
+  HelpCircle,
 } from 'lucide-react';
 import { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
@@ -107,7 +108,10 @@ const navigationGroups: NavGroup[] = [
   {
     name: 'Relationships',
     defaultOpen: true,
-    items: [{ name: 'Clients', href: '/clients', icon: Users, shortcut: 'U' }],
+    items: [
+      { name: 'Clients', href: '/clients', icon: Users, shortcut: 'U' },
+      { name: 'Help', href: '/help', icon: HelpCircle, shortcut: 'H' },
+    ],
   },
   {
     name: 'Resources',

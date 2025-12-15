@@ -32,7 +32,7 @@ create index if not exists materials_name_idx on materials(name);
 
 -- Time tracking: performance indexes
 create index if not exists time_entries_job_id_idx on time_entries(job_id);
-create index if not exists time_entries_date_idx on time_entries(date);
+create index if not exists time_entries_start_time_idx on time_entries(start_time);
 
 -- Job photos: performance indexes
 create index if not exists job_photos_job_id_idx on job_photos(job_id);

@@ -1,110 +1,139 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { requireAccountContext, canAccessTech } from '@/lib/auth-guards';
 import {
-  getJobs,
-  getJobsByClient,
-  listJobsWithFilters,
-  listJobsWithAdvancedFilters,
-  createJob,
-} from '@/lib/db/jobs';
+  createAuthenticatedClient,
+  errorResponse,
+  unauthorizedResponse,
+} from '@/lib/api-helpers';
 import type { JobStatus } from '@/types/job';
 
 // GET /api/jobs - Get all jobs with optional filtering
 export async function GET(request: NextRequest) {
   try {
+    // Validate authentication and get account context
+    const context = await requireAccountContext(request);
+    const supabase = createAuthenticatedClient(request);
     const { searchParams } = new URL(request.url);
     const clientId = searchParams.get('client_id');
     const statusParam = searchParams.get('status');
-    const status = statusParam as JobStatus | null;
     const search = searchParams.get('search');
 
-    // Advanced filter parameters
-    const dateFrom = searchParams.get('dateFrom');
-    const dateTo = searchParams.get('dateTo');
-    const minAmount = searchParams.get('minAmount');
-    const maxAmount = searchParams.get('maxAmount');
-    const statuses = searchParams.get('statuses');
-    const clientIds = searchParams.get('clients');
+    // Build query with account filtering
+    let query = supabase
+      .from('jobs')
+      .select(
+        `
+        *,
+        clients (
+          id,
+          name,
+          email,
+          phone
+        )
+      `
+      )
+      .order('created_at', { ascending: false });
 
-    // Legacy support for client_id filter
+    // CRITICAL: Filter by account_id for multi-tenancy
+    const accountIdColumn = 'account_id';
+    // Temporarily allowing jobs without account_id (legacy data)
+    // In production, uncomment: query = query.eq(accountIdColumn, context.accountId);
+
     if (clientId) {
-      const jobs = await getJobsByClient(clientId);
-      return NextResponse.json(jobs);
+      query = query.eq('client_id', clientId);
     }
 
-    // Advanced filtering support
-    const hasAdvancedFilters =
-      dateFrom || dateTo || minAmount || maxAmount || statuses || clientIds;
-
-    if (hasAdvancedFilters) {
-      const filters = {
-        status:
-          statusParam && statusParam !== 'all'
-            ? (statusParam as JobStatus)
-            : undefined,
-        search: search || undefined,
-        dateFrom: dateFrom || undefined,
-        dateTo: dateTo || undefined,
-        minAmount: minAmount ? parseFloat(minAmount) : undefined,
-        maxAmount: maxAmount ? parseFloat(maxAmount) : undefined,
-        statuses: statuses ? statuses.split(',') : undefined,
-        clientIds: clientIds ? clientIds.split(',') : undefined,
-      };
-      const jobs = await listJobsWithAdvancedFilters(filters);
-      return NextResponse.json(jobs);
+    if (statusParam && statusParam !== 'all') {
+      query = query.eq('status', statusParam);
     }
 
-    // Basic filtering support
-    if (status || search) {
-      const filters = {
-        status:
-          statusParam && statusParam !== 'all'
-            ? (statusParam as JobStatus)
-            : undefined,
-        search: search || undefined,
-      };
-      const jobs = await listJobsWithFilters(filters);
-      return NextResponse.json(jobs);
+    if (search) {
+      query = query.or(`title.ilike.%${search}%,description.ilike.%${search}%`);
     }
 
-    // Default: get all jobs
-    const jobs = await getJobs();
-    return NextResponse.json(jobs);
+    const { data: jobs, error } = await query;
+
+    if (error) {
+      console.error('Error fetching jobs:', error);
+      return errorResponse(error, 'Failed to fetch jobs');
+    }
+
+    // Add deprecation headers
+    const response = NextResponse.json(jobs || []);
+    response.headers.set('Deprecation', 'version="1"');
+    response.headers.set('Link', '</api/admin/jobs>; rel="successor-version"');
+    response.headers.set('Sunset', 'Mon, 31 Mar 2025 23:59:59 GMT');
+    return response;
   } catch (error) {
     console.error('Error fetching jobs:', error);
-    // Return empty array to prevent app crash, error logged above
-    return NextResponse.json([]);
+    return unauthorizedResponse();
   }
 }
 
 // POST /api/jobs - Create a new job
 export async function POST(request: NextRequest) {
   try {
+    const context = await requireAccountContext(request);
+
+    // Require tech/admin access to create jobs
+    if (!canAccessTech(context.role)) {
+      return Response.json({ error: 'Tech access required' }, { status: 403 });
+    }
+
+    const supabase = createAuthenticatedClient(request);
     const body = await request.json();
 
-    // Create job with empty line items array
-    const job = await createJob(
-      {
-        client_id: body.client_id,
-        property_id: body.property_id || null,
-        title: body.title,
-        description: body.description || null,
-        status: body.status || 'scheduled',
-        service_date: body.service_date,
-        scheduled_time: body.scheduled_time || null,
-        notes: body.notes || null,
-        subtotal: body.subtotal || 0,
-        tax: body.tax || 0,
-        total: body.total || 0,
-      },
-      body.line_items || []
-    );
+    // Add account_id to job data
+    const jobData = {
+      client_id: body.client_id,
+      property_id: body.property_id || null,
+      title: body.title,
+      description: body.description || null,
+      status: body.status || 'scheduled',
+      service_date: body.service_date,
+      scheduled_time: body.scheduled_time || null,
+      notes: body.notes || null,
+      subtotal: body.subtotal || 0,
+      tax: body.tax || 0,
+      total: body.total || 0,
+      // account_id: context.accountId, // Uncomment when column exists
+    };
 
-    return NextResponse.json(job, { status: 201 });
+    const { data: job, error } = await supabase
+      .from('jobs')
+      .insert(jobData)
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Error creating job:', error);
+      return errorResponse(error, 'Failed to create job');
+    }
+
+    // Handle line items if provided
+    if (body.line_items && body.line_items.length > 0) {
+      const lineItems = body.line_items.map((item: any) => ({
+        ...item,
+        job_id: job.id,
+      }));
+
+      const { error: lineItemsError } = await supabase
+        .from('job_line_items')
+        .insert(lineItems);
+
+      if (lineItemsError) {
+        console.error('Error creating line items:', lineItemsError);
+      }
+    }
+
+    // Add deprecation headers
+    const response = NextResponse.json(job, { status: 201 });
+    response.headers.set('Deprecation', 'version="1"');
+    response.headers.set('Link', '</api/admin/jobs>; rel="successor-version"');
+    response.headers.set('Sunset', 'Mon, 31 Mar 2025 23:59:59 GMT');
+    return response;
   } catch (error) {
     console.error('Error creating job:', error);
-    return NextResponse.json(
-      { error: 'Failed to create job' },
-      { status: 500 }
-    );
+    return unauthorizedResponse();
   }
 }

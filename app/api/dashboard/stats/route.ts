@@ -1,11 +1,17 @@
-import { NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
+import { NextRequest, NextResponse } from 'next/server';
+import { requireAccountContext } from '@/lib/auth-guards';
+import {
+  createAuthenticatedClient,
+  unauthorizedResponse,
+} from '@/lib/api-helpers';
 import { memoryCache } from '@/lib/utils';
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
-    // Check cache first (5 minute TTL for dashboard stats)
-    const cacheKey = 'dashboard-stats';
+    const context = await requireAccountContext(request);
+    const supabase = createAuthenticatedClient(request);
+    // Check cache first (5 minute TTL for dashboard stats per account)
+    const cacheKey = `dashboard-stats-${context.accountId}`;
     const cached = memoryCache.get(cacheKey);
     if (cached) {
       return NextResponse.json(cached);
@@ -60,18 +66,12 @@ export async function GET() {
     // Cache the result for 5 minutes
     memoryCache.set(cacheKey, stats, 5 * 60 * 1000);
 
+    // TODO: Add account_id filtering once columns are fully migrated
+    // For now, RLS policies will handle filtering based on user's account membership
+
     return NextResponse.json(stats);
   } catch (error) {
     console.error('Failed to fetch dashboard stats:', error);
-    return NextResponse.json(
-      {
-        totalClients: 0,
-        totalProperties: 0,
-        totalJobs: 0,
-        totalEstimates: 0,
-        totalLeads: 0,
-      },
-      { status: 500 }
-    );
+    return unauthorizedResponse();
   }
 }

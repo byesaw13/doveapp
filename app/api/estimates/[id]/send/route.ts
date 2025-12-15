@@ -110,13 +110,11 @@ async function sendEmail(options: {
   };
 }) {
   // TODO: Implement email sending (e.g., using Resend, SendGrid, etc.)
-  console.log('Sending email:', options);
   // For now, just log - replace with actual email service
 }
 
 async function sendSms(options: { to: string; message: string }) {
   // TODO: Implement SMS sending (e.g., using Twilio, etc.)
-  console.log('Sending SMS:', options);
   // For now, just log - replace with actual SMS service
 }
 
@@ -159,10 +157,8 @@ function generateSmsMessage(estimate: any): string {
 async function logEstimateActivity(estimateId: string, activity: any) {
   // TODO: Implement activity logging
   // This could be stored in the sent_history JSONB field or a separate activities table
-  console.log('Logging estimate activity:', estimateId, activity);
 }
 
 async function updateEstimateStatus(estimateId: string, status: string) {
   // TODO: Update estimate status in database
-  console.log('Updating estimate status:', estimateId, status);
 }

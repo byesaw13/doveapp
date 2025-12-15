@@ -5,7 +5,6 @@ import { getValidAccessToken } from '@/lib/square/token-manager';
 
 export async function POST() {
   try {
-    console.log('Starting Square import...');
     
     // Get OAuth access token
     const accessToken = await getValidAccessToken();
@@ -24,7 +23,6 @@ export async function POST() {
     
     // Fetch customers from Square using OAuth token
     const squareCustomers = await fetchSquareCustomersWithToken(accessToken);
-    console.log(`Fetched ${squareCustomers.length} customers from Square`);
 
     if (squareCustomers.length === 0) {
       return NextResponse.json({

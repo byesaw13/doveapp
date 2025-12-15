@@ -231,7 +231,6 @@ export default function InboxPage() {
 
   const handleSendReply = () => {
     if (!replyText.trim()) return;
-    console.log('Reply placeholder:', replyText);
     setReplyText('');
   };
 

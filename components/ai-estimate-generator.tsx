@@ -35,9 +35,11 @@ import {
   CheckCircle,
   AlertCircle,
   Image as ImageIcon,
+  Image,
   DollarSign,
   Clock,
 } from 'lucide-react';
+import NextImage from 'next/image';
 
 interface AIImagePreview {
   file: File;
@@ -527,10 +529,13 @@ export default function AIEstimateGenerator({
                   <div className="grid grid-cols-4 gap-2 mt-3">
                     {images.map((image) => (
                       <div key={image.id} className="relative group">
-                        <img
+                        <NextImage
                           src={image.preview}
-                          alt="Project"
-                          className="w-full h-20 object-cover rounded border border-slate-200"
+                          alt="Uploaded image"
+                          width={200}
+                          height={128}
+                          className="w-full h-32 object-cover rounded"
+                          loading="lazy"
                         />
                         <button
                           type="button"

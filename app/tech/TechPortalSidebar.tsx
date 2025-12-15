@@ -39,7 +39,7 @@ export function TechPortalSidebar({
             },
             {
               name: 'Schedule',
-              href: '/tech/schedule',
+              href: '/admin/schedule',
               icon: <CalendarDays className="h-5 w-5" />,
               shortcut: 'S',
             },

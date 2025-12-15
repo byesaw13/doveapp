@@ -10,4 +10,9 @@ test.describe('Smoke Tests', () => {
   test.skip('admin role lands on dashboard', async ({ page }) => {
     // TODO: Set up test auth
   });
+
+  test('tech jobs redirects to today', async ({ page }) => {
+    await page.goto('/tech/jobs');
+    await expect(page).toHaveURL('/tech/today');
+  });
 });

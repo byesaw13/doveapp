@@ -9,9 +9,13 @@ export interface EstimateServiceContext {
 }
 
 export interface EstimateFilters {
-  status?: EstimateStatus | 'all';
+  status?: string;
   search?: string;
   customerId?: string;
+  page?: number;
+  pageSize?: number;
+  sort?: string;
+  dir?: 'asc' | 'desc';
 }
 
 /**
@@ -20,7 +24,13 @@ export interface EstimateFilters {
 export async function listEstimates(
   context: EstimateServiceContext,
   filters: EstimateFilters = {}
-): Promise<{ data: EstimateWithRelations[] | null; error: Error | null }> {
+): Promise<{
+  data: EstimateWithRelations[] | null;
+  page: number;
+  pageSize: number;
+  total: number;
+  error: Error | null;
+}> {
   try {
     let query = context.supabase
       .from('estimates')
@@ -53,14 +63,32 @@ export async function listEstimates(
       );
     }
 
-    const { data, error } = await query;
+    // Pagination defaults
+    const page = filters.page || 1;
+    const pageSize = Math.min(filters.pageSize || 20, 100);
+    const offset = (page - 1) * pageSize;
+
+    // Sorting
+    const sortField = filters.sort || 'created_at';
+    const sortDir = filters.dir || 'desc';
+    query = query.order(sortField, { ascending: sortDir === 'asc' });
+
+    const { data, error, count } = await query
+      .select('*', { count: 'exact' })
+      .range(offset, offset + pageSize - 1);
 
     if (error) {
       console.error('Error fetching estimates:', error);
-      return { data: null, error: new Error('Failed to fetch estimates') };
+      return {
+        data: null,
+        page,
+        pageSize,
+        total: 0,
+        error: new Error('Failed to fetch estimates'),
+      };
     }
 
-    return { data: data || [], error: null };
+    return { data: data || [], page, pageSize, total: count || 0, error: null };
   } catch (error) {
     console.error('Unexpected error in listEstimates:', error);
     return { data: null, error: error as Error };

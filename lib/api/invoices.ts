@@ -9,9 +9,13 @@ export interface InvoiceServiceContext {
 }
 
 export interface InvoiceFilters {
-  status?: InvoiceStatus | 'all';
+  status?: string;
   search?: string;
   customerId?: string;
+  page?: number;
+  pageSize?: number;
+  sort?: string;
+  dir?: 'asc' | 'desc';
 }
 
 /**
@@ -20,7 +24,13 @@ export interface InvoiceFilters {
 export async function listInvoices(
   context: InvoiceServiceContext,
   filters: InvoiceFilters = {}
-): Promise<{ data: InvoiceWithRelations[] | null; error: Error | null }> {
+): Promise<{
+  data: InvoiceWithRelations[] | null;
+  page: number;
+  pageSize: number;
+  total: number;
+  error: Error | null;
+}> {
   try {
     let query = context.supabase
       .from('invoices')
@@ -52,14 +62,32 @@ export async function listInvoices(
       query = query.or(`invoice_number.ilike.%${filters.search}%`);
     }
 
-    const { data, error } = await query;
+    // Pagination defaults
+    const page = filters.page || 1;
+    const pageSize = Math.min(filters.pageSize || 20, 100);
+    const offset = (page - 1) * pageSize;
+
+    // Sorting
+    const sortField = filters.sort || 'created_at';
+    const sortDir = filters.dir || 'desc';
+    query = query.order(sortField, { ascending: sortDir === 'asc' });
+
+    const { data, error, count } = await query
+      .select('*', { count: 'exact' })
+      .range(offset, offset + pageSize - 1);
 
     if (error) {
       console.error('Error fetching invoices:', error);
-      return { data: null, error: new Error('Failed to fetch invoices') };
+      return {
+        data: null,
+        page,
+        pageSize,
+        total: 0,
+        error: new Error('Failed to fetch invoices'),
+      };
     }
 
-    return { data: data || [], error: null };
+    return { data: data || [], page, pageSize, total: count || 0, error: null };
   } catch (error) {
     console.error('Unexpected error in listInvoices:', error);
     return { data: null, error: error as Error };

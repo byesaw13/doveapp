@@ -10,6 +10,10 @@ export interface ClientServiceContext {
 
 export interface ClientFilters {
   search?: string;
+  page?: number;
+  pageSize?: number;
+  sort?: string;
+  dir?: 'asc' | 'desc';
 }
 
 /**
@@ -18,20 +22,20 @@ export interface ClientFilters {
 export async function listClients(
   context: ClientServiceContext,
   filters: ClientFilters = {}
-): Promise<{ data: Client[] | null; error: Error | null }> {
+): Promise<{
+  data: Client[] | null;
+  page: number;
+  pageSize: number;
+  total: number;
+  error: Error | null;
+}> {
   try {
     // Only admins and techs can list all clients
     if (context.role === 'CUSTOMER') {
       return { data: null, error: new Error('Customers cannot list clients') };
     }
 
-    let query = context.supabase
-      .from('clients')
-      .select('*')
-      .order('created_at', { ascending: false });
-
-    // Enforce tenant scoping
-    query = query.eq('account_id', context.accountId);
+    let query = context.supabase.from('clients').select('*');
 
     if (filters.search) {
       query = query.or(
@@ -39,14 +43,32 @@ export async function listClients(
       );
     }
 
-    const { data, error } = await query;
+    // Pagination defaults
+    const page = filters.page || 1;
+    const pageSize = Math.min(filters.pageSize || 20, 100);
+    const offset = (page - 1) * pageSize;
+
+    // Sorting
+    const sortField = filters.sort || 'created_at';
+    const sortDir = filters.dir || 'desc';
+    query = query.order(sortField, { ascending: sortDir === 'asc' });
+
+    const { data, error, count } = await query
+      .select('*', { count: 'exact' })
+      .range(offset, offset + pageSize - 1);
 
     if (error) {
       console.error('Error fetching clients:', error);
-      return { data: null, error: new Error('Failed to fetch clients') };
+      return {
+        data: null,
+        page,
+        pageSize,
+        total: 0,
+        error: new Error('Failed to fetch clients'),
+      };
     }
 
-    return { data: data || [], error: null };
+    return { data: data || [], page, pageSize, total: count || 0, error: null };
   } catch (error) {
     console.error('Unexpected error in listClients:', error);
     return { data: null, error: error as Error };

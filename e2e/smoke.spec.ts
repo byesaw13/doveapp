@@ -11,8 +11,8 @@ test.describe('Smoke Tests', () => {
     // TODO: Set up test auth
   });
 
-  test('tech jobs redirects to today', async ({ page }) => {
+  test('tech jobs redirects to my-jobs', async ({ page }) => {
     await page.goto('/tech/jobs');
-    await expect(page).toHaveURL('/tech/today');
+    await expect(page).toHaveURL('/tech/my-jobs');
   });
 });

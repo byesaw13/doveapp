@@ -28,3 +28,22 @@ export function logError(message: string, error?: Error, context?: LogContext) {
     })
   );
 }
+
+export async function logActivity(
+  supabase: any,
+  actorUserId: string,
+  actorRole: string,
+  entityType: string,
+  entityId: string,
+  action: string,
+  meta?: Record<string, any>
+) {
+  await supabase.from('activity_log').insert({
+    actor_user_id: actorUserId,
+    actor_role: actorRole,
+    entity_type: entityType,
+    entity_id: entityId,
+    action,
+    meta_json: meta || {},
+  });
+}

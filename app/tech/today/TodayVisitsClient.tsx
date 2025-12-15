@@ -44,6 +44,33 @@ export default function TodayVisitsClient() {
     }
   }, []);
 
+  const updateVisitStatus = useCallback(
+    async (
+      visitId: string,
+      status: 'in_progress' | 'completed',
+      notes?: string
+    ) => {
+      try {
+        const response = await fetch(`/api/tech/visits/${visitId}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ status, notes }),
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          throw new Error(errorData.error || `HTTP ${response.status}`);
+        }
+
+        // Refetch visits after successful update
+        await fetchVisits();
+      } catch (err: any) {
+        setError(err.message || 'Failed to update visit');
+      }
+    },
+    [fetchVisits]
+  );
+
   useEffect(() => {
     fetchVisits();
   }, [fetchVisits]);
@@ -213,12 +240,18 @@ export default function TodayVisitsClient() {
                 </div>
                 <div className="flex gap-2">
                   {visit.status === 'scheduled' && (
-                    <button className="px-3 py-1 bg-primary text-primary-foreground text-sm rounded-lg hover:bg-primary/90 transition-colors">
+                    <button
+                      className="px-3 py-1 bg-primary text-primary-foreground text-sm rounded-lg hover:bg-primary/90 transition-colors"
+                      onClick={() => updateVisitStatus(visit.id, 'in_progress')}
+                    >
                       Start Visit
                     </button>
                   )}
                   {visit.status === 'in_progress' && (
-                    <button className="px-3 py-1 bg-accent text-accent-foreground text-sm rounded-lg hover:bg-accent/90 transition-colors">
+                    <button
+                      className="px-3 py-1 bg-accent text-accent-foreground text-sm rounded-lg hover:bg-accent/90 transition-colors"
+                      onClick={() => updateVisitStatus(visit.id, 'completed')}
+                    >
                       Complete Visit
                     </button>
                   )}

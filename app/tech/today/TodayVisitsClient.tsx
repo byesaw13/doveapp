@@ -1,10 +1,27 @@
-import TodayVisitsClient from './TodayVisitsClient';
+'use client';
 
-export default function TechToday() {
-  return <TodayVisitsClient />;
+import { useState, useEffect, useCallback } from 'react';
+
+interface Visit {
+  id: string;
+  start_at: string;
+  end_at: string;
+  status: string;
+  job: {
+    title: string;
+    client: {
+      first_name: string;
+      last_name: string;
+      address_line1: string;
+      city: string;
+      state: string;
+      zip_code: string;
+      phone: string;
+    };
+  };
 }
 
-export default function TechToday() {
+export default function TodayVisitsClient() {
   const [visits, setVisits] = useState<Visit[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -12,14 +29,16 @@ export default function TechToday() {
   const fetchVisits = useCallback(async () => {
     try {
       setLoading(true);
+      setError(null);
       const response = await fetch('/api/tech/today-visits');
       if (!response.ok) {
-        throw new Error('Failed to fetch visits');
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || `HTTP ${response.status}`);
       }
       const data = await response.json();
       setVisits(data.data || []);
     } catch (err: any) {
-      setError(err.message);
+      setError(err.message || 'Failed to fetch visits');
     } finally {
       setLoading(false);
     }
@@ -220,36 +239,22 @@ export default function TechToday() {
         </h2>
         <div className="grid grid-cols-3 gap-4 text-center">
           <div>
-            <div className="text-2xl font-bold text-accent">1</div>
+            <div className="text-2xl font-bold text-accent">
+              {visits.filter((v) => v.status === 'completed').length}
+            </div>
             <div className="text-xs text-muted-foreground">Completed</div>
           </div>
           <div>
-            <div className="text-2xl font-bold text-primary">1</div>
+            <div className="text-2xl font-bold text-primary">
+              {visits.filter((v) => v.status === 'in_progress').length}
+            </div>
             <div className="text-xs text-muted-foreground">In Progress</div>
           </div>
           <div>
-            <div className="text-2xl font-bold text-muted-foreground">2</div>
+            <div className="text-2xl font-bold text-muted-foreground">
+              {visits.filter((v) => v.status === 'scheduled').length}
+            </div>
             <div className="text-xs text-muted-foreground">Remaining</div>
-          </div>
-        </div>
-      </div>
-
-      {/* Mobile-specific actions */}
-      <div className="fixed bottom-20 left-4 right-4 lg:hidden">
-        <div className="bg-card p-4 rounded-lg border border-border shadow-lg">
-          <div className="grid grid-cols-2 gap-3">
-            <button className="flex flex-col items-center p-3 bg-primary/10 hover:bg-primary/20 rounded-lg transition-colors">
-              <span className="text-xl mb-1">🚗</span>
-              <span className="text-xs font-medium text-foreground">
-                Start Route
-              </span>
-            </button>
-            <button className="flex flex-col items-center p-3 bg-accent/10 hover:bg-accent/20 rounded-lg transition-colors">
-              <span className="text-xl mb-1">📍</span>
-              <span className="text-xs font-medium text-foreground">
-                GPS Check-in
-              </span>
-            </button>
           </div>
         </div>
       </div>

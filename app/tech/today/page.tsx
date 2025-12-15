@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 
 interface Visit {
   id: string;
@@ -25,11 +25,7 @@ export default function TechToday() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    fetchVisits();
-  }, []);
-
-  const fetchVisits = async () => {
+  const fetchVisits = useCallback(async () => {
     try {
       setLoading(true);
       const response = await fetch('/api/tech/today-visits');
@@ -43,7 +39,11 @@ export default function TechToday() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    fetchVisits();
+  }, [fetchVisits]);
 
   const getStatusIcon = (status: string) => {
     switch (status) {

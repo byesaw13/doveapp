@@ -40,8 +40,8 @@ describe('/api/tech/today-visits', () => {
     mockCreateAuthenticatedClient.mockReturnValue(mockSupabase);
 
     mockRequireTechContext.mockResolvedValue({
-      accountId: 'test-account',
-      userId: 'tech-user',
+      accountId: '6785bba1-553c-4886-9638-460033ad6b01',
+      userId: 'demo-tech-user',
       role: 'TECH',
     });
   });
@@ -108,7 +108,7 @@ describe('/api/tech/today-visits', () => {
       expect(mockSupabase.from).toHaveBeenCalledWith('visits');
       expect(mockSupabase.eq).toHaveBeenCalledWith(
         'technician_id',
-        'tech-user'
+        'demo-tech-user'
       );
     });
 
@@ -128,9 +128,10 @@ describe('/api/tech/today-visits', () => {
     it('should only return visits assigned to the tech', async () => {
       const mockVisits = [
         {
-          id: 'visit-1',
-          technician_id: 'tech-user',
-          job: { title: 'Assigned Job' },
+          accountId: '6785bba1-553c-4886-9638-460033ad6b01',
+          userId: 'demo-tech-user',
+          role: 'TECH',
+          supabase: expect.any(Object),
         },
       ];
 
@@ -143,7 +144,7 @@ describe('/api/tech/today-visits', () => {
 
       expect(mockSupabase.eq).toHaveBeenCalledWith(
         'technician_id',
-        'tech-user'
+        'demo-tech-user'
       );
     });
   });

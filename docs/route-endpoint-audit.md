@@ -2,6 +2,13 @@
 
 This document audits all routes in the three portals (Admin, Tech, Customer) to ensure complete wiring between pages and endpoints.
 
+## Notes
+
+- All list endpoints now support pagination: `page`, `pageSize` (max 100), `sort`, `dir`
+- Response format: `{ data: [...], page: number, pageSize: number, total: number }`
+- Role-based access enforced server-side
+- Zod validation added for key inputs
+
 ## Admin Portal (/admin/\*)
 
 ### /admin/dashboard
@@ -68,8 +75,8 @@ This document audits all routes in the three portals (Admin, Tech, Customer) to 
 - **Data needed**: KPI metrics, charts
 - **Endpoints called**:
   - `/api/admin/kpi`
-- **Status**: ❌ Missing - no endpoint found
-- **Fix required**: Implement KPI endpoint
+- **Status**: ✅ Wired - endpoint implemented with aggregate queries
+- **Fix required**: Wire dashboard UI to use live data
 
 ### /admin/inventory
 
@@ -135,11 +142,11 @@ This document audits all routes in the three portals (Admin, Tech, Customer) to 
 
 ### /tech/today
 
-- **Data needed**: Today's jobs for the tech
+- **Data needed**: Today's visits for the tech
 - **Endpoints called**:
-  - `/api/tech/today-jobs`
-- **Status**: ⚠️ Stub - check if exists
-- **Fix required**: Implement if missing
+  - `/api/tech/today-visits`
+- **Status**: ✅ Wired - endpoint implemented
+- **Fix required**: Update UI to use visits instead of jobs
 
 ## Customer Portal (/portal/\*)
 

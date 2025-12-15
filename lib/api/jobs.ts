@@ -39,9 +39,8 @@ export async function listJobs(
           company_name,
           email,
           phone
-        )
+         )
       `)
-      )
       .order('created_at', { ascending: false });
 
     // CRITICAL: Always filter by account_id for multi-tenancy

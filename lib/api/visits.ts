@@ -40,7 +40,7 @@ export async function listTodayVisits(
         *,
         job:jobs (
           title,
-          client:clients (
+          clients!jobs_client_id_fkey (
             first_name,
             last_name,
             address_line1,

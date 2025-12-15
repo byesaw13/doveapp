@@ -1,5 +1,26 @@
 import { SupabaseClient } from '@supabase/supabase-js';
-import type { JobStatus, JobWithClient, JobWithDetails } from '@/types/job';
+
+// Temporary local types until module resolution is fixed
+export type JobStatus =
+  | 'draft'
+  | 'quote'
+  | 'scheduled'
+  | 'in_progress'
+  | 'completed'
+  | 'invoiced'
+  | 'cancelled';
+
+export interface JobWithClient {
+  id: string;
+  title: string;
+  status: JobStatus;
+  // Add other fields as needed
+  clients?: any;
+}
+
+export interface JobWithDetails extends JobWithClient {
+  // Add details
+}
 
 export interface JobServiceContext {
   accountId: string;
@@ -26,11 +47,18 @@ export interface JobFilters {
 export async function listJobs(
   context: JobServiceContext,
   filters: JobFilters = {}
-): Promise<{ data: JobWithClient[] | null; page: number; pageSize: number; total: number; error: Error | null }> {
+): Promise<{
+  data: JobWithClient[] | null;
+  page: number;
+  pageSize: number;
+  total: number;
+  error: Error | null;
+}> {
   try {
     let query = context.supabase
       .from('jobs')
-      .select(`
+      .select(
+        `
         *,
         clients (
           id,
@@ -40,7 +68,8 @@ export async function listJobs(
           email,
           phone
          )
-      `)
+      `
+      )
       .order('created_at', { ascending: false });
 
     // CRITICAL: Always filter by account_id for multi-tenancy
@@ -67,13 +96,19 @@ export async function listJobs(
     const sortDir = filters.dir || 'desc';
     query = query.order(sortField, { ascending: sortDir === 'asc' });
 
-    const { data, error, count } = await query
+    const { data, error, count } = await (query as any)
       .select('*', { count: 'exact' })
       .range(offset, offset + pageSize - 1);
 
     if (error) {
       console.error('Error fetching jobs:', error);
-      return { data: null, error: new Error('Failed to fetch jobs') };
+      return {
+        data: null,
+        page,
+        pageSize,
+        total: 0,
+        error: new Error('Failed to fetch jobs'),
+      };
     }
 
     return {
@@ -81,11 +116,17 @@ export async function listJobs(
       page,
       pageSize,
       total: count || 0,
-      error: null
+      error: null,
     };
   } catch (error) {
     console.error('Unexpected error in listJobs:', error);
-    return { data: null, error: error as Error };
+    return {
+      data: null,
+      page: 1,
+      pageSize: 20,
+      total: 0,
+      error: error as Error,
+    };
   }
 }
 
@@ -115,6 +156,7 @@ export async function getJobById(
           state,
           zip_code
         )
+      `
       )
       .eq('id', jobId);
 

@@ -85,6 +85,12 @@ const navigationGroups: NavGroup[] = [
     defaultOpen: true,
     items: [
       {
+        name: 'Today',
+        href: '/tech/today',
+        icon: Calendar,
+        shortcut: 'T',
+      },
+      {
         name: 'Calendar',
         href: '/admin/schedule',
         icon: Calendar,

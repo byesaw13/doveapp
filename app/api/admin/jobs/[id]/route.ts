@@ -13,6 +13,7 @@ export async function GET(
   try {
     const context = await requireAdminContext(request);
     const supabase = createAuthenticatedClient(request);
+    const { id } = await params;
 
     const { data, error } = await getJobById(
       {
@@ -21,7 +22,7 @@ export async function GET(
         role: context.role,
         supabase,
       },
-      params.id
+      id
     );
 
     if (error) {
@@ -49,6 +50,7 @@ export async function PATCH(
     const context = await requireAdminContext(request);
     const supabase = createAuthenticatedClient(request);
     const body = await request.json();
+    const { id } = await params;
 
     const { data, error } = await updateJob(
       {
@@ -57,7 +59,7 @@ export async function PATCH(
         role: context.role,
         supabase,
       },
-      params.id,
+      id,
       body
     );
 
@@ -85,6 +87,7 @@ export async function DELETE(
   try {
     const context = await requireAdminContext(request);
     const supabase = createAuthenticatedClient(request);
+    const { id } = await params;
 
     const { success, error } = await deleteJob(
       {
@@ -93,7 +96,7 @@ export async function DELETE(
         role: context.role,
         supabase,
       },
-      params.id
+      id
     );
 
     if (error) {

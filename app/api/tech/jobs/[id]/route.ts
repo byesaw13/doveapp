@@ -13,6 +13,7 @@ export async function GET(
   try {
     const context = await requireTechContext(request);
     const supabase = createAuthenticatedClient(request);
+    const { id } = await params;
 
     const { data, error } = await getJobById(
       {
@@ -21,7 +22,7 @@ export async function GET(
         role: context.role,
         supabase,
       },
-      params.id
+      id
     );
 
     if (error) {
@@ -52,6 +53,7 @@ export async function PATCH(
     const context = await requireTechContext(request);
     const supabase = createAuthenticatedClient(request);
     const body = await request.json();
+    const { id } = await params;
 
     // Techs can only update specific fields (status, notes)
     const allowedUpdates: any = {};
@@ -67,7 +69,7 @@ export async function PATCH(
         role: context.role,
         supabase,
       },
-      params.id,
+      id,
       allowedUpdates
     );
 

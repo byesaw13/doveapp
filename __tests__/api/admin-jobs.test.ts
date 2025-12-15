@@ -114,7 +114,7 @@ describe('/api/admin/jobs', () => {
       const data = await response.json();
 
       expect(response.status).toBe(200);
-      expect(data).toEqual(mockJobs);
+      expect(data.data).toEqual(mockJobs);
       expect(mockListJobs).toHaveBeenCalledWith(
         {
           accountId: 'test-account',
@@ -122,7 +122,7 @@ describe('/api/admin/jobs', () => {
           role: 'ADMIN',
           supabase: expect.any(Object),
         },
-        {}
+        { page: 1, pageSize: 20, sort: 'created_at', dir: 'desc' }
       );
     });
 
@@ -149,6 +149,10 @@ describe('/api/admin/jobs', () => {
       expect(mockListJobs).toHaveBeenCalledWith(expect.any(Object), {
         status: 'scheduled',
         search: 'test',
+        page: 1,
+        pageSize: 20,
+        sort: 'created_at',
+        dir: 'desc',
       });
     });
 

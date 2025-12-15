@@ -94,7 +94,7 @@ describe('/api/tech/jobs', () => {
       const data = await response.json();
 
       expect(response.status).toBe(200);
-      expect(data).toEqual(mockJobs);
+      expect(data.data).toEqual(mockJobs);
       expect(mockListJobs).toHaveBeenCalledWith(
         {
           accountId: 'test-account',
@@ -103,7 +103,11 @@ describe('/api/tech/jobs', () => {
           supabase: expect.any(Object),
         },
         {
-          assignedTechId: 'tech-user', // Auto-filtered by tech's user ID
+          assignedTechId: 'tech-user',
+          page: 1,
+          pageSize: 20,
+          sort: 'created_at',
+          dir: 'desc',
         }
       );
     });
@@ -189,7 +193,7 @@ describe('/api/tech/jobs', () => {
       );
       const data = await response.json();
 
-      expect(response.status).toBe(404);
+      expect(response.status).toBe(403);
       expect(data.error).toBe('Access denied: Job not assigned to you');
     });
   });

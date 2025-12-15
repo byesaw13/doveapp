@@ -14,6 +14,10 @@ export interface JobFilters {
   search?: string;
   assignedTechId?: string;
   customerId?: string;
+  page?: number;
+  pageSize?: number;
+  sort?: string;
+  dir?: 'asc' | 'desc';
 }
 
 /**
@@ -22,7 +26,7 @@ export interface JobFilters {
 export async function listJobs(
   context: JobServiceContext,
   filters: JobFilters = {}
-): Promise<{ data: JobWithClient[] | null; error: Error | null }> {
+): Promise<{ data: JobWithClient[] | null; page: number; pageSize: number; total: number; error: Error | null }> {
   try {
     let query = context.supabase
       .from('jobs')
@@ -54,33 +58,32 @@ export async function listJobs(
       // TODO: Filter by customer_id when jobs.customer_id is populated
     }
 
-    // Additional filters
-    if (filters.clientId) {
-      query = query.eq('client_id', filters.clientId);
-    }
+    // Pagination defaults
+    const page = filters.page || 1;
+    const pageSize = Math.min(filters.pageSize || 20, 100);
+    const offset = (page - 1) * pageSize;
 
-    if (filters.status && filters.status !== 'all') {
-      query = query.eq('status', filters.status);
-    }
+    // Sorting
+    const sortField = filters.sort || 'created_at';
+    const sortDir = filters.dir || 'desc';
+    query = query.order(sortField, { ascending: sortDir === 'asc' });
 
-    if (filters.search) {
-      query = query.or(
-        `title.ilike.%${filters.search}%,description.ilike.%${filters.search}%`
-      );
-    }
-
-    if (filters.assignedTechId) {
-      query = query.eq('assigned_tech_id', filters.assignedTechId);
-    }
-
-    const { data, error } = await query;
+    const { data, error, count } = await query
+      .select('*', { count: 'exact' })
+      .range(offset, offset + pageSize - 1);
 
     if (error) {
       console.error('Error fetching jobs:', error);
       return { data: null, error: new Error('Failed to fetch jobs') };
     }
 
-    return { data: data || [], error: null };
+    return {
+      data: data || [],
+      page,
+      pageSize,
+      total: count || 0,
+      error: null
+    };
   } catch (error) {
     console.error('Unexpected error in listJobs:', error);
     return { data: null, error: error as Error };

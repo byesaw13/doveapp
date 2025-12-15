@@ -17,9 +17,13 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       status: (searchParams.get('status') as any) || undefined,
       search: searchParams.get('search') || undefined,
       assignedTechId: searchParams.get('assigned_tech_id') || undefined,
+      page: parseInt(searchParams.get('page') || '1'),
+      pageSize: parseInt(searchParams.get('pageSize') || '20'),
+      sort: searchParams.get('sort') || 'created_at',
+      dir: (searchParams.get('dir') as 'asc' | 'desc') || 'desc',
     };
 
-    const { data, error } = await listJobs(
+    const { data, page, pageSize, total, error } = await listJobs(
       {
         accountId: context.accountId,
         userId: context.userId,
@@ -33,7 +37,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
-    return NextResponse.json(data || []);
+    return NextResponse.json({ data: data || [], page, pageSize, total });
   } catch (error: any) {
     console.error('Error in GET /api/admin/jobs:', error);
     return NextResponse.json(

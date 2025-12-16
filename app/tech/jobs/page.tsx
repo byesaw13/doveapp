@@ -1,5 +1,5 @@
-import { redirect } from 'next/navigation';
+import TechJobsClient from './TechJobsClient';
 
-export default function TechJobsAlias() {
-  redirect('/tech/my-jobs');
+export default function TechJobsPage() {
+  return <TechJobsClient />;
 }

@@ -3,6 +3,7 @@ import {
   getCurrentAccountContext,
 } from '@/lib/supabase-auth';
 import Link from 'next/link';
+import { DesignTokensShowcase } from '@/components/design-tokens/DesignTokensShowcase';
 
 export default async function DebugPage() {
   const supabase = await createAuthClient();
@@ -79,6 +80,8 @@ export default async function DebugPage() {
             Go to Main Dashboard
           </Link>
         </div>
+
+        <DesignTokensShowcase />
       </div>
     </div>
   );

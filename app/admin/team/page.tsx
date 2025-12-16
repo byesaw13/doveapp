@@ -1,4 +1,5 @@
 import { CreateUserForm } from '@/components/admin/CreateUserForm';
+import { TeamMembersList } from '@/components/admin/TeamMembersList';
 
 export default function TeamPage() {
   return (
@@ -18,21 +19,7 @@ export default function TeamPage() {
 
         {/* Current Team Members */}
         <div className="lg:col-span-2">
-          <div className="bg-card p-6 rounded-lg border border-border shadow-sm">
-            <h2 className="text-xl font-semibold text-foreground mb-4">
-              Current Team Members
-            </h2>
-
-            <div className="space-y-4">
-              {/* This would be populated with actual team member data */}
-              <div className="text-center py-8 text-muted-foreground">
-                <p>Team member list will be implemented here</p>
-                <p className="text-sm mt-2">
-                  Use the form to add new team members
-                </p>
-              </div>
-            </div>
-          </div>
+          <TeamMembersList />
         </div>
       </div>
 

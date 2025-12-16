@@ -32,6 +32,8 @@ export async function GET(request: NextRequest) {
 
     // Filter by account - CRITICAL for multi-tenancy
     // Note: clients table will be migrated to customers, this is temporary
+    // Temporarily disabled due to account_id backfill mismatch
+    // TODO: Fix account_id backfill to match user memberships
     // queryBuilder = queryBuilder.eq('account_id', context.accountId);
 
     if (query) {

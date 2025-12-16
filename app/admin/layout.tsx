@@ -3,6 +3,8 @@ import { CommandPalette } from '@/components/command-palette';
 import { QuickAddLead } from '@/components/quick-add-lead';
 import { ToastProvider } from '@/components/ui/toast';
 
+export const dynamic = 'force-dynamic';
+
 export default function MainLayout({
   children,
 }: {

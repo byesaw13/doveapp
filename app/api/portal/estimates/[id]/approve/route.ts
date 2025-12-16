@@ -5,12 +5,12 @@ import { logActivity } from '@/lib/logger';
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const context = await requireCustomerContext(request);
     const supabase = createAuthenticatedClient(request);
-    const estimateId = params.id;
+    const { id: estimateId } = await params;
 
     // Verify ownership
     const { data: estimate, error: fetchError } = await supabase

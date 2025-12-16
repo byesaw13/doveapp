@@ -96,10 +96,9 @@ export default function InvoicesPage() {
     // Search query filter
     const matchesQuery =
       invoice.invoice_number?.toLowerCase().includes(query) ||
-      invoice.description?.toLowerCase().includes(query) ||
+      invoice.notes?.toLowerCase().includes(query) ||
       invoice.customer?.first_name?.toLowerCase().includes(query) ||
-      invoice.customer?.last_name?.toLowerCase().includes(query) ||
-      invoice.customer?.company_name?.toLowerCase().includes(query);
+      invoice.customer?.last_name?.toLowerCase().includes(query);
 
     // Date range filter
     const matchesDate =
@@ -127,7 +126,7 @@ export default function InvoicesPage() {
     // Client filter
     const matchesClient =
       selectedClients.length === 0 ||
-      selectedClients.includes(invoice.customer_id);
+      (invoice.customer_id && selectedClients.includes(invoice.customer_id));
 
     return (
       matchesQuery &&

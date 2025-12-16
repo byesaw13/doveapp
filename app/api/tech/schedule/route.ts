@@ -18,7 +18,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
         status,
         job:jobs (
           title,
-          client:clients (
+          client:clients!jobs_client_id_fkey (
             first_name,
             last_name
           )

@@ -73,7 +73,7 @@ export async function listJobs(
       .order('created_at', { ascending: false });
 
     // CRITICAL: Always filter by account_id for multi-tenancy
-    // TODO: Enable after backfill - query = query.eq('account_id', context.accountId);
+    query = query.eq('account_id', context.accountId);
 
     // Role-specific filtering
     if (context.role === 'TECH') {

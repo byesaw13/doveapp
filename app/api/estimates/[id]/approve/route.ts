@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getEstimate, updateEstimate } from '@/lib/db/estimates';
 import { createJobFromEstimate } from '@/lib/db/jobs';
+import { createActivity } from '@/lib/db/activities';
+import { autoConvertQuoteToScheduled } from '@/lib/job-automation';
 
 interface ApproveEstimateRequest {
   clientName: string;
@@ -63,8 +65,32 @@ export async function POST(
       approval_info: approvalInfo,
     });
 
+    // Log activity
+    await createActivity({
+      client_id: estimate.client_id!,
+      activity_type: 'estimate_accepted',
+      title: `Estimate ${estimate.estimate_number} approved`,
+      description: `Approved by ${body.clientName}`,
+      related_id: estimateId,
+      related_type: 'estimate',
+    });
+
     // Create job from approved estimate
     const job = await createJobFromEstimate(estimateId);
+
+    // Auto-convert quote to scheduled
+    try {
+      const conversionResult = await autoConvertQuoteToScheduled(job.id);
+
+      if (!conversionResult.success) {
+        console.warn('Auto-conversion warnings:', conversionResult.errors);
+      } else {
+        console.log('Auto-conversion successful:', conversionResult.actions);
+      }
+    } catch (conversionError) {
+      console.error('Failed to auto-convert quote:', conversionError);
+      // Don't fail the approval if auto-conversion fails
+    }
 
     return NextResponse.json({
       success: true,

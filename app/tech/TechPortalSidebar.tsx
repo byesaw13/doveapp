@@ -33,7 +33,7 @@ export function TechPortalSidebar({
             },
             {
               name: 'My Jobs',
-              href: '/tech/my-jobs',
+              href: '/tech/jobs',
               icon: <Briefcase className="h-5 w-5" />,
               shortcut: 'J',
             },

@@ -1,6 +1,8 @@
 'use client';
 
 import { useState, useEffect, Suspense } from 'react';
+
+export const dynamic = 'force-dynamic';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { Button } from '@/components/ui/button';
@@ -107,24 +109,24 @@ function ChangePasswordForm() {
       // Redirect after success
       setTimeout(() => {
         // Get user's role and redirect appropriately
-            supabase.auth.getUser().then(async ({ data }) => {
-              if (data.user) {
-                const { data: memberships } = await supabase
-                  .from('account_memberships')
-                  .select('role')
-                  .eq('user_id', data.user.id)
-                  .eq('is_active', true)
-                  .order('created_at', { ascending: false })
-                  .limit(1);
+        supabase.auth.getUser().then(async ({ data }) => {
+          if (data.user) {
+            const { data: memberships } = await supabase
+              .from('account_memberships')
+              .select('role')
+              .eq('user_id', data.user.id)
+              .eq('is_active', true)
+              .order('created_at', { ascending: false })
+              .limit(1);
 
-                const membership = memberships?.[0];
+            const membership = memberships?.[0];
 
-                if (membership) {
-                  if (membership.role === 'OWNER' || membership.role === 'ADMIN') {
-                    window.location.href = '/admin/dashboard';
-                  } else if (membership.role === 'TECH') {
-                    window.location.href = '/tech/today';
-                  } else {
+            if (membership) {
+              if (membership.role === 'OWNER' || membership.role === 'ADMIN') {
+                window.location.href = '/admin/dashboard';
+              } else if (membership.role === 'TECH') {
+                window.location.href = '/tech/today';
+              } else {
                 window.location.href = '/portal/home';
               }
             } else {

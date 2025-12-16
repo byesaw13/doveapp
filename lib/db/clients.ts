@@ -19,6 +19,42 @@ export async function getClients(): Promise<Client[]> {
 }
 
 /**
+ * Get all clients with outstanding balance
+ */
+export async function getClientsWithOutstandingBalance(): Promise<
+  (Client & { outstanding_balance: number })[]
+> {
+  // First get all clients
+  const clients = await getClients();
+
+  // Get outstanding balances for all clients in one query
+  const clientIds = clients.map((c) => c.id);
+  const { data: invoices, error } = await supabase
+    .from('invoices')
+    .select('client_id, balance_due, status')
+    .in('client_id', clientIds)
+    .neq('status', 'paid');
+
+  if (error) {
+    console.error('Error fetching outstanding balances:', error);
+    // Return clients with 0 balance if query fails
+    return clients.map((client) => ({ ...client, outstanding_balance: 0 }));
+  }
+
+  // Calculate balance per client
+  const balanceMap = new Map<string, number>();
+  invoices?.forEach((invoice) => {
+    const current = balanceMap.get(invoice.client_id) || 0;
+    balanceMap.set(invoice.client_id, current + (invoice.balance_due || 0));
+  });
+
+  return clients.map((client) => ({
+    ...client,
+    outstanding_balance: balanceMap.get(client.id) || 0,
+  }));
+}
+
+/**
  * Get a single client by ID
  */
 export async function getClient(id: string): Promise<Client | null> {

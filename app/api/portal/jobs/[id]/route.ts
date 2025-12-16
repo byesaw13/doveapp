@@ -13,6 +13,7 @@ export async function GET(
   try {
     const context = await requireCustomerContext(request);
     const supabase = createAuthenticatedClient(request);
+    const { id: jobId } = await params;
 
     const { data, error } = await getJobById(
       {
@@ -21,7 +22,7 @@ export async function GET(
         role: 'CUSTOMER', // Force customer role
         supabase,
       },
-      params.id
+      jobId
     );
 
     if (error) {
@@ -33,22 +34,22 @@ export async function GET(
 
     // Redact internal fields for customer view
     const customerData = {
-      id: data?.id,
-      job_number: data?.job_number,
-      title: data?.title,
-      description: data?.description,
-      status: data?.status,
-      service_date: data?.service_date,
-      scheduled_time: data?.scheduled_time,
-      total: data?.total,
-      line_items: data?.line_items?.map((item: any) => ({
+      id: (data as any)?.id,
+      job_number: (data as any)?.job_number,
+      title: (data as any)?.title,
+      description: (data as any)?.description,
+      status: (data as any)?.status,
+      service_date: (data as any)?.service_date,
+      scheduled_time: (data as any)?.scheduled_time,
+      total: (data as any)?.total,
+      line_items: (data as any)?.line_items?.map((item: any) => ({
         description: item.description,
         quantity: item.quantity,
         unit_price: item.unit_price,
         total: item.total,
       })),
-      created_at: data?.created_at,
-      updated_at: data?.updated_at,
+      created_at: (data as any)?.created_at,
+      updated_at: (data as any)?.updated_at,
       // Omit: internal_notes, subtotal, tax, cost breakdowns, assigned_tech_id
     };
 

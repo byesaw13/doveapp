@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getEstimate } from '@/lib/db/estimates';
+import { sendChangeRequestEmail } from '@/lib/email';
 
 interface RequestChangesRequest {
   description: string;
@@ -47,10 +48,21 @@ export async function POST(
         'unknown',
     };
 
-    // TODO: Send email notification to business about change request
+    // Send email notification to business about change request
+    const businessEmail = process.env.BUSINESS_EMAIL || 'admin@example.com'; // TODO: Get from business settings
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+    const estimateUrl = `${appUrl}/admin/estimates/${estimateId}`;
 
-    // For now, just log - in production, send email to business
-    // await sendEmailToBusiness(estimate, body.description);
+    await sendChangeRequestEmail({
+      to: businessEmail,
+      customerName:
+        estimate.client?.first_name && estimate.client?.last_name
+          ? `${estimate.client.first_name} ${estimate.client.last_name}`
+          : 'Customer',
+      estimateNumber: estimate.estimate_number,
+      requestedChanges: body.description,
+      estimateUrl,
+    });
 
     return NextResponse.json({
       success: true,

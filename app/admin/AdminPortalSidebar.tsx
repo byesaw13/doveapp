@@ -13,6 +13,9 @@ import {
   Home,
   Zap,
   UserCog,
+  Mail,
+  Brain,
+  Shield,
 } from 'lucide-react';
 
 interface AdminPortalSidebarProps {
@@ -77,6 +80,12 @@ export function AdminPortalSidebar({
           defaultOpen: true,
           items: [
             {
+              name: 'Today',
+              href: '/admin/today',
+              icon: <Calendar className="h-5 w-5" />,
+              shortcut: 'T',
+            },
+            {
               name: 'Calendar',
               href: '/admin/calendar',
               icon: <Calendar className="h-5 w-5" />,
@@ -129,9 +138,39 @@ export function AdminPortalSidebar({
           ],
         },
         {
+          name: 'Settings',
+          defaultOpen: false,
+          items: [
+            {
+              name: 'Basic Settings',
+              href: '/admin/settings',
+              icon: <Settings className="h-5 w-5" />,
+              shortcut: 'S',
+            },
+            {
+              name: 'Advanced Settings',
+              href: '/admin/advanced-settings',
+              icon: <Settings className="h-5 w-5" />,
+              shortcut: 'A',
+            },
+            {
+              name: 'AI Estimator',
+              href: '/admin/settings/ai-estimator',
+              icon: <Brain className="h-5 w-5" />,
+              shortcut: 'I',
+            },
+          ],
+        },
+        {
           name: 'Administration',
           defaultOpen: false,
           items: [
+            {
+              name: 'Emails',
+              href: '/admin/emails',
+              icon: <Mail className="h-5 w-5" />,
+              shortcut: 'M',
+            },
             {
               name: 'Team',
               href: '/admin/team',
@@ -139,9 +178,9 @@ export function AdminPortalSidebar({
               shortcut: 'T',
             },
             {
-              name: 'Settings',
-              href: '/admin/settings',
-              icon: <Settings className="h-5 w-5" />,
+              name: 'Security & Compliance',
+              href: '/admin/security-compliance',
+              icon: <Shield className="h-5 w-5" />,
               shortcut: 'S',
             },
           ],

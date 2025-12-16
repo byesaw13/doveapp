@@ -5,9 +5,10 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Calendar, Clock, MapPin, User, Phone } from 'lucide-react';
-import type { JobWithClient } from '@/types/job';
+import type { JobWithClient, JobLineItem } from '@/types/job';
 
 interface UpcomingJob extends JobWithClient {
+  line_items?: JobLineItem[];
   // Customer-specific view - internal fields removed
 }
 

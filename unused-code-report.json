@@ -1,0 +1,860 @@
+{
+  "unusedDependencies": [
+    {
+      "package": "@dnd-kit/core",
+      "version": "^6.3.1",
+      "usage": "Not found in code"
+    },
+    {
+      "package": "@dnd-kit/sortable",
+      "version": "^10.0.0",
+      "usage": "Not found in code"
+    },
+    {
+      "package": "@dnd-kit/utilities",
+      "version": "^3.2.2",
+      "usage": "Not found in code"
+    },
+    {
+      "package": "@hookform/resolvers",
+      "version": "^5.2.2",
+      "usage": "Not found in code"
+    },
+    {
+      "package": "@radix-ui/react-alert-dialog",
+      "version": "^1.1.15",
+      "usage": "Not found in code"
+    },
+    {
+      "package": "@radix-ui/react-checkbox",
+      "version": "^1.3.3",
+      "usage": "Not found in code"
+    },
+    {
+      "package": "@radix-ui/react-dialog",
+      "version": "^1.1.15",
+      "usage": "Not found in code"
+    },
+    {
+      "package": "@radix-ui/react-dropdown-menu",
+      "version": "^2.1.16",
+      "usage": "Not found in code"
+    },
+    {
+      "package": "@radix-ui/react-label",
+      "version": "^2.1.8",
+      "usage": "Not found in code"
+    },
+    {
+      "package": "@radix-ui/react-progress",
+      "version": "^1.1.8",
+      "usage": "Not found in code"
+    },
+    {
+      "package": "@radix-ui/react-select",
+      "version": "^2.2.6",
+      "usage": "Not found in code"
+    },
+    {
+      "package": "@radix-ui/react-separator",
+      "version": "^1.1.2",
+      "usage": "Not found in code"
+    },
+    {
+      "package": "@radix-ui/react-slot",
+      "version": "^1.2.4",
+      "usage": "Not found in code"
+    },
+    {
+      "package": "@radix-ui/react-switch",
+      "version": "^1.2.6",
+      "usage": "Not found in code"
+    },
+    {
+      "package": "@radix-ui/react-tabs",
+      "version": "^1.1.8",
+      "usage": "Not found in code"
+    },
+    {
+      "package": "@supabase/ssr",
+      "version": "^0.8.0",
+      "usage": "Not found in code"
+    },
+    {
+      "package": "@supabase/supabase-js",
+      "version": "^2.86.0",
+      "usage": "Not found in code"
+    },
+    {
+      "package": "@types/jspdf",
+      "version": "^1.3.3",
+      "usage": "Not found in code"
+    },
+    {
+      "package": "@types/react-big-calendar",
+      "version": "^1.16.3",
+      "usage": "Not found in code"
+    },
+    {
+      "package": "@vercel/analytics",
+      "version": "^1.6.1",
+      "usage": "Not found in code"
+    },
+    {
+      "package": "@vercel/speed-insights",
+      "version": "^1.3.1",
+      "usage": "Not found in code"
+    },
+    {
+      "package": "browser-image-compression",
+      "version": "^2.0.2",
+      "usage": "Not found in code"
+    },
+    {
+      "package": "html2canvas",
+      "version": "^1.4.1",
+      "usage": "Not found in code"
+    },
+    {
+      "package": "shadcn",
+      "version": "^3.5.1",
+      "usage": "Not found in code"
+    },
+    {
+      "package": "@next/bundle-analyzer",
+      "version": "^16.0.8",
+      "usage": "Not found in code"
+    },
+    {
+      "package": "@playwright/test",
+      "version": "^1.57.0",
+      "usage": "Not found in code"
+    },
+    {
+      "package": "@tailwindcss/postcss",
+      "version": "^4",
+      "usage": "Not found in code"
+    },
+    {
+      "package": "@testing-library/jest-dom",
+      "version": "^6.9.1",
+      "usage": "Not found in code"
+    },
+    {
+      "package": "@testing-library/react",
+      "version": "^16.3.0",
+      "usage": "Not found in code"
+    },
+    {
+      "package": "@types/jest",
+      "version": "^30.0.0",
+      "usage": "Not found in code"
+    },
+    {
+      "package": "@types/node",
+      "version": "^20",
+      "usage": "Not found in code"
+    },
+    {
+      "package": "@types/papaparse",
+      "version": "^5.5.0",
+      "usage": "Not found in code"
+    },
+    {
+      "package": "@types/react",
+      "version": "^19",
+      "usage": "Not found in code"
+    },
+    {
+      "package": "@types/react-dom",
+      "version": "^19",
+      "usage": "Not found in code"
+    },
+    {
+      "package": "baseline-browser-mapping",
+      "version": "^2.9.2",
+      "usage": "Not found in code"
+    },
+    {
+      "package": "eslint-config-next",
+      "version": "16.0.5",
+      "usage": "Not found in code"
+    },
+    {
+      "package": "eslint-config-prettier",
+      "version": "^10.1.8",
+      "usage": "Not found in code"
+    },
+    {
+      "package": "jest-environment-jsdom",
+      "version": "^30.2.0",
+      "usage": "Not found in code"
+    },
+    {
+      "package": "ts-node",
+      "version": "^10.9.2",
+      "usage": "Not found in code"
+    },
+    {
+      "package": "tw-animate-css",
+      "version": "^1.4.0",
+      "usage": "Not found in code"
+    }
+  ],
+  "unusedComponents": [
+    {
+      "component": "AdminClockBanner",
+      "file": "components/admin/AdminClockBanner.tsx",
+      "references": 0
+    },
+    {
+      "component": "ThemeDebug",
+      "file": "components/theme-debug.tsx",
+      "references": 0
+    },
+    {
+      "component": "AnimatedButton",
+      "file": "components/ui/animations.tsx",
+      "references": 0
+    },
+    {
+      "component": "cardVariants",
+      "file": "components/ui/animations.tsx",
+      "references": 0
+    },
+    {
+      "component": "SkeletonCard",
+      "file": "components/ui/skeletons.tsx",
+      "references": 0
+    },
+    {
+      "component": "SkeletonForm",
+      "file": "components/ui/skeletons.tsx",
+      "references": 0
+    }
+  ],
+  "unusedExports": [
+    {
+      "export": "forbiddenResponse",
+      "file": "lib/api-helpers.ts",
+      "type": "function/const"
+    },
+    {
+      "export": "logLogin",
+      "file": "lib/audit-log.ts",
+      "type": "function/const"
+    },
+    {
+      "export": "logDataAccess",
+      "file": "lib/audit-log.ts",
+      "type": "function/const"
+    },
+    {
+      "export": "logDataModification",
+      "file": "lib/audit-log.ts",
+      "type": "function/const"
+    },
+    {
+      "export": "canManageUsers",
+      "file": "lib/auth-guards.ts",
+      "type": "function/const"
+    },
+    {
+      "export": "canManageAccount",
+      "file": "lib/auth-guards.ts",
+      "type": "function/const"
+    },
+    {
+      "export": "canManageBusiness",
+      "file": "lib/auth-guards.ts",
+      "type": "function/const"
+    },
+    {
+      "export": "canManageTeam",
+      "file": "lib/auth-guards.ts",
+      "type": "function/const"
+    },
+    {
+      "export": "canAccessCustomer",
+      "file": "lib/auth-guards.ts",
+      "type": "function/const"
+    },
+    {
+      "export": "createAndDownloadBackup",
+      "file": "lib/backup.ts",
+      "type": "function/const"
+    },
+    {
+      "export": "useCache",
+      "file": "lib/cache.ts",
+      "type": "function/const"
+    },
+    {
+      "export": "nextCache",
+      "file": "lib/cache.ts",
+      "type": "function/const"
+    },
+    {
+      "export": "invalidateCache",
+      "file": "lib/cache.ts",
+      "type": "function/const"
+    },
+    {
+      "export": "getJobsByStatus",
+      "file": "lib/dashboard.ts",
+      "type": "function/const"
+    },
+    {
+      "export": "getPaymentSummary",
+      "file": "lib/dashboard.ts",
+      "type": "function/const"
+    },
+    {
+      "export": "logEmailReceived",
+      "file": "lib/db/activities.ts",
+      "type": "function/const"
+    },
+    {
+      "export": "upsertAIEstimateSettings",
+      "file": "lib/db/ai-estimate-settings.ts",
+      "type": "function/const"
+    },
+    {
+      "export": "updateAIEstimateSettings",
+      "file": "lib/db/ai-estimate-settings.ts",
+      "type": "function/const"
+    },
+    {
+      "export": "resetAIEstimateSettingsToDefaults",
+      "file": "lib/db/ai-estimate-settings.ts",
+      "type": "function/const"
+    },
+    {
+      "export": "getAllUserAIEstimateSettings",
+      "file": "lib/db/ai-estimate-settings.ts",
+      "type": "function/const"
+    },
+    {
+      "export": "validateAIEstimateSettings",
+      "file": "lib/db/ai-estimate-settings.ts",
+      "type": "function/const"
+    },
+    {
+      "export": "getToolImages",
+      "file": "lib/db/ai-tool-recognition.ts",
+      "type": "function/const"
+    },
+    {
+      "export": "deleteToolImage",
+      "file": "lib/db/ai-tool-recognition.ts",
+      "type": "function/const"
+    },
+    {
+      "export": "getInventoryCounts",
+      "file": "lib/db/ai-tool-recognition.ts",
+      "type": "function/const"
+    },
+    {
+      "export": "batchAnalyzeImages",
+      "file": "lib/db/ai-tool-recognition.ts",
+      "type": "function/const"
+    },
+    {
+      "export": "isAutomationEnabled",
+      "file": "lib/db/automations.ts",
+      "type": "function/const"
+    },
+    {
+      "export": "searchClients",
+      "file": "lib/db/clients.ts",
+      "type": "function/const"
+    },
+    {
+      "export": "getEstimates",
+      "file": "lib/db/estimates.ts",
+      "type": "function/const"
+    },
+    {
+      "export": "markEstimateViewed",
+      "file": "lib/db/estimates.ts",
+      "type": "function/const"
+    },
+    {
+      "export": "getEstimatesByStatus",
+      "file": "lib/db/estimates.ts",
+      "type": "function/const"
+    },
+    {
+      "export": "getExpiredEstimates",
+      "file": "lib/db/estimates.ts",
+      "type": "function/const"
+    },
+    {
+      "export": "getEstimateStats",
+      "file": "lib/db/estimates.ts",
+      "type": "function/const"
+    },
+    {
+      "export": "getEstimateTemplates",
+      "file": "lib/db/estimates.ts",
+      "type": "function/const"
+    },
+    {
+      "export": "createEstimateTemplate",
+      "file": "lib/db/estimates.ts",
+      "type": "function/const"
+    },
+    {
+      "export": "updateEstimateTemplate",
+      "file": "lib/db/estimates.ts",
+      "type": "function/const"
+    },
+    {
+      "export": "deleteEstimateTemplate",
+      "file": "lib/db/estimates.ts",
+      "type": "function/const"
+    },
+    {
+      "export": "createEstimateFromTemplate",
+      "file": "lib/db/estimates.ts",
+      "type": "function/const"
+    },
+    {
+      "export": "searchEstimates",
+      "file": "lib/db/estimates.ts",
+      "type": "function/const"
+    },
+    {
+      "export": "listInvoicesWithFilters",
+      "file": "lib/db/invoices.ts",
+      "type": "function/const"
+    },
+    {
+      "export": "updateInvoiceStatus",
+      "file": "lib/db/invoices.ts",
+      "type": "function/const"
+    },
+    {
+      "export": "getInvoiceStats",
+      "file": "lib/db/invoices.ts",
+      "type": "function/const"
+    },
+    {
+      "export": "deleteInvoicePayment",
+      "file": "lib/db/invoices.ts",
+      "type": "function/const"
+    },
+    {
+      "export": "getInvoicesByJobId",
+      "file": "lib/db/invoices.ts",
+      "type": "function/const"
+    },
+    {
+      "export": "getJobPhoto",
+      "file": "lib/db/job-photos.ts",
+      "type": "function/const"
+    },
+    {
+      "export": "updateJobPhoto",
+      "file": "lib/db/job-photos.ts",
+      "type": "function/const"
+    },
+    {
+      "export": "getJobPhotosByType",
+      "file": "lib/db/job-photos.ts",
+      "type": "function/const"
+    },
+    {
+      "export": "getJobs",
+      "file": "lib/db/jobs.ts",
+      "type": "function/const"
+    },
+    {
+      "export": "updateJobStatus",
+      "file": "lib/db/jobs.ts",
+      "type": "function/const"
+    },
+    {
+      "export": "updateJobPayment",
+      "file": "lib/db/jobs.ts",
+      "type": "function/const"
+    },
+    {
+      "export": "createJobFromTemplate",
+      "file": "lib/db/jobs.ts",
+      "type": "function/const"
+    },
+    {
+      "export": "listJobsWithFilters",
+      "file": "lib/db/jobs.ts",
+      "type": "function/const"
+    },
+    {
+      "export": "listJobsWithAdvancedFilters",
+      "file": "lib/db/jobs.ts",
+      "type": "function/const"
+    },
+    {
+      "export": "getLeads",
+      "file": "lib/db/leads.ts",
+      "type": "function/const"
+    },
+    {
+      "export": "createLead",
+      "file": "lib/db/leads.ts",
+      "type": "function/const"
+    },
+    {
+      "export": "getLeadsByStatus",
+      "file": "lib/db/leads.ts",
+      "type": "function/const"
+    },
+    {
+      "export": "getLeadsForFollowUp",
+      "file": "lib/db/leads.ts",
+      "type": "function/const"
+    },
+    {
+      "export": "getLeadStats",
+      "file": "lib/db/leads.ts",
+      "type": "function/const"
+    },
+    {
+      "export": "searchLeads",
+      "file": "lib/db/leads.ts",
+      "type": "function/const"
+    },
+    {
+      "export": "getJobMaterials",
+      "file": "lib/db/materials.ts",
+      "type": "function/const"
+    },
+    {
+      "export": "addMaterialToJob",
+      "file": "lib/db/materials.ts",
+      "type": "function/const"
+    },
+    {
+      "export": "updateJobMaterial",
+      "file": "lib/db/materials.ts",
+      "type": "function/const"
+    },
+    {
+      "export": "removeMaterialFromJob",
+      "file": "lib/db/materials.ts",
+      "type": "function/const"
+    },
+    {
+      "export": "adjustStock",
+      "file": "lib/db/materials.ts",
+      "type": "function/const"
+    },
+    {
+      "export": "getToolAssignmentById",
+      "file": "lib/db/materials.ts",
+      "type": "function/const"
+    },
+    {
+      "export": "updateToolMaintenance",
+      "file": "lib/db/materials.ts",
+      "type": "function/const"
+    },
+    {
+      "export": "getJobTools",
+      "file": "lib/db/materials.ts",
+      "type": "function/const"
+    },
+    {
+      "export": "returnJobTool",
+      "file": "lib/db/materials.ts",
+      "type": "function/const"
+    },
+    {
+      "export": "getToolUtilization",
+      "file": "lib/db/materials.ts",
+      "type": "function/const"
+    },
+    {
+      "export": "getPayment",
+      "file": "lib/db/payments.ts",
+      "type": "function/const"
+    },
+    {
+      "export": "updatePayment",
+      "file": "lib/db/payments.ts",
+      "type": "function/const"
+    },
+    {
+      "export": "getProperty",
+      "file": "lib/db/properties.ts",
+      "type": "function/const"
+    },
+    {
+      "export": "getPropertyWithClient",
+      "file": "lib/db/properties.ts",
+      "type": "function/const"
+    },
+    {
+      "export": "typography",
+      "file": "lib/design-tokens.ts",
+      "type": "function/const"
+    },
+    {
+      "export": "breakpoints",
+      "file": "lib/design-tokens.ts",
+      "type": "function/const"
+    },
+    {
+      "export": "animations",
+      "file": "lib/design-tokens.ts",
+      "type": "function/const"
+    },
+    {
+      "export": "zIndex",
+      "file": "lib/design-tokens.ts",
+      "type": "function/const"
+    },
+    {
+      "export": "sendPasswordResetEmail",
+      "file": "lib/email.ts",
+      "type": "function/const"
+    },
+    {
+      "export": "formatRelativeDate",
+      "file": "lib/formatters.ts",
+      "type": "function/const"
+    },
+    {
+      "export": "formatNumber",
+      "file": "lib/formatters.ts",
+      "type": "function/const"
+    },
+    {
+      "export": "formatJobStatus",
+      "file": "lib/formatters.ts",
+      "type": "function/const"
+    },
+    {
+      "export": "formatInvoiceStatus",
+      "file": "lib/formatters.ts",
+      "type": "function/const"
+    },
+    {
+      "export": "autoConvertQuoteToScheduled",
+      "file": "lib/job-automation.ts",
+      "type": "function/const"
+    },
+    {
+      "export": "getJobAutomationSuggestions",
+      "file": "lib/job-automation.ts",
+      "type": "function/const"
+    },
+    {
+      "export": "getSourceColor",
+      "file": "lib/lead-utils.ts",
+      "type": "function/const"
+    },
+    {
+      "export": "logInfo",
+      "file": "lib/logger.ts",
+      "type": "function/const"
+    },
+    {
+      "export": "logError",
+      "file": "lib/logger.ts",
+      "type": "function/const"
+    },
+    {
+      "export": "removeSyncedData",
+      "file": "lib/offline-storage.ts",
+      "type": "function/const"
+    },
+    {
+      "export": "onConnectionChange",
+      "file": "lib/offline-storage.ts",
+      "type": "function/const"
+    },
+    {
+      "export": "offlineAwareFetch",
+      "file": "lib/offline-storage.ts",
+      "type": "function/const"
+    },
+    {
+      "export": "processQueuedRequests",
+      "file": "lib/offline-storage.ts",
+      "type": "function/const"
+    },
+    {
+      "export": "checkRateLimit",
+      "file": "lib/rate-limit.ts",
+      "type": "function/const"
+    },
+    {
+      "export": "getRateLimitHeaders",
+      "file": "lib/rate-limit.ts",
+      "type": "function/const"
+    },
+    {
+      "export": "fetchSquareCustomers",
+      "file": "lib/square/customers.ts",
+      "type": "function/const"
+    },
+    {
+      "export": "validateJobData",
+      "file": "lib/validation.ts",
+      "type": "function/const"
+    },
+    {
+      "export": "validateEstimateData",
+      "file": "lib/validation.ts",
+      "type": "function/const"
+    },
+    {
+      "export": "updateClientSchema",
+      "file": "lib/validations/api-schemas.ts",
+      "type": "function/const"
+    },
+    {
+      "export": "updateJobSchema",
+      "file": "lib/validations/api-schemas.ts",
+      "type": "function/const"
+    },
+    {
+      "export": "updateEstimateSchema",
+      "file": "lib/validations/api-schemas.ts",
+      "type": "function/const"
+    },
+    {
+      "export": "updateInvoiceSchema",
+      "file": "lib/validations/api-schemas.ts",
+      "type": "function/const"
+    },
+    {
+      "export": "updateLeadSchema",
+      "file": "lib/validations/api-schemas.ts",
+      "type": "function/const"
+    },
+    {
+      "export": "paginationSchema",
+      "file": "lib/validations/api-schemas.ts",
+      "type": "function/const"
+    },
+    {
+      "export": "validateRequest",
+      "file": "lib/validations/api-schemas.ts",
+      "type": "function/const"
+    },
+    {
+      "export": "sanitizeString",
+      "file": "lib/validations/api-schemas.ts",
+      "type": "function/const"
+    },
+    {
+      "export": "validateEmail",
+      "file": "lib/validations/api-schemas.ts",
+      "type": "function/const"
+    }
+  ],
+  "unusedTypes": [
+    {
+      "type": "ClientActivityWithRelated",
+      "file": "types/activity.ts",
+      "kind": "interface"
+    },
+    {
+      "type": "InvoiceStats",
+      "file": "types/invoice.ts",
+      "kind": "interface"
+    },
+    {
+      "type": "KPIReport",
+      "file": "types/kpi.ts",
+      "kind": "interface"
+    },
+    {
+      "type": "KPITarget",
+      "file": "types/kpi.ts",
+      "kind": "interface"
+    },
+    {
+      "type": "KPIAlert",
+      "file": "types/kpi.ts",
+      "kind": "interface"
+    },
+    {
+      "type": "PaymentStatus",
+      "file": "types/payment.ts",
+      "kind": "type"
+    },
+    {
+      "type": "TechnicianLocation",
+      "file": "types/time-tracking.ts",
+      "kind": "interface"
+    },
+    {
+      "type": "TechnicianRate",
+      "file": "types/time-tracking.ts",
+      "kind": "interface"
+    },
+    {
+      "type": "TimeTrackingSummary",
+      "file": "types/time-tracking.ts",
+      "kind": "interface"
+    },
+    {
+      "type": "TechnicianProductivity",
+      "file": "types/time-tracking.ts",
+      "kind": "interface"
+    },
+    {
+      "type": "JobTimeSummary",
+      "file": "types/time-tracking.ts",
+      "kind": "interface"
+    }
+  ],
+  "obsoleteFiles": [
+    {
+      "type": "Debug/Fix documentation (may be outdated)",
+      "count": 5,
+      "files": [
+        "FIX_ESTIMATES_ERROR.md",
+        "ISSUE_RESOLVED.md",
+        "LOGIN_DEBUG_GUIDE.md",
+        "TENANT_LOGIN_FIX.md",
+        "SCHEMA_ISSUES_AND_FIXES.md"
+      ]
+    }
+  ],
+  "suggestions": [
+    {
+      "category": "Dependencies",
+      "action": "Remove unused packages",
+      "command": "npm uninstall @dnd-kit/core @dnd-kit/sortable @dnd-kit/utilities @hookform/resolvers @radix-ui/react-alert-dialog @radix-ui/react-checkbox @radix-ui/react-dialog @radix-ui/react-dropdown-menu @radix-ui/react-label @radix-ui/react-progress @radix-ui/react-select @radix-ui/react-separator @radix-ui/react-slot @radix-ui/react-switch @radix-ui/react-tabs @supabase/ssr @supabase/supabase-js @types/jspdf @types/react-big-calendar @vercel/analytics @vercel/speed-insights browser-image-compression html2canvas shadcn @next/bundle-analyzer @playwright/test @tailwindcss/postcss @testing-library/jest-dom @testing-library/react @types/jest @types/node @types/papaparse @types/react @types/react-dom baseline-browser-mapping eslint-config-next eslint-config-prettier jest-environment-jsdom ts-node tw-animate-css",
+      "impact": "Reduce bundle size and security surface"
+    },
+    {
+      "category": "Components",
+      "action": "Review and remove unused components",
+      "impact": "Reduce code complexity and maintenance burden",
+      "note": "Verify these are truly unused before deleting"
+    },
+    {
+      "category": "Exports",
+      "action": "Remove unused exported functions",
+      "impact": "Cleaner API surface and better tree-shaking",
+      "note": "Consider making these internal if not needed elsewhere"
+    },
+    {
+      "category": "Types",
+      "action": "Remove unused type definitions",
+      "impact": "Reduce type complexity and improve compile times",
+      "note": "Check if these types are imported but not used"
+    },
+    {
+      "category": "Files",
+      "action": "Archive or delete obsolete files",
+      "impact": "Cleaner repository and reduced confusion",
+      "note": "Consider moving to a /docs/archive folder instead of deleting"
+    }
+  ]
+}

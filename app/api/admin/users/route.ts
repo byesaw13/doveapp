@@ -77,7 +77,7 @@ export async function POST(request: NextRequest) {
       return errorResponse(profileError, 'Failed to create user profile');
     }
 
-    // Create account membership with permissions
+    // Create account membership (permissions column not yet added to database)
     const membershipData: any = {
       account_id: context.accountId,
       user_id: authUser.user.id,
@@ -85,10 +85,10 @@ export async function POST(request: NextRequest) {
       is_active: true,
     };
 
-    // Only store custom permissions for ADMIN role (OWNER gets all permissions by default)
-    if (role === 'ADMIN' && permissions && Array.isArray(permissions)) {
-      membershipData.permissions = permissions;
-    }
+    // TODO: Store permissions once database column is added
+    // if (role === 'ADMIN' && permissions && Array.isArray(permissions)) {
+    //   membershipData.permissions = permissions;
+    // }
 
     const { error: membershipError } = await supabase
       .from('account_memberships')
@@ -143,6 +143,90 @@ export async function POST(request: NextRequest) {
     );
   } catch (error) {
     console.error('Error in user creation:', error);
+    return unauthorizedResponse();
+  }
+}
+
+export async function GET(request: NextRequest) {
+  try {
+    const context = await requireAccountContext(request);
+
+    if (!canManageAdmin(context.role)) {
+      return NextResponse.json(
+        { error: 'Admin access required' },
+        { status: 403 }
+      );
+    }
+
+    const supabase = createAdminClient();
+
+    // Get all users for this account with their membership info
+    const { data: memberships, error } = await supabase
+      .from('account_memberships')
+      .select(
+        `
+        role,
+        is_active,
+        created_at,
+        users (
+          id,
+          email,
+          full_name,
+          created_at,
+          updated_at
+        )
+      `
+      )
+      .eq('account_id', context.accountId)
+      .eq('is_active', true)
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('Error fetching team members:', error);
+      return errorResponse(error, 'Failed to fetch team members');
+    }
+
+    let teamMembers =
+      memberships?.map((membership: any) => ({
+        id: membership.users.id,
+        email: membership.users.email,
+        full_name: membership.users.full_name,
+        role: membership.role,
+        permissions: null, // TODO: Add permissions column to database
+        is_active: membership.is_active,
+        created_at: membership.created_at,
+        user_created_at: membership.users.created_at,
+      })) || [];
+
+    // If the current user is not in the memberships (e.g., account owner), add them
+    const currentUserIncluded = teamMembers.some(
+      (member) => member.id === context.userId
+    );
+    if (!currentUserIncluded) {
+      // Get current user info
+      const { data: currentUser, error: userError } = await supabase
+        .from('users')
+        .select('id, email, full_name, created_at, updated_at')
+        .eq('id', context.userId)
+        .single();
+
+      if (!userError && currentUser) {
+        teamMembers.unshift({
+          id: currentUser.id,
+          email: currentUser.email,
+          full_name: currentUser.full_name,
+          role: context.role,
+          permissions: null, // Will use default permissions based on role
+          is_active: true,
+          created_at: new Date().toISOString(),
+          user_created_at: currentUser.created_at,
+        });
+      }
+    }
+
+    return NextResponse.json(teamMembers);
+  } catch (error) {
+    console.error('Error fetching team members:', error);
     return unauthorizedResponse();
   }
 }

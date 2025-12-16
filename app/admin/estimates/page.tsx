@@ -214,7 +214,7 @@ export default function EstimatesPage() {
 
   const loadStats = async () => {
     try {
-      const response = await fetch('/api/estimates/stats');
+      const response = await fetch('/api/estimates?action=stats');
       if (!response.ok) throw new Error('Failed to load stats');
       const data = await response.json();
       setStats(data);
@@ -410,7 +410,7 @@ export default function EstimatesPage() {
       // Client filter
       const matchesClient =
         selectedClients.length === 0 ||
-        selectedClients.includes(estimate.client_id);
+        (estimate.client_id && selectedClients.includes(estimate.client_id));
 
       return (
         matchesQuery &&
@@ -573,7 +573,7 @@ export default function EstimatesPage() {
     // Client filter
     const matchesClient =
       selectedClients.length === 0 ||
-      selectedClients.includes(estimate.client_id);
+      (estimate.client_id && selectedClients.includes(estimate.client_id));
 
     return (
       matchesQuery &&
@@ -1360,15 +1360,58 @@ export default function EstimatesPage() {
       </Dialog>
 
       {/* SKU Picker Dialog */}
-      {showSKUPicker && (
-        <SKUPicker
-          onSelect={(sku) => {
-            // Handle SKU selection
-            setShowSKUPicker(false);
-          }}
-          onClose={() => setShowSKUPicker(false)}
-        />
-      )}
+      <SKUPicker
+        open={showSKUPicker}
+        onOpenChange={setShowSKUPicker}
+        onSelectSKU={async (sku) => {
+          try {
+            // Calculate pricing using the pricebook endpoint
+            const response = await fetch('/api/estimate/pricebook', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                lineItems: [
+                  {
+                    id: sku.id,
+                    quantity: 1,
+                    materialCost: 0,
+                    tier: 'standard',
+                  },
+                ],
+              }),
+            });
+
+            if (response.ok) {
+              const result = await response.json();
+              const calculatedItem = result.lineItems[0];
+
+              // Add the line item to the form
+              append({
+                description: `${sku.name} (Code: ${sku.code})`,
+                quantity: 1,
+                unit_price: calculatedItem.lineTotal,
+                unit: 'each',
+              });
+
+              toast({
+                title: 'Service Added',
+                description: `${sku.name} has been added to the estimate`,
+              });
+            } else {
+              throw new Error('Failed to calculate pricing');
+            }
+          } catch (error) {
+            console.error('Failed to add SKU:', error);
+            toast({
+              title: 'Error',
+              description: 'Failed to add service item to estimate',
+              variant: 'destructive',
+            });
+          }
+
+          setShowSKUPicker(false);
+        }}
+      />
     </>
   );
 }

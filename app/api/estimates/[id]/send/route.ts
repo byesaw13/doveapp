@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getEstimate } from '@/lib/db/estimates';
 import { generateEstimatePdf } from '@/lib/pdf-estimate';
+import { createActivity } from '@/lib/db/activities';
 
 interface SendEstimateRequest {
   via: 'email' | 'sms' | 'both';
@@ -75,12 +76,13 @@ export async function POST(
     }
 
     // Log the sending activity
-    await logEstimateActivity(estimateId, {
-      type: 'sent_to_client',
-      via: body.via,
-      timestamp: new Date().toISOString(),
-      message: body.message,
-    });
+    await logEstimateActivity(
+      estimateId,
+      'estimate_sent',
+      `Estimate sent via ${body.via}`,
+      body.message || `Estimate sent to client via ${body.via}`,
+      { via: body.via, message: body.message }
+    );
 
     // Update estimate status to 'sent'
     await updateEstimateStatus(estimateId, 'sent');
@@ -154,9 +156,29 @@ function generateSmsMessage(estimate: any): string {
   return `Your estimate #${estimate.estimate_number} for $${estimate.total.toFixed(2)} is ready. View & approve: ${approvalUrl}`;
 }
 
-async function logEstimateActivity(estimateId: string, activity: any) {
-  // TODO: Implement activity logging
-  // This could be stored in the sent_history JSONB field or a separate activities table
+async function logEstimateActivity(
+  estimateId: string,
+  activityType: string,
+  title: string,
+  description?: string,
+  metadata?: any
+) {
+  try {
+    const estimate = await getEstimate(estimateId);
+    if (!estimate) return;
+
+    await createActivity({
+      client_id: estimate.client_id!,
+      activity_type: activityType as any,
+      title,
+      description,
+      metadata,
+      related_id: estimateId,
+      related_type: 'estimate',
+    });
+  } catch (error) {
+    console.error('Failed to log estimate activity:', error);
+  }
 }
 
 async function updateEstimateStatus(estimateId: string, status: string) {

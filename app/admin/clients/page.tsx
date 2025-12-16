@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import {
   getClients,
+  getClientsWithOutstandingBalance,
   createClient,
   updateClient,
   deleteClient,
@@ -38,7 +39,9 @@ interface JobWithPayment extends JobWithClient {
 }
 
 export default function NewClientsPage() {
-  const [clients, setClients] = useState<Client[]>([]);
+  const [clients, setClients] = useState<
+    (Client & { outstanding_balance: number })[]
+  >([]);
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const [properties, setProperties] = useState<Property[]>([]);
   const [jobs, setJobs] = useState<JobWithPayment[]>([]);
@@ -119,7 +122,7 @@ export default function NewClientsPage() {
   const loadClients = async () => {
     try {
       setLoading(true);
-      const data = await getClients();
+      const data = await getClientsWithOutstandingBalance();
       setClients(data);
     } catch (error) {
       console.error('Failed to load clients:', error);
@@ -569,7 +572,7 @@ export default function NewClientsPage() {
           case 'phone':
             return client.phone && client.phone.trim() !== '';
           case 'outstanding':
-            return false; // TODO: Implement outstanding balance check
+            return client.outstanding_balance > 0;
           default:
             return true;
         }
@@ -873,6 +876,19 @@ export default function NewClientsPage() {
                       {client.email && (
                         <div className="text-sm text-slate-500 mt-1">
                           {client.email}
+                        </div>
+                      )}
+                      {client.outstanding_balance > 0 && (
+                        <div
+                          className={`text-sm mt-1 font-medium ${
+                            client.outstanding_balance > 90
+                              ? 'text-red-600'
+                              : client.outstanding_balance > 30
+                                ? 'text-yellow-600'
+                                : 'text-orange-600'
+                          }`}
+                        >
+                          Outstanding: ${client.outstanding_balance.toFixed(2)}
                         </div>
                       )}
                     </button>

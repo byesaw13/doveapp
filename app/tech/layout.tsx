@@ -6,6 +6,8 @@ import {
 import { TechLogoutButton } from '@/components/tech-logout-button';
 import { TechPortalSidebar } from './TechPortalSidebar';
 
+export const dynamic = 'force-dynamic';
+
 export default async function TechLayout({
   children,
 }: {

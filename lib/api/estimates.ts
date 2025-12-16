@@ -73,8 +73,13 @@ export async function listEstimates(
     const sortDir = filters.dir || 'desc';
     query = query.order(sortField, { ascending: sortDir === 'asc' });
 
-    const { data, error, count } = await query
-      .select('*', { count: 'exact' })
+    // Get total count
+    const { count } = await context.supabase
+      .from('estimates')
+      .select('*', { count: 'exact', head: true });
+
+    const { data, error } = await query
+      .select('*')
       .range(offset, offset + pageSize - 1);
 
     if (error) {
@@ -91,7 +96,13 @@ export async function listEstimates(
     return { data: data || [], page, pageSize, total: count || 0, error: null };
   } catch (error) {
     console.error('Unexpected error in listEstimates:', error);
-    return { data: null, error: error as Error };
+    return {
+      data: null,
+      page: 0,
+      pageSize: 0,
+      total: 0,
+      error: error as Error,
+    };
   }
 }
 

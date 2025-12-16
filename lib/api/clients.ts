@@ -32,29 +32,34 @@ export async function listClients(
   try {
     // Only admins and techs can list all clients
     if (context.role === 'CUSTOMER') {
-      return { data: null, error: new Error('Customers cannot list clients') };
+      return {
+        data: null,
+        page: 0,
+        pageSize: 0,
+        total: 0,
+        error: new Error('Customers cannot list clients'),
+      };
     }
 
     let query = context.supabase.from('clients').select('*');
 
     if (filters.search) {
       query = query.or(
-        `first_name.ilike.%${filters.search}%,last_name.ilike.%${filters.search}%,company_name.ilike.%${filters.search}%,email.ilike.%${filters.search}%`
+        `name.ilike.%${filters.search}%,email.ilike.%${filters.search}%,company.ilike.%${filters.search}%`
       );
     }
 
-    // Pagination defaults
     const page = filters.page || 1;
-    const pageSize = Math.min(filters.pageSize || 20, 100);
+    const pageSize = filters.pageSize || 10;
     const offset = (page - 1) * pageSize;
 
-    // Sorting
-    const sortField = filters.sort || 'created_at';
-    const sortDir = filters.dir || 'desc';
-    query = query.order(sortField, { ascending: sortDir === 'asc' });
+    // Get total count
+    const { count } = await context.supabase
+      .from('clients')
+      .select('*', { count: 'exact', head: true });
 
-    const { data, error, count } = await query
-      .select('*', { count: 'exact' })
+    const { data, error } = await query
+      .select('*')
       .range(offset, offset + pageSize - 1);
 
     if (error) {
@@ -71,7 +76,13 @@ export async function listClients(
     return { data: data || [], page, pageSize, total: count || 0, error: null };
   } catch (error) {
     console.error('Unexpected error in listClients:', error);
-    return { data: null, error: error as Error };
+    return {
+      data: null,
+      page: 0,
+      pageSize: 0,
+      total: 0,
+      error: error as Error,
+    };
   }
 }
 

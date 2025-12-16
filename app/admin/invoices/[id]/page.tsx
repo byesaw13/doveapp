@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { SendInvoiceDialog } from '@/components/invoices/SendInvoiceDialog';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
@@ -444,21 +445,16 @@ export default function InvoiceDetailPage() {
                   Download PDF
                 </Button>
 
-                <Button
-                  onClick={() => {
-                    // TODO: Implement send invoice functionality
-                    toast({
-                      title: 'Feature Coming Soon',
-                      description:
-                        'Send invoice functionality will be implemented',
-                    });
+                <SendInvoiceDialog
+                  invoiceId={invoiceId}
+                  invoiceNumber={invoice.invoice_number}
+                  customerEmail={invoice.customer?.email}
+                  customerPhone={invoice.customer?.phone}
+                  onSent={() => {
+                    // Refresh the invoice data after sending
+                    loadInvoice();
                   }}
-                  variant="outline"
-                  className="w-full flex items-center gap-2"
-                >
-                  <Send className="w-4 h-4" />
-                  Send Invoice
-                </Button>
+                />
 
                 {invoice.balance_due > 0 && (
                   <Button

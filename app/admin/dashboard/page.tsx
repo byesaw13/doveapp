@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { getDashboardStats } from '@/lib/dashboard';
 import { SmartDashboard } from '@/components/SmartDashboard';
 import { PWARegistration } from '@/components/PWARegistration';
+import { getSpacing, getBorderRadius } from '@/lib/design-tokens-utils';
 import {
   Users,
   Briefcase,
@@ -218,7 +219,7 @@ export default async function Dashboard() {
             </div>
           </Link>
 
-          <Link href="/time-tracking" className="group">
+          <Link href="/admin/time-tracking" className="group">
             <div className="bg-white rounded-xl border border-slate-200 p-5 hover:shadow-lg transition-all hover:border-emerald-300 hover:bg-emerald-50">
               <div className="flex flex-col items-center gap-3">
                 <div className="p-3 bg-emerald-100 group-hover:bg-emerald-500 rounded-xl transition-colors">

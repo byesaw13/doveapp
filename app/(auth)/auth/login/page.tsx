@@ -3,6 +3,8 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
+
+export const dynamic = 'force-dynamic';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -39,7 +41,6 @@ export default function LoginPage() {
         setError(error.message);
         return;
       }
-
 
       if (data.user) {
         // Check user's role and redirect appropriately
@@ -112,7 +113,6 @@ export default function LoginPage() {
     setError('');
 
     try {
-
       // Demo credentials based on role
       const demoCredentials = {
         admin: { email: 'admin@demo.com', password: 'demo123' },
@@ -133,7 +133,6 @@ export default function LoginPage() {
         setError(error.message);
         return;
       }
-
 
       if (data.user) {
         // Redirect based on role using window.location for hard navigation

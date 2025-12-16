@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
+import { supabase } from '@/lib/supabase';
 import {
   LayoutDashboard,
   Users,
@@ -86,7 +87,7 @@ const navigationGroups: NavGroup[] = [
     items: [
       {
         name: 'Today',
-        href: '/tech/today',
+        href: '/admin/today',
         icon: Calendar,
         shortcut: 'T',
       },
@@ -137,6 +138,12 @@ const navigationGroups: NavGroup[] = [
     defaultOpen: false,
     items: [
       {
+        name: 'Team',
+        href: '/admin/team',
+        icon: Users,
+        shortcut: 'T',
+      },
+      {
         name: 'Settings',
         href: '/admin/settings',
         icon: Settings,
@@ -158,6 +165,7 @@ export function Sidebar({ className }: SidebarProps) {
     new Set()
   );
   const [mounted, setMounted] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   // Initialize collapsed groups after mount to avoid hydration mismatch
   useEffect(() => {
@@ -319,6 +327,29 @@ export function Sidebar({ className }: SidebarProps) {
       (performance.weekRevenue / performance.weekRevenueTarget) * 100,
       100
     );
+  };
+
+  const handleLogout = async () => {
+    setIsLoggingOut(true);
+    try {
+      // Sign out from Supabase
+      await supabase.auth.signOut();
+
+      // Clear local storage
+      if (typeof window !== 'undefined') {
+        localStorage.clear();
+        sessionStorage.clear();
+      }
+
+      // Redirect to login
+      router.push('/auth/login');
+    } catch (error) {
+      console.error('Logout error:', error);
+      // Force redirect even if logout fails
+      router.push('/auth/login');
+    } finally {
+      setIsLoggingOut(false);
+    }
   };
 
   return (
@@ -558,16 +589,15 @@ export function Sidebar({ className }: SidebarProps) {
               <ThemeToggle />
             </div>
 
-            {/* Logout Button - TODO: Implement proper logout */}
+            {/* Logout Button */}
             <Button
               variant="outline"
               size="sm"
-              onClick={() => {
-                window.location.href = '/auth/login';
-              }}
+              onClick={handleLogout}
+              disabled={isLoggingOut}
               className="w-full text-sm"
             >
-              Sign Out
+              {isLoggingOut ? 'Signing Out...' : 'Sign Out'}
             </Button>
           </div>
         </div>

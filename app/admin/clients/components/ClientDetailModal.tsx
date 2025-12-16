@@ -19,6 +19,13 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { updateClient, createProperty } from '@/lib/db';
 import { ActivityTimeline } from './ActivityTimeline';
@@ -639,11 +646,242 @@ export function ClientDetailModal({
                 <CardHeader>
                   <CardTitle>Add New Property</CardTitle>
                 </CardHeader>
-                <CardContent>
-                  <p className="text-muted-foreground">
-                    Property creation form coming soon...
-                  </p>
-                  <div className="flex gap-2 mt-4">
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="property_name">Property Name</Label>
+                      <Input
+                        id="property_name"
+                        value={propertyData.name || ''}
+                        onChange={(e) =>
+                          setPropertyData({
+                            ...propertyData,
+                            name: e.target.value,
+                          })
+                        }
+                        placeholder="e.g., Main Residence"
+                      />
+                    </div>
+
+                    <div>
+                      <Label htmlFor="property_type">Property Type</Label>
+                      <Select
+                        value={propertyData.property_type || 'Residential'}
+                        onValueChange={(value: any) =>
+                          setPropertyData({
+                            ...propertyData,
+                            property_type: value,
+                          })
+                        }
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="Residential">
+                            Residential
+                          </SelectItem>
+                          <SelectItem value="Commercial">Commercial</SelectItem>
+                          <SelectItem value="Multi-family">
+                            Multi-family
+                          </SelectItem>
+                          <SelectItem value="Vacant Lot">Vacant Lot</SelectItem>
+                          <SelectItem value="Other">Other</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="address_line1">Address Line 1 *</Label>
+                    <Input
+                      id="address_line1"
+                      value={propertyData.address_line1 || ''}
+                      onChange={(e) =>
+                        setPropertyData({
+                          ...propertyData,
+                          address_line1: e.target.value,
+                        })
+                      }
+                      placeholder="Street address"
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="address_line1">Address Line 1 *</Label>
+                    <Input
+                      id="address_line1"
+                      value={propertyData.address_line1 || ''}
+                      onChange={(e) =>
+                        setPropertyData({
+                          ...propertyData,
+                          address_line1: e.target.value || null,
+                        })
+                      }
+                      placeholder="Street address"
+                    />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="address_line2">Address Line 2</Label>
+                    <Input
+                      id="address_line2"
+                      value={propertyData.address_line2 || ''}
+                      onChange={(e) =>
+                        setPropertyData({
+                          ...propertyData,
+                          address_line2: e.target.value,
+                        })
+                      }
+                      placeholder="Apartment, suite, etc. (optional)"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                      <Label htmlFor="city">City *</Label>
+                      <Input
+                        id="city"
+                        value={propertyData.city || ''}
+                        onChange={(e) =>
+                          setPropertyData({
+                            ...propertyData,
+                            city: e.target.value,
+                          })
+                        }
+                        placeholder="City"
+                        required
+                      />
+                    </div>
+
+                    <div>
+                      <Label htmlFor="state">State *</Label>
+                      <Input
+                        id="state"
+                        value={propertyData.state || ''}
+                        onChange={(e) =>
+                          setPropertyData({
+                            ...propertyData,
+                            state: e.target.value,
+                          })
+                        }
+                        placeholder="State"
+                        required
+                      />
+                    </div>
+
+                    <div>
+                      <Label htmlFor="zip_code">ZIP Code *</Label>
+                      <Input
+                        id="zip_code"
+                        value={propertyData.zip_code || ''}
+                        onChange={(e) =>
+                          setPropertyData({
+                            ...propertyData,
+                            zip_code: e.target.value,
+                          })
+                        }
+                        placeholder="ZIP"
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="property_notes">Notes</Label>
+                    <Textarea
+                      id="property_notes"
+                      value={propertyData.notes || ''}
+                      onChange={(e) =>
+                        setPropertyData({
+                          ...propertyData,
+                          notes: e.target.value,
+                        })
+                      }
+                      placeholder="Additional notes about this property..."
+                      rows={3}
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                      <Label htmlFor="city">City *</Label>
+                      <Input
+                        id="city"
+                        value={propertyData.city || ''}
+                        onChange={(e) =>
+                          setPropertyData({
+                            ...propertyData,
+                            city: e.target.value,
+                          })
+                        }
+                        placeholder="City"
+                        required
+                      />
+                    </div>
+
+                    <div>
+                      <Label htmlFor="state">State *</Label>
+                      <Input
+                        id="state"
+                        value={propertyData.state || ''}
+                        onChange={(e) =>
+                          setPropertyData({
+                            ...propertyData,
+                            state: e.target.value,
+                          })
+                        }
+                        placeholder="State"
+                        required
+                      />
+                    </div>
+
+                    <div>
+                      <Label htmlFor="zip_code">ZIP Code *</Label>
+                      <Input
+                        id="zip_code"
+                        value={propertyData.zip_code || ''}
+                        onChange={(e) =>
+                          setPropertyData({
+                            ...propertyData,
+                            zip_code: e.target.value,
+                          })
+                        }
+                        placeholder="ZIP"
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="property_notes">Notes</Label>
+                    <Textarea
+                      id="property_notes"
+                      value={propertyData.notes || ''}
+                      onChange={(e) =>
+                        setPropertyData({
+                          ...propertyData,
+                          notes: e.target.value,
+                        })
+                      }
+                      placeholder="Additional notes about this property..."
+                      rows={3}
+                    />
+                  </div>
+
+                  <div className="flex gap-2 pt-4">
+                    <Button
+                      onClick={handleAddProperty}
+                      disabled={
+                        !propertyData.address_line1?.trim() ||
+                        !propertyData.city?.trim() ||
+                        !propertyData.state?.trim() ||
+                        !propertyData.zip_code?.trim()
+                      }
+                    >
+                      Add Property
+                    </Button>
                     <Button
                       variant="outline"
                       onClick={() => setAddingProperty(false)}

@@ -112,6 +112,13 @@ export function CommandPalette() {
     },
 
     {
+      label: 'Team',
+      icon: Users,
+      action: () => navigate('/admin/team'),
+      keywords: ['users', 'members', 'staff'],
+    },
+
+    {
       label: 'Inventory',
       icon: Package,
       action: () => navigate('/admin/inventory'),

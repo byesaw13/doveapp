@@ -24,9 +24,11 @@ export async function GET(request: NextRequest) {
       .select(
         `
         *,
-        clients (
+        clients!jobs_client_id_fkey (
           id,
-          name,
+          first_name,
+          last_name,
+          company_name,
           email,
           phone
         )
@@ -36,8 +38,9 @@ export async function GET(request: NextRequest) {
 
     // CRITICAL: Filter by account_id for multi-tenancy
     const accountIdColumn = 'account_id';
-    // Temporarily allowing jobs without account_id (legacy data)
-    // In production, uncomment: query = query.eq(accountIdColumn, context.accountId);
+    // Temporarily allowing jobs without account_id filtering (data consistency issue)
+    // TODO: Fix account_id backfill to match user memberships
+    // query = query.eq(accountIdColumn, context.accountId);
 
     if (clientId) {
       query = query.eq('client_id', clientId);

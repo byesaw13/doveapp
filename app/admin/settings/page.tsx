@@ -26,6 +26,14 @@ export default function SettingsPage() {
   const [saving, setSaving] = useState(false);
   const [backupLoading, setBackupLoading] = useState(false);
   const [importLoading, setImportLoading] = useState(false);
+  const [showAdvancedSettings, setShowAdvancedSettings] = useState(() => {
+    // Initialize from localStorage, default to false
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('showAdvancedSettings');
+      return saved === 'true';
+    }
+    return false;
+  });
 
   // Form state
   const [formData, setFormData] = useState({
@@ -49,6 +57,14 @@ export default function SettingsPage() {
   useEffect(() => {
     loadSettings();
   }, []);
+
+  // Persist advanced settings toggle preference
+  useEffect(() => {
+    localStorage.setItem(
+      'showAdvancedSettings',
+      showAdvancedSettings.toString()
+    );
+  }, [showAdvancedSettings]);
 
   const loadSettings = async () => {
     try {
@@ -312,6 +328,120 @@ export default function SettingsPage() {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Advanced Settings Toggle */}
+        <div className="bg-white shadow-sm rounded-lg border border-gray-200 mb-8">
+          <div className="px-6 py-4 border-b border-gray-200 bg-gray-50">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-lg font-medium text-gray-900">
+                  Advanced Settings
+                </h3>
+                <p className="mt-1 text-sm text-gray-600">
+                  Access advanced configuration options for power users
+                </p>
+              </div>
+              <div className="flex items-center space-x-4">
+                <label className="flex items-center">
+                  <input
+                    type="checkbox"
+                    checked={showAdvancedSettings}
+                    onChange={(e) => setShowAdvancedSettings(e.target.checked)}
+                    className="rounded border-gray-300 text-emerald-600 focus:ring-emerald-500"
+                  />
+                  <span className="ml-2 text-sm text-gray-700">
+                    Show Advanced Settings
+                    {showAdvancedSettings && (
+                      <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800">
+                        <svg
+                          className="w-3 h-3 mr-1"
+                          fill="currentColor"
+                          viewBox="0 0 20 20"
+                        >
+                          <path
+                            fillRule="evenodd"
+                            d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                            clipRule="evenodd"
+                          />
+                        </svg>
+                        Enabled
+                      </span>
+                    )}
+                  </span>
+                </label>
+              </div>
+            </div>
+          </div>
+          {showAdvancedSettings && (
+            <div className="px-6 py-4 bg-emerald-50 border-t border-emerald-200">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <a
+                  href="/admin/advanced-settings"
+                  className="flex items-center p-4 border border-emerald-200 rounded-lg bg-white hover:bg-emerald-25 transition-colors"
+                >
+                  <div className="flex-shrink-0">
+                    <svg
+                      className="w-8 h-8 text-emerald-600"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"
+                      />
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                      />
+                    </svg>
+                  </div>
+                  <div className="ml-4">
+                    <h4 className="text-sm font-medium text-gray-900">
+                      Advanced Settings Hub
+                    </h4>
+                    <p className="text-sm text-gray-500">
+                      Configure advanced features and automation
+                    </p>
+                  </div>
+                </a>
+
+                <a
+                  href="/admin/settings/ai-estimator"
+                  className="flex items-center p-4 border border-emerald-200 rounded-lg bg-white hover:bg-emerald-25 transition-colors"
+                >
+                  <div className="flex-shrink-0">
+                    <svg
+                      className="w-8 h-8 text-emerald-600"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"
+                      />
+                    </svg>
+                  </div>
+                  <div className="ml-4">
+                    <h4 className="text-sm font-medium text-gray-900">
+                      AI Estimator Settings
+                    </h4>
+                    <p className="text-sm text-gray-500">
+                      Configure AI-powered pricing and business rules
+                    </p>
+                  </div>
+                </a>
+              </div>
+            </div>
+          )}
+        </div>
+
         {/* Company Information */}
         <div className="bg-white shadow-sm rounded-lg border border-gray-200">
           <div className="px-6 py-4 border-b border-gray-200 bg-gray-50">

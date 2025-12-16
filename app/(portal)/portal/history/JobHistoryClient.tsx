@@ -13,9 +13,10 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Calendar, Search, Star, MessageSquare } from 'lucide-react';
-import type { JobWithClient } from '@/types/job';
+import type { JobWithClient, JobLineItem } from '@/types/job';
 
 interface CompletedJob extends JobWithClient {
+  line_items?: JobLineItem[];
   // Customer-specific view - internal fields removed
 }
 

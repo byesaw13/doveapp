@@ -9,6 +9,7 @@ import {
   deleteLineItem,
   addLineItem,
 } from '@/lib/db/jobs';
+import { getJobAutomationSuggestions } from '@/lib/job-automation';
 import {
   getPaymentsByJob,
   createPayment,
@@ -59,6 +60,9 @@ export default function JobDetailPage() {
   const [photos, setPhotos] = useState<JobPhoto[]>([]);
   const [paymentDialogOpen, setPaymentDialogOpen] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [automationSuggestions, setAutomationSuggestions] = useState<string[]>(
+    []
+  );
 
   useEffect(() => {
     loadJob();
@@ -78,6 +82,12 @@ export default function JobDetailPage() {
       setPayments(paymentsData);
       setPaymentSummary(summaryData);
       setPhotos(photosData);
+
+      // Load automation suggestions
+      if (jobData) {
+        const suggestions = await getJobAutomationSuggestions(jobData.id);
+        setAutomationSuggestions(suggestions);
+      }
     } catch (error) {
       console.error('Failed to load job:', error);
       alert('Failed to load job');
@@ -106,14 +116,21 @@ export default function JobDetailPage() {
         method: 'POST',
       });
 
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Failed to create invoice');
+      const result = await response.json();
+
+      if (result.exists) {
+        // Invoice already exists
+        alert('An invoice already exists for this job.');
+        router.push(`/invoices/${result.invoice_id}`);
+        return;
       }
 
-      const invoice = await response.json();
-      alert(`Invoice ${invoice.invoice_number} created successfully!`);
-      router.push(`/invoices/${invoice.id}`);
+      if (!response.ok) {
+        throw new Error(result.error || 'Failed to create invoice');
+      }
+
+      alert(`Invoice ${result.invoice_number} created successfully!`);
+      router.push(`/invoices/${result.id}`);
     } catch (error) {
       console.error('Failed to create invoice:', error);
       alert(
@@ -292,6 +309,30 @@ export default function JobDetailPage() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Automation Suggestions */}
+      {automationSuggestions.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle>AI Suggestions</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              {automationSuggestions.map((suggestion, index) => (
+                <div
+                  key={index}
+                  className="flex items-center justify-between p-3 bg-blue-50 rounded-lg"
+                >
+                  <span className="text-sm text-blue-800">{suggestion}</span>
+                  <Button size="sm" variant="outline">
+                    Apply
+                  </Button>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Client Info */}
       <Card>

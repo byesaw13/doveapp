@@ -639,6 +639,7 @@ export async function createJobFromEstimate(estimateId: string): Promise<Job> {
   // Create job data
   const jobData = {
     client_id: estimate.client_id || '',
+    account_id: estimate.account_id || '6785bba1-553c-4886-9638-460033ad6b01', // Default account
     estimate_id: estimateId,
     title: estimate.title,
     description: estimate.description,
@@ -973,4 +974,133 @@ export async function getJobById(jobId: string): Promise<Job | null> {
   }
 
   return data;
+}
+
+/**
+ * Checklist item interface
+ */
+export interface ChecklistItem {
+  id: string;
+  job_id: string;
+  item_text: string;
+  is_completed: boolean;
+  sort_order: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ChecklistItemInsert {
+  job_id: string;
+  item_text: string;
+  sort_order?: number;
+}
+
+/**
+ * Get checklist items for a job
+ */
+export async function getJobChecklistItems(
+  jobId: string
+): Promise<ChecklistItem[]> {
+  const { data, error } = await supabase
+    .from('job_checklist_items')
+    .select('*')
+    .eq('job_id', jobId)
+    .order('sort_order', { ascending: true })
+    .order('created_at', { ascending: true });
+
+  if (error) {
+    console.error('Error fetching checklist items:', error);
+    throw new Error('Failed to fetch checklist items');
+  }
+
+  return data || [];
+}
+
+/**
+ * Add checklist item to job
+ */
+export async function addChecklistItem(
+  item: ChecklistItemInsert
+): Promise<ChecklistItem> {
+  const { data, error } = await supabase
+    .from('job_checklist_items')
+    .insert({
+      ...item,
+      sort_order: item.sort_order || 0,
+    })
+    .select()
+    .single();
+
+  if (error) {
+    console.error('Error adding checklist item:', error);
+    throw new Error('Failed to add checklist item');
+  }
+
+  return data;
+}
+
+/**
+ * Update checklist item
+ */
+export async function updateChecklistItem(
+  itemId: string,
+  updates: { item_text?: string; is_completed?: boolean; sort_order?: number }
+): Promise<void> {
+  const { error } = await supabase
+    .from('job_checklist_items')
+    .update({
+      ...updates,
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', itemId);
+
+  if (error) {
+    console.error('Error updating checklist item:', error);
+    throw new Error('Failed to update checklist item');
+  }
+}
+
+/**
+ * Delete checklist item
+ */
+export async function deleteChecklistItem(itemId: string): Promise<void> {
+  const { error } = await supabase
+    .from('job_checklist_items')
+    .delete()
+    .eq('id', itemId);
+
+  if (error) {
+    console.error('Error deleting checklist item:', error);
+    throw new Error('Failed to delete checklist item');
+  }
+}
+
+/**
+ * Toggle checklist item completion
+ */
+export async function toggleChecklistItem(itemId: string): Promise<void> {
+  // First get current state
+  const { data: item, error: fetchError } = await supabase
+    .from('job_checklist_items')
+    .select('is_completed')
+    .eq('id', itemId)
+    .single();
+
+  if (fetchError || !item) {
+    throw new Error('Checklist item not found');
+  }
+
+  // Toggle the state
+  const { error } = await supabase
+    .from('job_checklist_items')
+    .update({
+      is_completed: !item.is_completed,
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', itemId);
+
+  if (error) {
+    console.error('Error toggling checklist item:', error);
+    throw new Error('Failed to toggle checklist item');
+  }
 }

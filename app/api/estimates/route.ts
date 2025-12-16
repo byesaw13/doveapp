@@ -21,9 +21,11 @@ export async function GET(request: NextRequest) {
       .select(
         `
         *,
-        clients (
+        clients!estimates_client_id_fkey (
           id,
-          name,
+          first_name,
+          last_name,
+          company_name,
           email,
           phone
         )
@@ -55,21 +57,27 @@ export async function GET(request: NextRequest) {
       return errorResponse(error, 'Failed to fetch estimates');
     }
 
-    // Calculate stats if requested
+    // Calculate stats
+    const stats = {
+      total: estimates?.length || 0,
+      pending:
+        estimates?.filter((e: any) => e.status === 'pending').length || 0,
+      approved:
+        estimates?.filter((e: any) => e.status === 'approved').length || 0,
+      declined:
+        estimates?.filter((e: any) => e.status === 'declined').length || 0,
+    };
+
+    // Return stats if requested
     if (action === 'stats') {
-      const stats = {
-        total: estimates?.length || 0,
-        pending:
-          estimates?.filter((e: any) => e.status === 'pending').length || 0,
-        approved:
-          estimates?.filter((e: any) => e.status === 'approved').length || 0,
-        declined:
-          estimates?.filter((e: any) => e.status === 'declined').length || 0,
-      };
       return NextResponse.json(stats);
     }
 
-    return NextResponse.json(estimates || []);
+    // Return estimates with stats
+    return NextResponse.json({
+      estimates: estimates || [],
+      stats,
+    });
   } catch (error) {
     console.error('Error fetching estimates:', error);
     return unauthorizedResponse();
@@ -87,7 +95,6 @@ export async function POST(request: NextRequest) {
 
     const supabase = createAuthenticatedClient(request);
     const body = await request.json();
-
 
     // Add account_id to estimate data
     const estimateData = {

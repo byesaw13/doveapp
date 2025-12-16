@@ -25,6 +25,7 @@ export interface EstimateLineItem {
 
 export interface Estimate {
   id: string;
+  account_id?: string;
   estimate_number: string; // Auto-generated: EST-001
 
   // Related Records
@@ -183,6 +184,16 @@ export interface AIEstimateSettings {
       hourly_rate: number;
       minimum_charge: number;
     };
+  };
+
+  // AI Behavior Settings
+  ai_behavior: {
+    historical_data_weight: number; // 0.1 to 1.0
+    confidence_threshold: number; // 0.7 to 0.9
+    risk_strategy: 'conservative' | 'balanced' | 'aggressive';
+    image_analysis_detail: 'low' | 'medium' | 'high';
+    require_human_review_above_value: number; // dollar amount
+    auto_approve_confidence: number; // 0.8 to 0.95
   };
 
   created_at: string;

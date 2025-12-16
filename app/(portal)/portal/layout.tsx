@@ -2,6 +2,8 @@ import { redirect } from 'next/navigation';
 import { createAuthClient, getCurrentUser } from '@/lib/supabase-auth';
 import { CustomerPortalSidebar } from './CustomerPortalSidebar';
 
+export const dynamic = 'force-dynamic';
+
 export default async function PortalLayout({
   children,
 }: {

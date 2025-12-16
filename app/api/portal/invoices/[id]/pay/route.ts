@@ -3,18 +3,31 @@ import { requireCustomerContext } from '@/lib/auth-guards';
 import { createAuthenticatedClient } from '@/lib/api-helpers';
 import Stripe from 'stripe';
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: '2024-06-20',
-});
+const STRIPE_API_VERSION: Stripe.StripeConfig['apiVersion'] =
+  '2025-11-17.clover';
+const stripe =
+  process.env.STRIPE_SECRET_KEY && process.env.STRIPE_SECRET_KEY.length > 0
+    ? new Stripe(process.env.STRIPE_SECRET_KEY, {
+        apiVersion: STRIPE_API_VERSION,
+      })
+    : null;
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    if (!stripe) {
+      console.error('Stripe not configured: missing STRIPE_SECRET_KEY');
+      return NextResponse.json(
+        { error: 'Payments are not configured' },
+        { status: 500 }
+      );
+    }
+
     const context = await requireCustomerContext(request);
     const supabase = createAuthenticatedClient(request);
-    const invoiceId = params.id;
+    const { id: invoiceId } = await params;
 
     // Verify ownership
     const { data: invoice, error: fetchError } = await supabase

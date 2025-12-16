@@ -66,6 +66,19 @@ export function JobTemplates({ onTemplateSelect }: JobTemplatesProps) {
   const [notes, setNotes] = useState('');
   const [creating, setCreating] = useState(false);
 
+  // Form state for creating template
+  const [templateForm, setTemplateForm] = useState({
+    name: '',
+    title_template: '',
+    description: '',
+    description_template: '',
+    category: '',
+    estimated_duration_hours: 0,
+    estimated_cost: 0,
+    default_line_items: [] as any[],
+  });
+  const [creatingTemplate, setCreatingTemplate] = useState(false);
+
   useEffect(() => {
     loadTemplates();
     loadClients();
@@ -158,6 +171,67 @@ export function JobTemplates({ onTemplateSelect }: JobTemplatesProps) {
     }
   };
 
+  const handleCreateTemplate = async () => {
+    if (!templateForm.name.trim()) return;
+
+    try {
+      setCreatingTemplate(true);
+
+      const response = await fetch('/api/job-templates', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: templateForm.name.trim(),
+          title_template: templateForm.title_template.trim(),
+          description: templateForm.description?.trim(),
+          description_template: templateForm.description_template?.trim(),
+          category: templateForm.category,
+          estimated_duration_hours: templateForm.estimated_duration_hours,
+          estimated_cost: templateForm.estimated_cost,
+          default_line_items: templateForm.default_line_items,
+        }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+
+        toast({
+          title: 'Template Created',
+          description: `Template "${data.template.name}" created successfully.`,
+        });
+
+        // Reset form and close dialog
+        setTemplateForm({
+          name: '',
+          title_template: '',
+          description: '',
+          description_template: '',
+          category: '',
+          estimated_duration_hours: 0,
+          estimated_cost: 0,
+          default_line_items: [],
+        });
+        setShowCreateDialog(false);
+
+        // Reload templates
+        loadTemplates();
+      } else {
+        throw new Error('Failed to create template');
+      }
+    } catch (error) {
+      console.error('Failed to create template:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to create job template.',
+        variant: 'destructive',
+      });
+    } finally {
+      setCreatingTemplate(false);
+    }
+  };
+
   const getCategoryIcon = (category?: string) => {
     switch (category) {
       case 'maintenance':
@@ -245,9 +319,147 @@ export function JobTemplates({ onTemplateSelect }: JobTemplatesProps) {
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-4">
-              <p className="text-sm text-muted-foreground">
-                Template creation feature coming soon...
-              </p>
+              <div>
+                <Label htmlFor="template_name">Template Name *</Label>
+                <Input
+                  id="template_name"
+                  value={templateForm.name}
+                  onChange={(e) =>
+                    setTemplateForm({ ...templateForm, name: e.target.value })
+                  }
+                  placeholder="e.g., Kitchen Remodel"
+                  required
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="title_template">Job Title Template *</Label>
+                <Input
+                  id="title_template"
+                  value={templateForm.title_template}
+                  onChange={(e) =>
+                    setTemplateForm({
+                      ...templateForm,
+                      title_template: e.target.value,
+                    })
+                  }
+                  placeholder="e.g., Kitchen Remodel - {client_name}"
+                  required
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="category">Category</Label>
+                <Select
+                  value={templateForm.category}
+                  onValueChange={(value) =>
+                    setTemplateForm({ ...templateForm, category: value })
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select category" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="painting">Painting</SelectItem>
+                    <SelectItem value="plumbing">Plumbing</SelectItem>
+                    <SelectItem value="electrical">Electrical</SelectItem>
+                    <SelectItem value="hvac">HVAC</SelectItem>
+                    <SelectItem value="general">General</SelectItem>
+                    <SelectItem value="other">Other</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="estimated_duration">Duration (hours)</Label>
+                  <Input
+                    id="estimated_duration"
+                    type="number"
+                    value={templateForm.estimated_duration_hours || ''}
+                    onChange={(e) =>
+                      setTemplateForm({
+                        ...templateForm,
+                        estimated_duration_hours: parseInt(e.target.value) || 0,
+                      })
+                    }
+                    placeholder="8"
+                    min="0"
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="estimated_cost">Estimated Cost ($)</Label>
+                  <Input
+                    id="estimated_cost"
+                    type="number"
+                    value={templateForm.estimated_cost || ''}
+                    onChange={(e) =>
+                      setTemplateForm({
+                        ...templateForm,
+                        estimated_cost: parseFloat(e.target.value) || 0,
+                      })
+                    }
+                    placeholder="1500.00"
+                    min="0"
+                    step="0.01"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <Label htmlFor="description_template">
+                  Description Template
+                </Label>
+                <Textarea
+                  id="description_template"
+                  value={templateForm.description_template}
+                  onChange={(e) =>
+                    setTemplateForm({
+                      ...templateForm,
+                      description_template: e.target.value,
+                    })
+                  }
+                  placeholder="Template for job description with variables like {client_name}, {service_date}, etc."
+                  rows={3}
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="template_description">Description</Label>
+                <Textarea
+                  id="template_description"
+                  value={templateForm.description}
+                  onChange={(e) =>
+                    setTemplateForm({
+                      ...templateForm,
+                      description: e.target.value,
+                    })
+                  }
+                  placeholder="Describe what this template is for..."
+                  rows={3}
+                />
+              </div>
+
+              <div className="flex justify-end space-x-2 pt-4">
+                <Button
+                  variant="outline"
+                  onClick={() => setShowCreateDialog(false)}
+                  disabled={creatingTemplate}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={handleCreateTemplate}
+                  disabled={
+                    !templateForm.name.trim() ||
+                    !templateForm.title_template.trim() ||
+                    creatingTemplate
+                  }
+                >
+                  {creatingTemplate ? 'Creating...' : 'Create Template'}
+                </Button>
+              </div>
             </div>
           </DialogContent>
         </Dialog>

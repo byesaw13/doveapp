@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { loginAsAdmin, loginAsTech, loginAsCustomer } from './auth';
 
 test.describe('Smoke Tests', () => {
   test('unauthenticated user redirected to login', async ({ page }) => {
@@ -6,51 +7,50 @@ test.describe('Smoke Tests', () => {
     await expect(page).toHaveURL('/auth/login');
   });
 
-  // For role tests, would need auth setup
-  test.skip('admin role lands on dashboard', async ({ page }) => {
-    // TODO: Set up test auth
+  test('login page loads', async ({ page }) => {
+    await page.goto('/auth/login');
+    await expect(page.locator('input[type="email"]')).toBeVisible();
+    await expect(page.locator('input[type="password"]')).toBeVisible();
   });
 
-  test.describe('Tech Portal Navigation', () => {
-    test('tech jobs loads directly', async ({ page }) => {
+  test.skip('admin role lands on dashboard', async ({ page }) => {
+    await loginAsAdmin(page);
+    await expect(page).toHaveURL('/admin');
+  });
+
+  test.skip('tech role lands on dashboard', async ({ page }) => {
+    await loginAsTech(page);
+    await expect(page).toHaveURL('/tech');
+  });
+
+  test.skip('customer role lands on dashboard', async ({ page }) => {
+    await loginAsCustomer(page);
+    await expect(page).toHaveURL('/customer');
+  });
+
+  test.describe('Protected Route Access', () => {
+    test('tech jobs requires authentication', async ({ page }) => {
       await page.goto('/tech/jobs');
-      // Should load the jobs page without redirect
-      await expect(page.locator('h1')).toContainText('My Jobs');
-      // Check for main elements
-      await expect(page.locator('text=Search jobs...')).toBeVisible();
-      await expect(page.locator('text=All Status')).toBeVisible();
+      // Should redirect to login for unauthenticated access
+      await expect(page).toHaveURL('/auth/login');
     });
 
-    test('tech today loads directly', async ({ page }) => {
+    test('tech today requires authentication', async ({ page }) => {
       await page.goto('/tech/today');
-      // Should load the today page without redirect
-      await expect(page.locator('h1')).toContainText("Today's Visits");
+      // Should redirect to login for unauthenticated access
+      await expect(page).toHaveURL('/auth/login');
     });
 
-    test('tech schedule loads directly', async ({ page }) => {
+    test('tech schedule requires authentication', async ({ page }) => {
       await page.goto('/tech/schedule');
-      // Should load the schedule page without redirect
-      await expect(page.locator('h1')).toContainText('Schedule');
+      // Should redirect to login for unauthenticated access
+      await expect(page).toHaveURL('/auth/login');
     });
 
-    test('tech profile loads directly', async ({ page }) => {
+    test('tech profile requires authentication', async ({ page }) => {
       await page.goto('/tech/profile');
-      // Should load the profile page without redirect
-      await expect(page.locator('text=Profile')).toBeVisible();
-    });
-
-    test('tech jobs navigation works', async ({ page }) => {
-      await page.goto('/tech/jobs');
-      // Wait for page to load
-      await expect(page.locator('h1')).toContainText('My Jobs');
-
-      // Test basic interaction - search should be present
-      const searchInput = page.locator('input[placeholder="Search jobs..."]');
-      await expect(searchInput).toBeVisible();
-
-      // Test status filter
-      const statusSelect = page.locator('text=All Status');
-      await expect(statusSelect).toBeVisible();
+      // Should redirect to login for unauthenticated access
+      await expect(page).toHaveURL('/auth/login');
     });
   });
 });

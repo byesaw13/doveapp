@@ -15,6 +15,10 @@
     "test": "jest",
     "test:watch": "jest --watch",
     "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "test:e2e:headed": "playwright test --headed",
+    "test:e2e:report": "playwright show-report",
+    "test:e2e:audit": "playwright test link_audit.spec.ts",
     "migrate:addresses": "node scripts/migrate-client-addresses.js",
     "setup:tenant": "node scripts/setup-tenant.js"
   },

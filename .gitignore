@@ -304,3 +304,7 @@ storybook-static/
 # ============================================
 # End of .gitignore
 # ============================================
+
+# E2E Test Output
+e2e/output/
+test-results/

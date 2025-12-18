@@ -129,10 +129,20 @@ export async function preflightAuthCheck(
     role === 'admin' ? '/admin' : role === 'tech' ? '/tech' : '/customer';
   const testApiEndpoint = '/api/health'; // Assuming a simple endpoint
 
-  // Browser navigation check
-  await page.goto(protectedPage);
+  // Browser navigation check - use current page if already on protected route
   const currentUrl = page.url();
-  if (currentUrl.includes('/auth/login')) {
+  const isOnProtectedRoute =
+    (role === 'admin' && currentUrl.includes('/admin')) ||
+    (role === 'tech' && currentUrl.includes('/tech')) ||
+    (role === 'customer' && currentUrl.includes('/customer'));
+
+  if (!isOnProtectedRoute) {
+    await page.goto(protectedPage);
+  }
+
+  // Check if redirected to login
+  const finalUrl = page.url();
+  if (finalUrl.includes('/auth/login')) {
     throw new Error(
       `${role} auth failed: redirected to login on ${protectedPage}`
     );

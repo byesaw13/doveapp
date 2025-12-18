@@ -25,7 +25,8 @@ export async function loginAsAdmin(page: Page) {
   await page.fill('input[type="email"]', email);
   await page.fill('input[type="password"]', password);
   await page.click('button[type="submit"]');
-  await page.waitForURL('/admin');
+  // Wait for either /admin or /admin/dashboard (app may redirect)
+  await page.waitForURL(/\/admin(\/dashboard)?/, { timeout: 10000 });
   await waitForAppReady(page);
 }
 
@@ -38,7 +39,8 @@ export async function loginAsTech(page: Page) {
   await page.fill('input[type="email"]', email);
   await page.fill('input[type="password"]', password);
   await page.click('button[type="submit"]');
-  await page.waitForURL('/tech');
+  // Wait for tech routes (may have subpath)
+  await page.waitForURL(/\/tech/, { timeout: 10000 });
   await waitForAppReady(page);
 }
 
@@ -51,6 +53,7 @@ export async function loginAsCustomer(page: Page) {
   await page.fill('input[type="email"]', email);
   await page.fill('input[type="password"]', password);
   await page.click('button[type="submit"]');
-  await page.waitForURL('/customer');
+  // Wait for customer routes (may have subpath)
+  await page.waitForURL(/\/customer/, { timeout: 10000 });
   await waitForAppReady(page);
 }

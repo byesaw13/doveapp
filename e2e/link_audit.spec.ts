@@ -115,8 +115,13 @@ test.describe('Link Audit', () => {
   });
 
   test('audit all routes', async ({ page, request }) => {
-    // Preflight checks
+    // Preflight policy check
     preflightPolicyCheck();
+
+    // Setup auth by logging in first
+    await loginAsAdmin(page);
+
+    // Verify auth is working
     await preflightAuthCheck(page, request, 'admin');
 
     const visited = new Set<string>();
@@ -135,9 +140,6 @@ test.describe('Link Audit', () => {
     const pageErrorCounts = new Map<string, number>();
     const targetCounts = new Map<string, Map<string, number>>();
     const redirectChains = new Map<string, string[]>(); // Track redirect chains for loop detection
-
-    // Setup auth by logging in once (affects all subsequent requests in this context)
-    await loginAsAdmin(page);
 
     // URL normalization
     const normalizeUrl = (url: string): string => {

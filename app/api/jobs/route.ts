@@ -135,22 +135,6 @@ export async function POST(request: NextRequest) {
       return errorResponse(error, 'Failed to create job');
     }
 
-    // Handle line items if provided
-    if (body.line_items && body.line_items.length > 0) {
-      const lineItems = body.line_items.map((item: any) => ({
-        ...item,
-        job_id: job.id,
-      }));
-
-      const { error: lineItemsError } = await supabase
-        .from('job_line_items')
-        .insert(lineItems);
-
-      if (lineItemsError) {
-        console.error('Error creating line items:', lineItemsError);
-      }
-    }
-
     // Add deprecation headers
     const response = NextResponse.json(job, { status: 201 });
     response.headers.set('Deprecation', 'version="1"');

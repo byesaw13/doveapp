@@ -66,6 +66,22 @@ interface JobWorkflow {
   updated_at: string;
 }
 
+interface WorkflowFormData {
+  name: string;
+  description: string;
+  trigger_status: 'scheduled' | 'in_progress' | 'completed' | 'cancelled';
+  is_active: boolean;
+  actions: Array<{
+    type: string;
+    title?: string;
+    message?: string;
+    recipients?: string[];
+    auto_generate?: boolean;
+    due_days?: number;
+    hours_before?: number;
+  }>;
+}
+
 export function JobWorkflowsManager() {
   const [workflows, setWorkflows] = useState<JobWorkflow[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -78,20 +94,12 @@ export function JobWorkflowsManager() {
   const { toast } = useToast();
 
   // Form state
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<WorkflowFormData>({
     name: '',
     description: '',
-    trigger_status: 'completed' as const,
+    trigger_status: 'completed',
     is_active: true,
-    actions: [] as Array<{
-      type: string;
-      title?: string;
-      message?: string;
-      recipients?: string[];
-      auto_generate?: boolean;
-      due_days?: number;
-      hours_before?: number;
-    }>,
+    actions: [],
   });
 
   useEffect(() => {
@@ -692,7 +700,10 @@ function WorkflowForm({
             id="name"
             value={formData.name}
             onChange={(e) =>
-              setFormData((prev) => ({ ...prev, name: e.target.value }))
+              setFormData((prev: WorkflowFormData) => ({
+                ...prev,
+                name: e.target.value,
+              }))
             }
             placeholder="e.g., Job Completed Notification"
           />
@@ -702,7 +713,10 @@ function WorkflowForm({
           <Select
             value={formData.trigger_status}
             onValueChange={(value: any) =>
-              setFormData((prev) => ({ ...prev, trigger_status: value }))
+              setFormData((prev: WorkflowFormData) => ({
+                ...prev,
+                trigger_status: value,
+              }))
             }
           >
             <SelectTrigger>
@@ -724,7 +738,10 @@ function WorkflowForm({
           id="description"
           value={formData.description}
           onChange={(e) =>
-            setFormData((prev) => ({ ...prev, description: e.target.value }))
+            setFormData((prev: WorkflowFormData) => ({
+              ...prev,
+              description: e.target.value,
+            }))
           }
           placeholder="Brief description of what this workflow does..."
           rows={2}
@@ -737,7 +754,10 @@ function WorkflowForm({
           id="is_active"
           checked={formData.is_active}
           onChange={(e) =>
-            setFormData((prev) => ({ ...prev, is_active: e.target.checked }))
+            setFormData((prev: WorkflowFormData) => ({
+              ...prev,
+              is_active: e.target.checked,
+            }))
           }
           className="rounded"
         />

@@ -46,17 +46,81 @@ export async function getAIEstimateSettings(
 export async function upsertAIEstimateSettings(
   settings: Omit<AIEstimateSettings, 'id' | 'created_at' | 'updated_at'>
 ): Promise<AIEstimateSettings> {
-  const { data, error } = await supabase
-    .from('ai_estimate_settings')
-    .upsert(settings, {
-      onConflict: 'user_id',
-      ignoreDuplicates: false,
-    })
-    .select()
-    .single();
+  const userId = settings.user_id;
 
-  if (error) throw error;
-  return data as AIEstimateSettings;
+  console.log('Upserting settings for userId:', userId);
+
+  // Check if settings already exist (don't use .single() to avoid error on empty result)
+  let existingSettings;
+  if (userId) {
+    const { data, error } = await supabase
+      .from('ai_estimate_settings')
+      .select('id')
+      .eq('user_id', userId)
+      .maybeSingle();
+
+    if (error) {
+      console.error('Error checking existing user settings:', error);
+      throw error;
+    }
+    existingSettings = data;
+  } else {
+    const { data, error } = await supabase
+      .from('ai_estimate_settings')
+      .select('id')
+      .is('user_id', null)
+      .maybeSingle();
+
+    if (error) {
+      console.error('Error checking existing global settings:', error);
+      throw error;
+    }
+    existingSettings = data;
+  }
+
+  console.log('Existing settings found:', existingSettings);
+
+  // Update existing or insert new
+  if (existingSettings) {
+    console.log('Updating existing settings with id:', existingSettings.id);
+    const { data, error } = await supabase
+      .from('ai_estimate_settings')
+      .update(settings)
+      .eq('id', existingSettings.id)
+      .select()
+      .maybeSingle();
+
+    if (error) {
+      console.error('Error updating settings:', error);
+      throw error;
+    }
+
+    if (!data) {
+      console.error('Update returned no data - likely RLS policy blocking');
+      throw new Error('Failed to update settings - permission denied');
+    }
+
+    return data as AIEstimateSettings;
+  } else {
+    console.log('Inserting new settings');
+    const { data, error } = await supabase
+      .from('ai_estimate_settings')
+      .insert(settings)
+      .select()
+      .maybeSingle();
+
+    if (error) {
+      console.error('Error inserting settings:', error);
+      throw error;
+    }
+
+    if (!data) {
+      console.error('Insert returned no data - likely RLS policy blocking');
+      throw new Error('Failed to insert settings - permission denied');
+    }
+
+    return data as AIEstimateSettings;
+  }
 }
 
 /**

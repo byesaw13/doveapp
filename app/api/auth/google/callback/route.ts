@@ -8,13 +8,10 @@ const GOOGLE_REDIRECT_URI = process.env.GOOGLE_REDIRECT_URI!;
 // GET /api/auth/google/callback - Handle OAuth callback for Email Intelligence Engine
 export async function GET(request: NextRequest) {
   try {
-    console.log('OAuth callback received');
     const { searchParams } = new URL(request.url);
     const code = searchParams.get('code');
     const error = searchParams.get('error');
 
-    console.log('Code present:', !!code);
-    console.log('Error present:', !!error);
 
     if (error) {
       console.error('OAuth error:', error);
@@ -79,7 +76,6 @@ export async function GET(request: NextRequest) {
     //   2. Parse email content (sender, subject, body, attachments)
     //   3. POST to /api/email/intake to add emails to the unified inbox
     // The worker will need to refresh the access_token using refresh_token when it expires.
-    console.log('Gmail OAuth successful for:', profile.email);
 
     // Calculate token expiration timestamp (Google typically returns expires_in: 3600 seconds)
     const expiresAt = tokenData.expires_in
@@ -111,7 +107,6 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    console.log('Gmail connection stored successfully for:', profile.email);
 
     // Redirect to unified inbox with success flag.
     // TODO: Future enhancement - build a dedicated /emails page to manage Gmail connections.

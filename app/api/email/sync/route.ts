@@ -38,7 +38,6 @@ export async function GET(_req: NextRequest): Promise<NextResponse> {
 
 async function handleSync(): Promise<NextResponse> {
   try {
-    console.log('📧 Email sync endpoint called');
 
     // TODO: Add authentication check here
     // Example: Verify cron secret or user session

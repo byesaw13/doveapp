@@ -18,7 +18,6 @@ export async function POST(request: NextRequest) {
       id: subscriptionId,
     });
 
-    console.log('Push subscription stored:', subscriptionId);
 
     return NextResponse.json({
       success: true,
@@ -55,7 +54,6 @@ export async function sendPushNotification(
 
   // In a real implementation, you'd use a service like Firebase Cloud Messaging
   // or send directly to the push service
-  console.log('Sending push notification to:', subscriptionId, payload);
 
   // For demo purposes, we'll just log it
   return { success: true, message: 'Notification queued' };

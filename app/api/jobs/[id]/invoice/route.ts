@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import {
   createInvoiceFromJob,
   getInvoiceByIdWithRelations,
+  getInvoicesByJobId,
 } from '@/lib/db/invoices';
 
 export async function POST(
@@ -21,8 +22,17 @@ export async function POST(
 
     // Check if invoice already exists for this job (unless overwrite is requested)
     if (!body.overwrite) {
-      // TODO: Check if invoice exists for this job
-      // For now, just try to create and let it fail if duplicate
+      const existingInvoices = await getInvoicesByJobId(jobId);
+      if (existingInvoices.length > 0) {
+        return NextResponse.json(
+          {
+            exists: true,
+            invoice_id: existingInvoices[0].id,
+            message: 'An invoice already exists for this job',
+          },
+          { status: 200 }
+        );
+      }
     }
 
     const invoice = await createInvoiceFromJob(jobId);

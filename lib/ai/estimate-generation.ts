@@ -9,6 +9,12 @@ import {
   analyzeHistoricalPricing,
   type HistoricalPricingData,
 } from './historical-pricing-analysis';
+import {
+  getAllServiceItems,
+  getAllServiceCategories,
+  getPricingRules,
+  type ServiceItem,
+} from '@/lib/pricingEngine';
 
 export interface EstimateGenerationOptions {
   settings: AIEstimateSettings;
@@ -44,8 +50,20 @@ export async function generateAIEstimate({
     console.warn('Failed to load historical pricing data:', error);
   }
 
-  // Build the prompt based on request type and historical data
-  const prompt = buildEstimatePrompt(settings, request, historicalData);
+  // Get pricebook data for AI context
+  const pricebookItems = getAllServiceItems();
+  const pricebookCategories = getAllServiceCategories();
+  const pricingRules = getPricingRules();
+
+  // Build the prompt based on request type, historical data, and pricebook
+  const prompt = buildEstimatePrompt(
+    settings,
+    request,
+    historicalData,
+    pricebookItems,
+    pricebookCategories,
+    pricingRules
+  );
 
   let messages: any[] = [{ role: 'user', content: prompt }];
 
@@ -106,12 +124,59 @@ export async function generateAIEstimate({
 function buildEstimatePrompt(
   settings: AIEstimateSettings,
   request: AIEstimateRequest,
-  historicalData: HistoricalPricingData | null
+  historicalData: HistoricalPricingData | null,
+  pricebookItems: ServiceItem[],
+  pricebookCategories: any[],
+  pricingRules: any
 ): string {
   const serviceSpecificRates =
     settings.service_rates[
       request.service_type as keyof typeof settings.service_rates
     ] || settings.service_rates.general;
+
+  // Build pricebook context - filter relevant items for this service type
+  const relevantPricebookItems = pricebookItems
+    .filter(
+      (item) =>
+        item.category_key.includes(request.service_type.toLowerCase()) ||
+        item.name
+          .toLowerCase()
+          .includes(request.description.toLowerCase().split(' ')[0]) ||
+        request.service_type === 'general'
+    )
+    .slice(0, 30); // Limit to prevent token overflow
+
+  const pricebookContext = `
+PRICEBOOK SERVICES (Your Company's Standard Services):
+These are your company's pre-defined services with established pricing.
+ALWAYS PRIORITIZE USING THESE SERVICES when they match the work described.
+
+Available Services:
+${relevantPricebookItems
+  .map(
+    (item) => `
+- Code ${item.code}: ${item.name}
+  Category: ${item.category_key}
+  Standard Price: $${item.standard_price}
+  Description: ${item.description}
+  ${item.notes_for_ai ? `AI Notes: ${item.notes_for_ai}` : ''}
+  Tier: ${item.tier} | Risk: ${item.riskFactor || 'medium'}
+`
+  )
+  .join('\n')}
+
+PRICEBOOK PRICING RULES:
+- Labor Rate: $${pricingRules.labor_rate}/hour
+- Material Markup: ${pricingRules.material_markup * 100}%
+- Minimum Job Total: $${pricingRules.minimum_job_total}
+- Tier Multipliers: Basic ${pricingRules.multipliers.basic}x | Standard ${pricingRules.multipliers.standard}x | Premium ${pricingRules.multipliers.premium}x
+
+IMPORTANT: When generating the estimate:
+1. FIRST check if any pricebook services match the work described
+2. Use pricebook service IDs in your response when applicable
+3. Only create custom line items when no pricebook services fit
+4. The pricebook prices already include appropriate margins
+`;
 
   // Build historical context section if data is available
   let historicalContext = '';
@@ -145,8 +210,9 @@ ${historicalData.similarJobs.length > 0 ? 'Pay special attention to the similar 
   }
 
   return `You are an expert estimator for a field service company specializing in ${request.service_type} services. Generate a detailed, accurate estimate based on the provided information.
+${pricebookContext}
 ${historicalContext}
-BUSINESS CONTEXT (Fallback Defaults):
+BUSINESS CONTEXT (Fallback Defaults - use only when pricebook services don't apply):
 - Service Type: ${request.service_type}
 - Your hourly labor rate: $${settings.hourly_labor_rate}/hour
 - Your billable rate: $${settings.billable_hourly_rate}/hour
@@ -177,6 +243,16 @@ TASK: Analyze this project and provide a comprehensive estimate breakdown. Consi
 
 Return a JSON object with this exact structure:
 {
+  "pricebook_services": [
+    {
+      "service_id": 1001,
+      "service_code": "1001",
+      "service_name": "Service name from pricebook",
+      "quantity": 1,
+      "tier": "basic|standard|premium",
+      "notes": "Why this service was selected"
+    }
+  ],
   "analysis": {
     "service_type": "${request.service_type}",
     "complexity": "simple|moderate|complex|very_complex",
@@ -212,7 +288,7 @@ Return a JSON object with this exact structure:
     "recommendations": ["Recommendation 1", "Recommendation 2"],
     "confidence_score": 0.0
   },
-  "reasoning": "Detailed explanation of your estimate methodology and assumptions"
+  "reasoning": "Detailed explanation of your estimate methodology and assumptions. ALWAYS explain which pricebook services you selected and why."
 }`;
 }
 
@@ -226,6 +302,49 @@ function applyBusinessRules(
 ): AIEstimateResult {
   const lineItems: EstimateLineItem[] = [];
   let subtotal = 0;
+  const pricingRules = getPricingRules();
+
+  // Process pricebook services FIRST (prioritize these)
+  if (
+    aiResult.pricebook_services &&
+    Array.isArray(aiResult.pricebook_services)
+  ) {
+    aiResult.pricebook_services.forEach((pbService: any, index: number) => {
+      const serviceItem = getAllServiceItems().find(
+        (item) =>
+          item.id === pbService.service_id ||
+          item.code === pbService.service_code
+      );
+
+      if (serviceItem) {
+        const quantity = pbService.quantity || 1;
+        const tier = pbService.tier || 'standard';
+
+        // Calculate using pricebook rules
+        const basePrice = serviceItem.standard_price;
+        const tierMultiplier =
+          pricingRules.multipliers[
+            tier as keyof typeof pricingRules.multipliers
+          ] || 1;
+        const riskMultiplier =
+          pricingRules.risk_multipliers[serviceItem.riskFactor || 'medium'];
+
+        let lineTotal = basePrice * tierMultiplier * riskMultiplier * quantity;
+        lineTotal = Math.round(lineTotal);
+
+        lineItems.push({
+          id: `pricebook-${index}`,
+          description: `${serviceItem.name} (Code: ${serviceItem.code})${pbService.notes ? ` - ${pbService.notes}` : ''}`,
+          quantity,
+          unit_price: Math.round(lineTotal / quantity),
+          unit: 'each',
+          total: lineTotal,
+        });
+
+        subtotal += lineTotal;
+      }
+    });
+  }
 
   // Process materials
   aiResult.analysis.required_materials?.forEach(
@@ -494,6 +613,14 @@ export function getDefaultAIEstimateSettings(): Omit<
         hourly_rate: 75,
         minimum_charge: 150,
       },
+    },
+    ai_behavior: {
+      historical_data_weight: 0.5,
+      confidence_threshold: 0.8,
+      risk_strategy: 'balanced',
+      image_analysis_detail: 'medium',
+      require_human_review_above_value: 5000,
+      auto_approve_confidence: 0.9,
     },
   };
 }

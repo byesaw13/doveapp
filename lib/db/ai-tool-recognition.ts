@@ -336,40 +336,132 @@ export async function getToolRecognitionStats(
 // Helper Functions
 async function callAIVisionService(
   imageUrl: string,
-  provider = 'google_vision'
+  provider = 'openai_vision'
 ): Promise<any> {
-  // TODO: Implement actual AI vision service integration
-  // For now, return mock data
+  // Check if OpenAI API key is configured
+  const openaiApiKey = process.env.OPENAI_API_KEY;
+  if (!openaiApiKey) {
+    console.warn('OpenAI API key not configured, falling back to mock data');
+    return getMockVisionResponse(provider);
+  }
 
-  // This would typically:
-  // 1. Call Google Vision API, AWS Rekognition, or similar
-  // 2. Process the response to identify tools
-  // 3. Match against tool database using image similarity or object detection
+  try {
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${openaiApiKey}`,
+      },
+      body: JSON.stringify({
+        model: 'gpt-4-vision-preview',
+        messages: [
+          {
+            role: 'user',
+            content: [
+              {
+                type: 'text',
+                text: 'Analyze this image and identify any tools or equipment that appear to be construction, plumbing, electrical, or HVAC tools. For each tool you identify, provide: 1) The tool name, 2) Your confidence level (0-1), 3) A brief description, 4) Approximate location in the image. Return the results as a JSON object with a "tools" array containing objects with "name", "confidence", "description", and "location" fields.',
+              },
+              {
+                type: 'image_url',
+                image_url: {
+                  url: imageUrl,
+                  detail: 'low', // Use low detail for faster processing
+                },
+              },
+            ],
+          },
+        ],
+        max_tokens: 1000,
+        temperature: 0.1, // Low temperature for consistent results
+      }),
+    });
 
+    if (!response.ok) {
+      throw new Error(
+        `OpenAI API error: ${response.status} ${response.statusText}`
+      );
+    }
+
+    const data = await response.json();
+    const content = data.choices[0]?.message?.content;
+
+    if (!content) {
+      throw new Error('No response content from OpenAI');
+    }
+
+    // Parse the JSON response
+    let parsedResponse;
+    try {
+      // Extract JSON from the response (it might be wrapped in markdown)
+      const jsonMatch =
+        content.match(/```json\s*(\{[\s\S]*?\})\s*```/) ||
+        content.match(/\{[\s\S]*\}/);
+      const jsonString = jsonMatch ? jsonMatch[1] || jsonMatch[0] : content;
+      parsedResponse = JSON.parse(jsonString);
+    } catch (parseError) {
+      console.warn('Failed to parse OpenAI response as JSON, using fallback');
+      return getMockVisionResponse(provider);
+    }
+
+    // Transform OpenAI response to our format
+    const detectedObjects =
+      parsedResponse.tools?.map((tool: any) => ({
+        name: tool.name,
+        confidence: tool.confidence,
+        description: tool.description,
+        location: tool.location,
+      })) || [];
+
+    // For now, we'll create mock recognized tools since we don't have a tool matching system yet
+    const recognizedTools = detectedObjects
+      .filter((tool: any) => tool.confidence > 0.7) // Only high confidence matches
+      .map((tool: any) => ({
+        material_id: `tool-${tool.name.toLowerCase().replace(/\s+/g, '-')}`,
+        confidence: tool.confidence,
+        matchReason: `AI detected ${tool.name} with ${Math.round(tool.confidence * 100)}% confidence`,
+        boundingBox: { x: 0, y: 0, width: 100, height: 100 }, // Placeholder
+      }));
+
+    return {
+      rawResponse: {
+        provider: 'openai_vision',
+        timestamp: new Date().toISOString(),
+        model: data.model,
+        usage: data.usage,
+      },
+      detectedObjects,
+      recognizedTools,
+    };
+  } catch (error) {
+    console.error('OpenAI Vision API error:', error);
+    // Fall back to mock data on error
+    return getMockVisionResponse(provider);
+  }
+}
+
+function getMockVisionResponse(provider: string) {
   return {
     rawResponse: {
       provider,
       timestamp: new Date().toISOString(),
       mock: true,
+      reason: 'OpenAI API not configured or failed',
     },
     detectedObjects: [
       {
         name: 'hammer',
-        confidence: 0.95,
-        boundingBox: { x: 100, y: 100, width: 200, height: 150 },
-      },
-      {
-        name: 'screwdriver',
-        confidence: 0.87,
-        boundingBox: { x: 350, y: 120, width: 180, height: 40 },
+        confidence: 0.85,
+        description: 'A claw hammer commonly used in construction',
+        location: 'center left of image',
       },
     ],
     recognizedTools: [
       {
-        material_id: 'tool-uuid-1', // Would be matched from database
-        confidence: 0.95,
-        matchReason: 'Visual similarity to reference image',
-        boundingBox: { x: 100, y: 100, width: 200, height: 150 },
+        material_id: 'mock-hammer-001',
+        confidence: 0.85,
+        matchReason: 'Mock AI detection - OpenAI not configured',
+        boundingBox: { x: 50, y: 50, width: 100, height: 80 },
       },
     ],
   };

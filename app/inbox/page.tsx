@@ -3,6 +3,7 @@
 // Force browser cache invalidation - v2.0
 import { useEffect, useMemo, useState } from 'react';
 import clsx from 'clsx';
+import { AttachmentViewer } from '@/components/inbox/AttachmentViewer';
 
 type Conversation = {
   id: string;
@@ -231,7 +232,6 @@ export default function InboxPage() {
 
   const handleSendReply = () => {
     if (!replyText.trim()) return;
-    console.log('Reply placeholder:', replyText);
     setReplyText('');
   };
 
@@ -464,22 +464,10 @@ export default function InboxPage() {
                       <div className="whitespace-pre-wrap text-sm">
                         {message.message_text || ''}
                       </div>
-                      {message.attachments &&
-                        message.attachments.length > 0 && (
-                          <div className="mt-2 space-y-1 text-xs">
-                            {message.attachments.map((att, idx) => (
-                              <a
-                                key={`${att.url}-${idx}`}
-                                href={att.url}
-                                target="_blank"
-                                rel="noreferrer"
-                                className="text-emerald-700 underline"
-                              >
-                                {att.filename || att.type}
-                              </a>
-                            ))}
-                          </div>
-                        )}
+                      <AttachmentViewer
+                        attachments={message.attachments || []}
+                        messageId={message.id}
+                      />
                     </div>
                   ))}
                   {messages.length === 0 && !loadingMessages && (

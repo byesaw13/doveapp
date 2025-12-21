@@ -1,0 +1,17 @@
+# Robots.txt for DoveApp
+# Allow all crawlers to access public content
+
+User-agent: *
+Allow: /
+
+# Disallow admin and auth routes
+Disallow: /admin/
+Disallow: /auth/
+Disallow: /api/
+
+# Allow tech and portal routes (public-facing)
+Allow: /tech/
+Allow: /portal/
+
+# Sitemap
+Sitemap: https://doveapp.com/sitemap.xml

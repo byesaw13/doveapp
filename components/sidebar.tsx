@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
+import { supabase } from '@/lib/supabase';
 import {
   LayoutDashboard,
   Users,
@@ -22,11 +23,13 @@ import {
   DollarSign,
   AlertCircle,
   Settings,
+  HelpCircle,
 } from 'lucide-react';
 import { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ThemeToggle } from '@/components/theme-toggle';
+
 import type { SidebarNotificationCounts } from '@/app/api/sidebar/notifications/route';
 import type { SidebarPerformanceData } from '@/app/api/sidebar/performance/route';
 
@@ -51,11 +54,11 @@ const navigationGroups: NavGroup[] = [
     items: [
       {
         name: 'Dashboard',
-        href: '/',
+        href: '/admin/dashboard',
         icon: LayoutDashboard,
         shortcut: 'D',
       },
-      { name: 'KPI', href: '/kpi', icon: BarChart3, shortcut: 'K' },
+      { name: 'KPI', href: '/admin/kpi', icon: BarChart3, shortcut: 'K' },
     ],
   },
   {
@@ -64,14 +67,14 @@ const navigationGroups: NavGroup[] = [
     items: [
       {
         name: 'Leads',
-        href: '/leads',
+        href: '/admin/leads',
         icon: Users,
         badge: 'newLeads',
         shortcut: 'L',
       },
       {
         name: 'Estimates',
-        href: '/estimates',
+        href: '/admin/estimates',
         icon: FileText,
         badge: 'pendingEstimates',
         shortcut: 'E',
@@ -83,21 +86,27 @@ const navigationGroups: NavGroup[] = [
     defaultOpen: true,
     items: [
       {
+        name: 'Today',
+        href: '/admin/today',
+        icon: Calendar,
+        shortcut: 'T',
+      },
+      {
         name: 'Calendar',
-        href: '/calendar',
+        href: '/admin/schedule',
         icon: Calendar,
         shortcut: 'C',
       },
       {
         name: 'Jobs',
-        href: '/jobs',
+        href: '/admin/jobs',
         icon: Briefcase,
         badge: 'overdueJobs',
         shortcut: 'J',
       },
       {
         name: 'Time Tracking',
-        href: '/time-tracking',
+        href: '/admin/time-tracking',
         icon: Clock,
         shortcut: 'T',
       },
@@ -106,7 +115,10 @@ const navigationGroups: NavGroup[] = [
   {
     name: 'Relationships',
     defaultOpen: true,
-    items: [{ name: 'Clients', href: '/clients', icon: Users, shortcut: 'U' }],
+    items: [
+      { name: 'Clients', href: '/admin/clients', icon: Users, shortcut: 'U' },
+      { name: 'Help', href: '/admin/help', icon: HelpCircle, shortcut: 'H' },
+    ],
   },
   {
     name: 'Resources',
@@ -114,7 +126,7 @@ const navigationGroups: NavGroup[] = [
     items: [
       {
         name: 'Inventory',
-        href: '/inventory',
+        href: '/admin/inventory',
         icon: Package,
         badge: 'lowInventoryItems',
         shortcut: 'I',
@@ -126,8 +138,14 @@ const navigationGroups: NavGroup[] = [
     defaultOpen: false,
     items: [
       {
+        name: 'Team',
+        href: '/admin/team',
+        icon: Users,
+        shortcut: 'T',
+      },
+      {
         name: 'Settings',
-        href: '/settings',
+        href: '/admin/settings',
         icon: Settings,
         shortcut: 'S',
       },
@@ -147,6 +165,7 @@ export function Sidebar({ className }: SidebarProps) {
     new Set()
   );
   const [mounted, setMounted] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   // Initialize collapsed groups after mount to avoid hydration mismatch
   useEffect(() => {
@@ -310,6 +329,29 @@ export function Sidebar({ className }: SidebarProps) {
     );
   };
 
+  const handleLogout = async () => {
+    setIsLoggingOut(true);
+    try {
+      // Sign out from Supabase
+      await supabase.auth.signOut();
+
+      // Clear local storage
+      if (typeof window !== 'undefined') {
+        localStorage.clear();
+        sessionStorage.clear();
+      }
+
+      // Redirect to login
+      router.push('/auth/login');
+    } catch (error) {
+      console.error('Logout error:', error);
+      // Force redirect even if logout fails
+      router.push('/auth/login');
+    } finally {
+      setIsLoggingOut(false);
+    }
+  };
+
   return (
     <>
       {/* Mobile menu button */}
@@ -349,10 +391,12 @@ export function Sidebar({ className }: SidebarProps) {
             <div className="flex items-center gap-3">
               <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center shadow-sm">
                 <span className="text-primary-foreground font-bold text-lg">
-                  D
+                  H
                 </span>
               </div>
-              <h1 className="text-xl font-bold text-foreground">DoveApp</h1>
+              <h1 className="text-xl font-bold text-foreground">
+                FieldOps Pro
+              </h1>
             </div>
           </div>
 
@@ -532,9 +576,11 @@ export function Sidebar({ className }: SidebarProps) {
 
           {/* Footer - Monday.com style */}
           <div className="p-4 border-t border-border bg-muted/50">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between mb-3">
               <div className="text-xs text-muted-foreground space-y-1">
-                <div className="font-semibold text-foreground">DoveApp</div>
+                <div className="font-semibold text-foreground">
+                  FieldOps Pro
+                </div>
                 <div>Field Service Management</div>
                 <div className="text-[10px] text-muted-foreground/70 pt-1">
                   v0.1.0
@@ -542,6 +588,17 @@ export function Sidebar({ className }: SidebarProps) {
               </div>
               <ThemeToggle />
             </div>
+
+            {/* Logout Button */}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleLogout}
+              disabled={isLoggingOut}
+              className="w-full text-sm"
+            >
+              {isLoggingOut ? 'Signing Out...' : 'Sign Out'}
+            </Button>
           </div>
         </div>
       </div>

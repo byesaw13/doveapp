@@ -8,18 +8,13 @@ const GOOGLE_REDIRECT_URI = process.env.GOOGLE_REDIRECT_URI!;
 export async function GET() {
   // Debug: Check if environment variables are loaded
   // Debug logging for OAuth setup
-  console.log('🔍 GOOGLE OAUTH DEBUG - Checking configuration');
-  console.log('Current redirect URI in env:', GOOGLE_REDIRECT_URI);
-  console.log(
+  console.warn(
     '⚠️  Make sure this EXACTLY matches your Google Cloud Console redirect URI!'
   );
-  console.log('Client ID present:', !!GOOGLE_CLIENT_ID);
-  console.log('Client Secret present:', !!GOOGLE_CLIENT_SECRET);
-  console.log('Redirect URI:', GOOGLE_REDIRECT_URI);
   console.log(
     'Expected redirect URI: http://localhost:3000/api/auth/google/callback'
   );
-  console.log(
+  console.warn(
     '⚠️  CRITICAL: Make sure this EXACTLY matches your Google Cloud Console redirect URI!'
   );
   console.log(

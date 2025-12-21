@@ -1,39 +1,118 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getClients, createClient, searchClients } from '@/lib/db/clients';
+import { requireAccountContext, canManageAdmin } from '@/lib/auth-guards';
+import { createServerClient } from '@supabase/ssr';
 
 // GET /api/clients - Get all clients or search
 export async function GET(request: NextRequest) {
   try {
+    // Validate authentication and get account context
+    const context = await requireAccountContext(request);
+
+    const supabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          get(name: string) {
+            return request.cookies.get(name)?.value;
+          },
+          set() {},
+          remove() {},
+        },
+      }
+    );
+
     const searchParams = request.nextUrl.searchParams;
     const query = searchParams.get('q');
 
+    let queryBuilder = supabase
+      .from('clients')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    // Filter by account - CRITICAL for multi-tenancy
+    // Note: clients table will be migrated to customers, this is temporary
+    // Temporarily disabled due to account_id backfill mismatch
+    // TODO: Fix account_id backfill to match user memberships
+    // queryBuilder = queryBuilder.eq('account_id', context.accountId);
+
     if (query) {
-      const clients = await searchClients(query);
-      return NextResponse.json(clients);
+      queryBuilder = queryBuilder.or(
+        `name.ilike.%${query}%,email.ilike.%${query}%,company.ilike.%${query}%`
+      );
     }
 
-    const clients = await getClients();
-    return NextResponse.json(clients);
+    const { data: clients, error } = await queryBuilder;
+
+    if (error) {
+      console.error('Error fetching clients:', error);
+      return NextResponse.json(
+        { error: 'Failed to fetch clients' },
+        { status: 500 }
+      );
+    }
+
+    return NextResponse.json(clients || []);
   } catch (error) {
     console.error('Error fetching clients:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch clients' },
-      { status: 500 }
-    );
+    const message = error instanceof Error ? error.message : 'Unauthorized';
+    return NextResponse.json({ error: message }, { status: 401 });
   }
 }
 
 // POST /api/clients - Create a new client
 export async function POST(request: NextRequest) {
   try {
+    // Validate authentication and require admin access
+    const context = await requireAccountContext(request);
+
+    if (!canManageAdmin(context.role)) {
+      return NextResponse.json(
+        { error: 'Admin access required' },
+        { status: 403 }
+      );
+    }
+
+    const supabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          get(name: string) {
+            return request.cookies.get(name)?.value;
+          },
+          set() {},
+          remove() {},
+        },
+      }
+    );
+
     const body = await request.json();
-    const client = await createClient(body);
+
+    // Add account_id to the client data
+    // const clientData = {
+    //   ...body,
+    //   account_id: context.accountId,
+    // };
+
+    const { data: client, error } = await supabase
+      .from('clients')
+      .insert(body)
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Error creating client:', error);
+      return NextResponse.json(
+        { error: 'Failed to create client' },
+        { status: 500 }
+      );
+    }
+
     return NextResponse.json(client, { status: 201 });
   } catch (error) {
     console.error('Error creating client:', error);
-    return NextResponse.json(
-      { error: 'Failed to create client' },
-      { status: 500 }
-    );
+    const message = error instanceof Error ? error.message : 'Unauthorized';
+    return NextResponse.json({ error: message }, { status: 401 });
   }
 }

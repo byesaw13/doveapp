@@ -8,6 +8,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -21,6 +22,8 @@ import {
 } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
+
+import { HelpCircle } from 'lucide-react';
 import {
   Filter,
   X,
@@ -153,23 +156,14 @@ export default function AdvancedFilters({
                 )}
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-md">
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <h4 className="font-semibold">Advanced Filters</h4>
-                  {hasActiveFilters && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={onClearAll}
-                      className="text-red-600 hover:text-red-700"
-                    >
-                      <X className="w-4 h-4 mr-1" />
-                      Clear All
-                    </Button>
-                  )}
-                </div>
-
+            <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle>Advanced Filters</DialogTitle>
+                <DialogDescription>
+                  Filter results by date range, amount, status, and client.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-6">
                 {/* Date Range Filter */}
                 {onDateRangeChange && (
                   <div className="space-y-2">
@@ -367,7 +361,10 @@ export default function AdvancedFilters({
                 <X
                   className="w-3 h-3 cursor-pointer"
                   onClick={() =>
-                    onDateRangeChange?.({ from: dateRange.from, to: undefined })
+                    onDateRangeChange?.({
+                      from: dateRange.from,
+                      to: undefined,
+                    })
                   }
                 />
               </Badge>

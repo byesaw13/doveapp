@@ -65,56 +65,63 @@ export function CommandPalette() {
     {
       label: 'Dashboard',
       icon: LayoutDashboard,
-      action: () => navigate('/'),
+      action: () => navigate('/admin/dashboard'),
       keywords: ['home', 'overview'],
     },
     {
       label: 'KPI',
       icon: BarChart3,
-      action: () => navigate('/kpi'),
+      action: () => navigate('/admin/kpi'),
       keywords: ['metrics', 'analytics', 'stats'],
     },
     {
       label: 'Calendar',
       icon: Calendar,
-      action: () => navigate('/calendar'),
+      action: () => navigate('/admin/schedule'),
       keywords: ['schedule', 'appointments'],
     },
     {
       label: 'Leads',
       icon: Target,
-      action: () => navigate('/leads'),
+      action: () => navigate('/admin/leads'),
       keywords: ['prospects', 'opportunities'],
     },
     {
       label: 'Estimates',
       icon: FileText,
-      action: () => navigate('/estimates'),
+      action: () => navigate('/admin/estimates'),
       keywords: ['quotes', 'proposals'],
     },
     {
       label: 'Jobs',
       icon: Briefcase,
-      action: () => navigate('/jobs'),
+      action: () => navigate('/admin/jobs'),
       keywords: ['work orders', 'projects'],
     },
     {
       label: 'Time Tracking',
       icon: Clock,
-      action: () => navigate('/time-tracking'),
+      action: () => navigate('/admin/time-tracking'),
       keywords: ['hours', 'timesheet'],
     },
     {
       label: 'Clients',
       icon: Users,
-      action: () => navigate('/clients'),
+      action: () => navigate('/admin/clients'),
       keywords: ['customers', 'contacts'],
+    },
+
+    {
+      label: 'Team',
+      icon: Users,
+      action: () => navigate('/admin/team'),
+      keywords: ['users', 'members', 'staff'],
     },
 
     {
       label: 'Inventory',
       icon: Package,
-      action: () => navigate('/inventory'),
+      action: () => navigate('/admin/inventory'),
       keywords: ['materials', 'stock', 'supplies'],
     },
   ];
@@ -123,19 +130,19 @@ export function CommandPalette() {
     {
       label: 'New Job',
       icon: Plus,
-      action: () => navigate('/jobs/new'),
+      action: () => navigate('/admin/jobs/new'),
       keywords: ['create', 'add'],
     },
     {
       label: 'New Client',
       icon: Plus,
-      action: () => navigate('/clients?new=true'),
+      action: () => navigate('/admin/clients?new=true'),
       keywords: ['create', 'add', 'customer'],
     },
     {
       label: 'New Estimate',
       icon: Plus,
-      action: () => navigate('/estimates?new=true'),
+      action: () => navigate('/admin/estimates?new=true'),
       keywords: ['create', 'add', 'quote'],
     },
   ];

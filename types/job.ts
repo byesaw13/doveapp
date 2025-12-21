@@ -25,6 +25,7 @@ export interface JobLineItem {
 
 export interface Job {
   id: string;
+  account_id?: string;
   client_id: string;
   property_id?: string | null;
   estimate_id?: string | null;
@@ -36,6 +37,7 @@ export interface Job {
   scheduled_time?: string | null;
   scheduled_for?: string | null;
   technician_id?: string | null;
+  assigned_tech_id?: string | null;
   subtotal: number;
   tax: number;
   total: number;

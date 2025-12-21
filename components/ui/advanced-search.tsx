@@ -68,6 +68,7 @@ export function AdvancedSearch({
     dateRange: 'all', // all, today, week, month, quarter, year
     status: 'all', // all, active, completed, pending, etc.
     amountRange: 'all', // all, under-1000, 1000-5000, 5000-10000, over-10000
+    showFilters: false,
   });
 
   // Debounced search
@@ -126,6 +127,7 @@ export function AdvancedSearch({
       dateRange: 'all',
       status: 'all',
       amountRange: 'all',
+      showFilters: false,
     });
   };
 
@@ -202,7 +204,12 @@ export function AdvancedSearch({
         </div>
 
         {/* Search Type Tabs */}
-        <Tabs value={searchType} onValueChange={setSearchType}>
+        <Tabs
+          value={searchType}
+          onValueChange={(value) =>
+            setSearchType(value as 'all' | 'clients' | 'jobs' | 'estimates')
+          }
+        >
           <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="all">All</TabsTrigger>
             <TabsTrigger value="clients">

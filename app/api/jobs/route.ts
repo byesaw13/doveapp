@@ -5,15 +5,20 @@ import {
   errorResponse,
   unauthorizedResponse,
 } from '@/lib/api-helpers';
+import { PerformanceLogger } from '@/lib/api/performance';
+import { validateRequest, createJobSchema } from '@/lib/api/validation';
 import type { JobStatus } from '@/types/job';
 
 // GET /api/jobs - Get all jobs with optional filtering
 export async function GET(request: NextRequest) {
+  const url = new URL(request.url);
+  const perfLogger = new PerformanceLogger(url.pathname, 'GET');
+
   try {
     // Validate authentication and get account context
     const context = await requireAccountContext(request);
     const supabase = createAuthenticatedClient(request);
-    const { searchParams } = new URL(request.url);
+    const { searchParams } = url;
     const clientId = searchParams.get('client_id');
     const statusParam = searchParams.get('status');
     const search = searchParams.get('search');
@@ -54,10 +59,12 @@ export async function GET(request: NextRequest) {
       query = query.or(`title.ilike.%${search}%,description.ilike.%${search}%`);
     }
 
+    perfLogger.incrementQueryCount();
     const { data: jobs, error } = await query;
 
     if (error) {
       console.error('Error fetching jobs:', error);
+      perfLogger.complete(500);
       return errorResponse(error, 'Failed to fetch jobs');
     }
 
@@ -66,9 +73,18 @@ export async function GET(request: NextRequest) {
     response.headers.set('Deprecation', 'version="1"');
     response.headers.set('Link', '</api/admin/jobs>; rel="successor-version"');
     response.headers.set('Sunset', 'Mon, 31 Mar 2025 23:59:59 GMT');
+
+    // Add performance headers
+    const metrics = perfLogger.complete(200);
+    response.headers.set('X-Response-Time', `${metrics.duration}ms`);
+    if (metrics.queryCount) {
+      response.headers.set('X-Query-Count', metrics.queryCount.toString());
+    }
+
     return response;
   } catch (error) {
     console.error('Error fetching jobs:', error);
+    perfLogger.complete(401);
     return unauthorizedResponse();
   }
 }
@@ -84,21 +100,27 @@ export async function POST(request: NextRequest) {
     }
 
     const supabase = createAuthenticatedClient(request);
-    const body = await request.json();
+
+    // Validate request body
+    const { data, error: validationError } = await validateRequest(
+      request,
+      createJobSchema
+    );
+    if (validationError) return validationError;
 
     // Add account_id to job data
     const jobData = {
-      client_id: body.client_id,
-      property_id: body.property_id || null,
-      title: body.title,
-      description: body.description || null,
-      status: body.status || 'scheduled',
-      service_date: body.service_date,
-      scheduled_time: body.scheduled_time || null,
-      notes: body.notes || null,
-      subtotal: body.subtotal || 0,
-      tax: body.tax || 0,
-      total: body.total || 0,
+      client_id: data!.client_id,
+      property_id: data!.property_id || null,
+      title: data!.title,
+      description: data!.description || null,
+      status: data!.status || 'scheduled',
+      service_date: data!.scheduled_date, // Map scheduled_date to service_date
+      scheduled_time: null, // Keep for backward compatibility
+      notes: null,
+      subtotal: 0,
+      tax: 0,
+      total: 0,
       // account_id: context.accountId, // Uncomment when column exists
     };
 

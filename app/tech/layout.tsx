@@ -1,10 +1,12 @@
 import { redirect } from 'next/navigation';
+import Link from 'next/link';
 import {
   createAuthClient,
   getCurrentAccountContext,
 } from '@/lib/supabase-auth';
 import { TechLogoutButton } from '@/components/tech-logout-button';
 import { TechPortalSidebar } from './TechPortalSidebar';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
 
 export const dynamic = 'force-dynamic';
 
@@ -76,46 +78,50 @@ export default async function TechLayout({
         />
         <main className="flex-1 overflow-auto bg-muted/20">
           <div className="min-h-full">
-            <div className="px-4 py-6 lg:px-8 lg:py-8">{children}</div>
+            <div className="px-4 py-6 lg:px-8 lg:py-8">
+              <ErrorBoundary>{children}</ErrorBoundary>
+            </div>
           </div>
         </main>
       </div>
 
       {/* Mobile Layout with Bottom Navigation */}
       <div className="lg:hidden">
-        <main className="pb-20">{children}</main>
+        <main className="pb-20">
+          <ErrorBoundary>{children}</ErrorBoundary>
+        </main>
 
         {/* Mobile Bottom Navigation */}
         <nav className="fixed bottom-0 left-0 right-0 bg-card border-t border-border lg:hidden z-50">
           <div className="flex">
-            <a
+            <Link
               href="/tech/today"
               className="flex-1 flex flex-col items-center py-3 px-2 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
             >
               <span className="text-lg mb-1">📅</span>
               Today
-            </a>
-            <a
+            </Link>
+            <Link
               href="/tech/jobs"
               className="flex-1 flex flex-col items-center py-3 px-2 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
             >
               <span className="text-lg mb-1">📋</span>
               Jobs
-            </a>
-            <a
+            </Link>
+            <Link
               href="/tech/schedule"
               className="flex-1 flex flex-col items-center py-3 px-2 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
             >
               <span className="text-lg mb-1">🗓️</span>
               Schedule
-            </a>
-            <a
+            </Link>
+            <Link
               href="/tech/profile"
               className="flex-1 flex flex-col items-center py-3 px-2 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
             >
               <span className="text-lg mb-1">👤</span>
               Profile
-            </a>
+            </Link>
           </div>
         </nav>
       </div>

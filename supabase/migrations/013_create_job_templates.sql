@@ -9,7 +9,7 @@ CREATE TABLE job_templates (
   category TEXT, -- e.g., 'maintenance', 'repair', 'installation', 'inspection'
   estimated_duration_hours DECIMAL(4,2), -- Estimated time to complete
   estimated_cost DECIMAL(8,2), -- Estimated total cost
-  default_priority TEXT DEFAULT 'medium' CHECK (priority IN ('low', 'medium', 'high', 'urgent')),
+  default_priority TEXT DEFAULT 'medium' CHECK (default_priority IN ('low', 'medium', 'high', 'urgent')),
   is_active BOOLEAN DEFAULT true,
 
   -- Template content

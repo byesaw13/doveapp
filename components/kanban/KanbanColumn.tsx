@@ -24,7 +24,7 @@ export default function KanbanColumn<T extends { id: string; status: string }>({
   const itemIds = column.items.map((item) => item.id);
 
   return (
-    <div className="flex-shrink-0 w-80 bg-slate-50 rounded-lg flex flex-col max-h-full">
+    <div className="flex-shrink-0 w-96 bg-slate-50 rounded-lg flex flex-col max-h-full">
       {/* Column Header */}
       <div
         className={`p-4 border-b-4 rounded-t-lg ${

@@ -1,11 +1,36 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { generateInvoicePdf } from '@/lib/pdf-invoice';
+import {
+  checkRateLimit,
+  RATE_LIMITS,
+  getRateLimitHeaders,
+} from '@/lib/rate-limit';
 
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    // Apply rate limiting to PDF exports (resource intensive)
+    const ip =
+      request.headers.get('x-forwarded-for') ||
+      request.headers.get('x-real-ip') ||
+      'unknown';
+    const rateLimit = checkRateLimit(`pdf-export:${ip}`, RATE_LIMITS.EXPORTS);
+
+    if (!rateLimit.allowed) {
+      return NextResponse.json(
+        {
+          error: 'PDF export rate limit exceeded',
+          message: 'Too many PDF exports. Please try again later.',
+        },
+        {
+          status: 429,
+          headers: getRateLimitHeaders(rateLimit.remaining, rateLimit.resetAt),
+        }
+      );
+    }
+
     const { id: invoiceId } = await params;
 
     if (!invoiceId) {

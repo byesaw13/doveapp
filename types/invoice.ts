@@ -14,7 +14,7 @@ export interface Invoice {
   id: string;
   job_id: string;
   estimate_id?: string | null;
-  customer_id?: string | null;
+  client_id?: string | null;
   status: InvoiceStatus;
   invoice_number: string;
   issue_date: string;
@@ -67,7 +67,7 @@ export interface InvoiceWithRelations extends Invoice {
     estimate_number: string;
     title: string;
   };
-  customer?: {
+  client?: {
     id: string;
     first_name: string;
     last_name: string;

@@ -6,7 +6,8 @@ DECLARE
 BEGIN
   SELECT id INTO v_target FROM accounts WHERE name = 'Dovetails Services LLC' LIMIT 1;
   IF v_target IS NULL THEN
-    RAISE EXCEPTION 'Target account "Dovetails Services LLC" not found';
+    RAISE NOTICE 'Target account "Dovetails Services LLC" not found - skipping data reassignment';
+    RETURN;
   END IF;
 
   -- Helper to update a table if it has an account_id column

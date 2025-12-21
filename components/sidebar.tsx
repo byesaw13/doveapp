@@ -24,6 +24,10 @@ import {
   AlertCircle,
   Settings,
   HelpCircle,
+  Search,
+  Mail,
+  PieChart,
+  Workflow,
 } from 'lucide-react';
 import { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
@@ -59,6 +63,24 @@ const navigationGroups: NavGroup[] = [
         shortcut: 'D',
       },
       { name: 'KPI', href: '/admin/kpi', icon: BarChart3, shortcut: 'K' },
+      {
+        name: 'Customer Analytics',
+        href: '/admin/analytics/customers',
+        icon: PieChart,
+        shortcut: 'A',
+      },
+      {
+        name: 'Business Intelligence',
+        href: '/admin/business-intelligence',
+        icon: BarChart3,
+        shortcut: 'B',
+      },
+      {
+        name: 'Advanced Analytics',
+        href: '/admin/advanced-analytics',
+        icon: BarChart3,
+        shortcut: 'V',
+      },
     ],
   },
   {
@@ -116,6 +138,7 @@ const navigationGroups: NavGroup[] = [
     name: 'Relationships',
     defaultOpen: true,
     items: [
+      { name: 'Search', href: '/admin/search', icon: Search, shortcut: 'F' },
       { name: 'Clients', href: '/admin/clients', icon: Users, shortcut: 'U' },
       { name: 'Help', href: '/admin/help', icon: HelpCircle, shortcut: 'H' },
     ],
@@ -131,17 +154,89 @@ const navigationGroups: NavGroup[] = [
         badge: 'lowInventoryItems',
         shortcut: 'I',
       },
+      {
+        name: 'Advanced Automation',
+        href: '/admin/advanced-automation',
+        icon: Workflow,
+        shortcut: 'U',
+      },
+      {
+        name: 'Job Templates',
+        href: '/admin/job-templates',
+        icon: Briefcase,
+        shortcut: 'T',
+      },
+      {
+        name: 'Job Workflows',
+        href: '/admin/job-workflows',
+        icon: Workflow,
+        shortcut: 'W',
+      },
+      {
+        name: 'Time Tracking',
+        href: '/admin/time-tracking',
+        icon: Clock,
+        shortcut: 'M',
+      },
+      {
+        name: 'Pricebook Inspector',
+        href: '/admin/pricebook/inspector',
+        icon: FileText,
+        shortcut: 'P',
+      },
     ],
   },
   {
     name: 'Administration',
-    defaultOpen: false,
+    defaultOpen: true,
     items: [
       {
         name: 'Team',
         href: '/admin/team',
         icon: Users,
         shortcut: 'T',
+      },
+      {
+        name: 'Team Scheduling',
+        href: '/admin/team/scheduling',
+        icon: Calendar,
+        shortcut: 'S',
+      },
+      {
+        name: 'Email Templates',
+        href: '/admin/email-templates',
+        icon: Mail,
+        shortcut: 'E',
+      },
+      {
+        name: 'Job Templates',
+        href: '/admin/job-templates',
+        icon: Briefcase,
+        shortcut: 'J',
+      },
+      {
+        name: 'Invoice Reminders',
+        href: '/admin/invoice-reminders',
+        icon: Mail,
+        shortcut: 'R',
+      },
+      {
+        name: 'Job Workflows',
+        href: '/admin/job-workflows',
+        icon: Workflow,
+        shortcut: 'W',
+      },
+      {
+        name: 'Help & Support',
+        href: '/admin/help',
+        icon: HelpCircle,
+        shortcut: 'H',
+      },
+      {
+        name: 'Debug Tools',
+        href: '/admin/debug',
+        icon: Search, // Using Search as debug icon
+        shortcut: 'D',
       },
       {
         name: 'Settings',
@@ -360,6 +455,7 @@ export function Sidebar({ className }: SidebarProps) {
           variant="outline"
           size="icon"
           onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+          aria-label={isMobileMenuOpen ? 'Close menu' : 'Open menu'}
         >
           {isMobileMenuOpen ? (
             <X className="h-4 w-4" />

@@ -14,12 +14,8 @@ import {
 } from 'lucide-react';
 import type { InvoiceWithRelations } from '@/types/invoice';
 
-interface CustomerInvoice extends InvoiceWithRelations {
-  // Customer-specific view - internal fields removed
-}
-
 export default function InvoicesClient() {
-  const [invoices, setInvoices] = useState<CustomerInvoice[]>([]);
+  const [invoices, setInvoices] = useState<InvoiceWithRelations[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 

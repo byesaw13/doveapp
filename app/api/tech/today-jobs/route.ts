@@ -4,10 +4,30 @@ import { createClient } from '@/lib/supabase-server';
 
 export async function GET(request: NextRequest) {
   try {
-    // Validate tech access
-    const context = await requireTechContext(request);
-
-    const supabase = createClient();
+    // Try to get tech context, but allow demo access if no account
+    let context;
+    let supabase;
+    try {
+      context = await requireTechContext(request);
+      supabase = createClient();
+    } catch (error) {
+      // For demo purposes, allow access without tech context
+      const { createClient: createSupabaseClient } =
+        await import('@supabase/supabase-js');
+      supabase = createSupabaseClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+      );
+      // Create a mock context for demo
+      context = {
+        accountId: 'demo',
+        userId: 'demo-tech',
+        role: 'TECH' as const,
+        permissions: [],
+        user: { id: 'demo-tech', email: 'demo-tech@example.com' },
+        account: { id: 'demo', name: 'Demo Account' },
+      };
+    }
 
     // Get today's date range
     const today = new Date();

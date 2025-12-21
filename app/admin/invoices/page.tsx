@@ -97,8 +97,8 @@ export default function InvoicesPage() {
     const matchesQuery =
       invoice.invoice_number?.toLowerCase().includes(query) ||
       invoice.notes?.toLowerCase().includes(query) ||
-      invoice.customer?.first_name?.toLowerCase().includes(query) ||
-      invoice.customer?.last_name?.toLowerCase().includes(query);
+      invoice.client?.first_name?.toLowerCase().includes(query) ||
+      invoice.client?.last_name?.toLowerCase().includes(query);
 
     // Date range filter
     const matchesDate =
@@ -126,7 +126,7 @@ export default function InvoicesPage() {
     // Client filter
     const matchesClient =
       selectedClients.length === 0 ||
-      (invoice.customer_id && selectedClients.includes(invoice.customer_id));
+      (invoice.client_id && selectedClients.includes(invoice.client_id));
 
     return (
       matchesQuery &&
@@ -323,8 +323,8 @@ export default function InvoicesPage() {
                           {invoice.invoice_number}
                         </Link>
                         <p className="text-sm text-gray-600 mt-1">
-                          {invoice.customer?.first_name}{' '}
-                          {invoice.customer?.last_name}
+                          {invoice.client?.first_name}{' '}
+                          {invoice.client?.last_name}
                         </p>
                       </div>
                       <Badge

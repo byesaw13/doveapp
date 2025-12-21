@@ -21,7 +21,7 @@ export async function GET(request: NextRequest) {
       .select(
         `
         *,
-        clients!invoices_client_id_fkey (
+        client:clients!invoices_client_id_fkey (
           id,
           first_name,
           last_name,

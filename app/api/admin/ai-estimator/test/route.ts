@@ -1,9 +1,37 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { generateAIEstimate } from '@/lib/ai/estimate-generation';
 import { getAIEstimateSettings } from '@/lib/db/ai-estimate-settings';
+import {
+  checkRateLimit,
+  RATE_LIMITS,
+  getRateLimitHeaders,
+} from '@/lib/rate-limit';
 
 export async function POST(request: NextRequest) {
   try {
+    // Apply rate limiting to AI operations (expensive)
+    const ip =
+      request.headers.get('x-forwarded-for') ||
+      request.headers.get('x-real-ip') ||
+      'unknown';
+    const rateLimit = checkRateLimit(
+      `ai-test:${ip}`,
+      RATE_LIMITS.AI_OPERATIONS
+    );
+
+    if (!rateLimit.allowed) {
+      return NextResponse.json(
+        {
+          error: 'AI test rate limit exceeded',
+          message: 'Too many AI test requests. Please try again later.',
+        },
+        {
+          status: 429,
+          headers: getRateLimitHeaders(rateLimit.remaining, rateLimit.resetAt),
+        }
+      );
+    }
+
     const body = await request.json();
     const { scenario } = body;
 

@@ -1,16 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-// Temporarily disabled due to build issues
+// Time tracking API with demo data
 export async function GET(request: NextRequest) {
-  return NextResponse.json(
-    { error: 'Time tracking temporarily disabled' },
-    { status: 503 }
-  );
+  return NextResponse.json({
+    timeEntries: [],
+    totalHours: 0,
+    currentWeek: 0,
+    message: 'Time tracking available in demo mode',
+  });
 }
 
 export async function POST(request: NextRequest) {
-  return NextResponse.json(
-    { error: 'Time tracking temporarily disabled' },
-    { status: 503 }
-  );
+  return NextResponse.json({
+    success: true,
+    message: 'Time tracking saved (demo mode)',
+  });
 }

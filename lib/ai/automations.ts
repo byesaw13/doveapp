@@ -58,8 +58,8 @@ export async function generateInvoiceFollowUp(
   invoice: InvoiceWithRelations,
   daysOverdue: number
 ): Promise<string> {
-  const clientName = invoice.customer
-    ? `${invoice.customer.first_name || ''} ${invoice.customer.last_name || ''}`.trim()
+  const clientName = invoice.client
+    ? `${invoice.client.first_name || ''} ${invoice.client.last_name || ''}`.trim()
     : 'the client';
 
   const prompt = `You are writing a polite invoice follow-up for a field service company.

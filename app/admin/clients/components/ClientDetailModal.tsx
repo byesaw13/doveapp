@@ -29,6 +29,7 @@ import {
 import { Textarea } from '@/components/ui/textarea';
 import { updateClient, createProperty } from '@/lib/db';
 import { ActivityTimeline } from './ActivityTimeline';
+import { CustomerCommunications } from '@/components/admin/CustomerCommunications';
 import type { Client } from '@/types/client';
 import type { PropertyWithClient } from '@/types/property';
 import type { JobWithClient } from '@/types/job';
@@ -328,6 +329,12 @@ export function ClientDetailModal({
               className="flex-1 basis-full sm:basis-[calc(50%-0.5rem)] lg:basis-[calc(33.33%-0.5rem)] whitespace-normal rounded-lg px-4 py-2 text-sm font-medium data-[state=active]:bg-white data-[state=active]:text-slate-900 data-[state=inactive]:text-slate-500 shadow-sm"
             >
               Notes & Preferences
+            </TabsTrigger>
+            <TabsTrigger
+              value="communications"
+              className="flex-1 basis-full sm:basis-[calc(50%-0.5rem)] lg:basis-[calc(33.33%-0.5rem)] whitespace-normal rounded-lg px-4 py-2 text-sm font-medium data-[state=active]:bg-white data-[state=active]:text-slate-900 data-[state=inactive]:text-slate-500 shadow-sm"
+            >
+              Communications
             </TabsTrigger>
             <TabsTrigger
               value="timeline"
@@ -1159,6 +1166,13 @@ export function ClientDetailModal({
                 </CardContent>
               </Card>
             </div>
+          </TabsContent>
+
+          <TabsContent value="communications" className="mt-6 space-y-6">
+            <CustomerCommunications
+              customerId={client.id}
+              customerName={`${client.first_name} ${client.last_name}`}
+            />
           </TabsContent>
 
           <TabsContent value="timeline" className="mt-6 space-y-6">

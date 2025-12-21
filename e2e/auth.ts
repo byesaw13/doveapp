@@ -17,43 +17,34 @@ export async function waitForAppReady(page: Page) {
 }
 
 export async function loginAsAdmin(page: Page) {
-  const email = process.env.E2E_ADMIN_EMAIL!;
-  const password = process.env.E2E_ADMIN_PASSWORD!;
-
   await page.goto('/auth/login');
   await waitForAppReady(page);
-  await page.fill('input[type="email"]', email);
-  await page.fill('input[type="password"]', password);
-  await page.click('button[type="submit"]');
-  // Wait for either /admin or /admin/dashboard (app may redirect)
-  await page.waitForURL(/\/admin(\/dashboard)?/, { timeout: 10000 });
+  // Click the admin demo login button and wait for navigation
+  await Promise.all([
+    page.waitForURL(/\/admin/, { timeout: 15000 }),
+    page.click('text=Admin Portal'),
+  ]);
   await waitForAppReady(page);
 }
 
 export async function loginAsTech(page: Page) {
-  const email = process.env.E2E_TECH_EMAIL!;
-  const password = process.env.E2E_TECH_PASSWORD!;
-
   await page.goto('/auth/login');
   await waitForAppReady(page);
-  await page.fill('input[type="email"]', email);
-  await page.fill('input[type="password"]', password);
-  await page.click('button[type="submit"]');
-  // Wait for tech routes (may have subpath)
-  await page.waitForURL(/\/tech/, { timeout: 10000 });
+  // Click the tech demo login button and wait for navigation
+  await Promise.all([
+    page.waitForURL(/\/tech/, { timeout: 15000 }),
+    page.click('text=Technician Portal'),
+  ]);
   await waitForAppReady(page);
 }
 
 export async function loginAsCustomer(page: Page) {
-  const email = process.env.E2E_CUSTOMER_EMAIL!;
-  const password = process.env.E2E_CUSTOMER_PASSWORD!;
-
   await page.goto('/auth/login');
   await waitForAppReady(page);
-  await page.fill('input[type="email"]', email);
-  await page.fill('input[type="password"]', password);
-  await page.click('button[type="submit"]');
-  // Wait for customer routes (may have subpath)
-  await page.waitForURL(/\/customer/, { timeout: 10000 });
+  // Click the customer demo login button and wait for navigation
+  await Promise.all([
+    page.waitForURL(/\/portal/, { timeout: 15000 }),
+    page.click('text=Customer Portal'),
+  ]);
   await waitForAppReady(page);
 }

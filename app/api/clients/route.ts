@@ -1,14 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAccountContext, canManageAdmin } from '@/lib/auth-guards';
 import { createServerClient } from '@supabase/ssr';
+import { PerformanceLogger } from '@/lib/api/performance';
+import { validateRequest, createClientSchema } from '@/lib/api/validation';
 
 // GET /api/clients - Get all clients or search
 export async function GET(request: NextRequest) {
+  const url = new URL(request.url);
+  const perfLogger = new PerformanceLogger(url.pathname, 'GET');
+
   try {
     // Validate authentication and get account context
     const context = await requireAccountContext(request);
 
-    const supabase = createServerClient(
+    const supabaseClient = createServerClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
       {
@@ -25,7 +30,7 @@ export async function GET(request: NextRequest) {
     const searchParams = request.nextUrl.searchParams;
     const query = searchParams.get('q');
 
-    let queryBuilder = supabase
+    let queryBuilder = supabaseClient
       .from('clients')
       .select('*')
       .order('created_at', { ascending: false });
@@ -42,19 +47,29 @@ export async function GET(request: NextRequest) {
       );
     }
 
+    perfLogger.incrementQueryCount();
     const { data: clients, error } = await queryBuilder;
 
     if (error) {
       console.error('Error fetching clients:', error);
+      perfLogger.complete(500);
       return NextResponse.json(
         { error: 'Failed to fetch clients' },
         { status: 500 }
       );
     }
 
-    return NextResponse.json(clients || []);
+    const metrics = perfLogger.complete(200);
+    const response = NextResponse.json(clients || []);
+    response.headers.set('X-Response-Time', `${metrics.duration}ms`);
+    if (metrics.queryCount) {
+      response.headers.set('X-Query-Count', metrics.queryCount.toString());
+    }
+
+    return response;
   } catch (error) {
     console.error('Error fetching clients:', error);
+    perfLogger.complete(401);
     const message = error instanceof Error ? error.message : 'Unauthorized';
     return NextResponse.json({ error: message }, { status: 401 });
   }
@@ -73,7 +88,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const supabase = createServerClient(
+    const supabaseClient = createServerClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
       {
@@ -87,17 +102,20 @@ export async function POST(request: NextRequest) {
       }
     );
 
-    const body = await request.json();
+    // Validate request body
+    const { data: validatedData, error: validationError } =
+      await validateRequest(request, createClientSchema);
+    if (validationError) return validationError;
 
     // Add account_id to the client data
-    // const clientData = {
-    //   ...body,
-    //   account_id: context.accountId,
-    // };
+    const clientData = {
+      ...validatedData,
+      // account_id: context.accountId, // Uncomment when column exists
+    };
 
-    const { data: client, error } = await supabase
+    const { data: client, error } = await supabaseClient
       .from('clients')
-      .insert(body)
+      .insert(clientData)
       .select()
       .single();
 

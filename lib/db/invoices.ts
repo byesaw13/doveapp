@@ -73,7 +73,7 @@ export async function createInvoiceFromJob(
     .insert({
       job_id: jobId,
       estimate_id: job.estimate_id,
-      customer_id: job.client_id,
+      client_id: job.client_id,
       status: 'draft',
       issue_date: new Date().toISOString().split('T')[0],
       due_date: dueDate,
@@ -142,7 +142,7 @@ export async function getInvoiceByIdWithRelations(
         estimate_number,
         title
       ),
-      customer:clients(
+      client:clients(
         id,
         first_name,
         last_name,
@@ -188,7 +188,7 @@ export async function listInvoicesWithFilters(filters: {
         estimate_number,
         title
       ),
-      customer:clients(
+      client:clients(
         id,
         first_name,
         last_name,
@@ -417,7 +417,7 @@ export async function getInvoicesByJobId(
         title,
         status
       ),
-      customer:clients(
+      client:clients(
         id,
         first_name,
         last_name,

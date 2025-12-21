@@ -177,7 +177,9 @@ export default function TechJobsClient() {
                       {job.title}
                     </h3>
                     <p className="text-sm text-muted-foreground">
-                      {job.client.first_name} {job.client.last_name}
+                      {job.client
+                        ? `${job.client.first_name} ${job.client.last_name}`
+                        : 'Unknown Client'}
                     </p>
                     <p className="text-xs text-muted-foreground">
                       {new Date(job.service_date).toLocaleDateString()}

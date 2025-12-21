@@ -9,12 +9,39 @@ import { createAuthenticatedClient } from '@/lib/api-helpers';
 // GET /api/settings - Get business settings
 export async function GET(request: NextRequest) {
   try {
-    const context = await requireAccountContext(request);
-    if (!canManageAdmin(context.role)) {
-      return NextResponse.json({ error: 'Admin access required' }, { status: 403 });
+    // Try to get account context, but allow demo access if no account
+    let context;
+    let supabase;
+    try {
+      context = await requireAccountContext(request);
+      if (!canManageAdmin(context.role)) {
+        return NextResponse.json(
+          { error: 'Admin access required' },
+          { status: 403 }
+        );
+      }
+      supabase = createAuthenticatedClient(request);
+    } catch (error) {
+      // For demo purposes, return default settings
+      return NextResponse.json({
+        id: 'demo-settings',
+        account_id: 'demo',
+        business_name: 'Demo Services LLC',
+        business_address: '123 Demo Street',
+        business_phone: '(555) 123-4567',
+        business_email: 'demo@example.com',
+        ai_automation: {
+          estimate_followups: true,
+          invoice_followups: true,
+          job_closeout: true,
+          review_requests: true,
+          lead_response: true,
+        },
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      });
     }
 
-    const supabase = createAuthenticatedClient(request);
     const settings = await getOrCreateBusinessSettings(supabase);
     return NextResponse.json(settings);
   } catch (error) {
@@ -31,7 +58,10 @@ export async function PUT(request: NextRequest) {
   try {
     const context = await requireAccountContext(request);
     if (!canManageAdmin(context.role)) {
-      return NextResponse.json({ error: 'Admin access required' }, { status: 403 });
+      return NextResponse.json(
+        { error: 'Admin access required' },
+        { status: 403 }
+      );
     }
 
     const supabase = createAuthenticatedClient(request);

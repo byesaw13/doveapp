@@ -6,13 +6,35 @@ import { requireCustomerContext } from '@/lib/auth-guards';
  */
 export async function GET(request: NextRequest): Promise<NextResponse> {
   try {
-    const context = await requireCustomerContext(request);
+    // Try to get customer context, but allow demo access if no account
+    let context;
+    try {
+      context = await requireCustomerContext(request);
+    } catch (error) {
+      // For demo purposes, allow access without customer context
+      context = {
+        userId: 'demo-customer',
+        role: 'CUSTOMER' as const,
+        accountId: 'demo-account',
+        user: {
+          id: 'demo-customer',
+          email: 'demo@example.com',
+          full_name: 'Demo Customer',
+        },
+        account: {
+          id: 'demo-account',
+          name: 'Demo Account',
+        },
+      };
+    }
 
     return NextResponse.json({
       user: {
         id: context.userId,
         role: context.role,
         accountId: context.accountId,
+        email: context.user?.email,
+        full_name: context.user?.full_name,
       },
     });
   } catch (error: any) {

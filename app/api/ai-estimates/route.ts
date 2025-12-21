@@ -5,9 +5,37 @@ import {
 } from '@/lib/ai/estimate-generation';
 import { getAIEstimateSettings } from '@/lib/db/ai-estimate-settings';
 import type { AIEstimateRequest } from '@/types/estimate';
+import {
+  checkRateLimit,
+  RATE_LIMITS,
+  getRateLimitHeaders,
+} from '@/lib/rate-limit';
 
 export async function POST(request: NextRequest) {
   try {
+    // Apply rate limiting to AI operations (expensive)
+    const ip =
+      request.headers.get('x-forwarded-for') ||
+      request.headers.get('x-real-ip') ||
+      'unknown';
+    const rateLimit = checkRateLimit(
+      `ai-estimate:${ip}`,
+      RATE_LIMITS.AI_OPERATIONS
+    );
+
+    if (!rateLimit.allowed) {
+      return NextResponse.json(
+        {
+          error: 'AI estimate rate limit exceeded',
+          message: 'Too many AI estimate requests. Please try again later.',
+        },
+        {
+          status: 429,
+          headers: getRateLimitHeaders(rateLimit.remaining, rateLimit.resetAt),
+        }
+      );
+    }
+
     // Check for OpenAI API key first
     if (!process.env.OPENAI_API_KEY) {
       console.error(

@@ -12,6 +12,7 @@ import { SWRConfig } from 'swr';
 import { KeyboardShortcuts } from '@/components/KeyboardShortcuts';
 import { SkipLink } from '@/components/ui/skip-link';
 import { ErrorBoundary } from '@/components/ui/error-boundary';
+import { ToastProvider } from '@/components/ui/toast';
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -124,8 +125,6 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
-  maximumScale: 5,
-  userScalable: true,
   themeColor: '#0066cc', // Housecall Pro blue
 };
 
@@ -174,19 +173,21 @@ export default function RootLayout({
     <html lang="en" className={`${geistSans.variable} ${geistMono.variable}`}>
       <body>
         <ThemeProvider>
-          <SWRConfig
-            value={{
-              revalidateOnFocus: false,
-              revalidateOnReconnect: true,
-              dedupingInterval: 5000,
-            }}
-          >
-            <SkipLink />
-            <KeyboardShortcuts />
-            <ErrorBoundary>
-              <main id="main-content">{children}</main>
-            </ErrorBoundary>
-          </SWRConfig>
+          <ToastProvider>
+            <SWRConfig
+              value={{
+                revalidateOnFocus: false,
+                revalidateOnReconnect: true,
+                dedupingInterval: 5000,
+              }}
+            >
+              <SkipLink />
+              <KeyboardShortcuts />
+              <ErrorBoundary>
+                <main id="main-content">{children}</main>
+              </ErrorBoundary>
+            </SWRConfig>
+          </ToastProvider>
         </ThemeProvider>
         <RegisterServiceWorker />
       </body>

@@ -213,7 +213,7 @@ export default function InvoiceDetailPage() {
                 {invoice.invoice_number}
               </h1>
               <p className="text-gray-600 mt-1">
-                {invoice.customer?.first_name} {invoice.customer?.last_name}
+                {invoice.client?.first_name} {invoice.client?.last_name}
               </p>
             </div>
           </div>
@@ -448,8 +448,8 @@ export default function InvoiceDetailPage() {
                 <SendInvoiceDialog
                   invoiceId={invoiceId}
                   invoiceNumber={invoice.invoice_number}
-                  customerEmail={invoice.customer?.email}
-                  customerPhone={invoice.customer?.phone}
+                  customerEmail={invoice.client?.email}
+                  customerPhone={invoice.client?.phone}
                   onSent={() => {
                     // Refresh the invoice data after sending
                     loadInvoice();

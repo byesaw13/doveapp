@@ -14,12 +14,8 @@ import {
 } from 'lucide-react';
 import type { EstimateWithRelations } from '@/types/estimate';
 
-interface CustomerEstimate extends EstimateWithRelations {
-  // Customer-specific view - internal fields removed
-}
-
 export default function EstimatesClient() {
-  const [estimates, setEstimates] = useState<CustomerEstimate[]>([]);
+  const [estimates, setEstimates] = useState<EstimateWithRelations[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 

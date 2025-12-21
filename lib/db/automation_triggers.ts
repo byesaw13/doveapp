@@ -53,7 +53,7 @@ export async function scheduleInvoiceFollowUps(
       runAt,
       payload: {
         invoice_number: invoice.invoice_number,
-        customer_id: invoice.customer_id,
+        customer_id: invoice.client_id,
         due_date: invoice.due_date,
         sequence_days: days,
       },

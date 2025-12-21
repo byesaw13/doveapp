@@ -1,0 +1,60 @@
+name: Automated Database Backup
+
+on:
+  schedule:
+    # Run daily at 2:00 AM UTC
+    - cron: '0 2 * * *'
+  workflow_dispatch: # Allow manual triggers
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Create backups directory
+        run: mkdir -p backups
+
+      - name: Run backup script
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          BACKUP_RETENTION_DAYS: 30
+        run: node scripts/automated-backup.js
+
+      - name: Upload backup artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: database-backup-${{ github.run_number }}
+          path: backups/*.json
+          retention-days: 30
+
+      - name: Get backup info
+        id: backup-info
+        run: |
+          LATEST_BACKUP=$(ls -t backups/*.json | head -1)
+          BACKUP_SIZE=$(du -h "$LATEST_BACKUP" | cut -f1)
+          echo "size=$BACKUP_SIZE" >> $GITHUB_OUTPUT
+          echo "file=$(basename $LATEST_BACKUP)" >> $GITHUB_OUTPUT
+
+      - name: Create backup summary
+        run: |
+          echo "## 📦 Database Backup Complete" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Backup File:** ${{ steps.backup-info.outputs.file }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Size:** ${{ steps.backup-info.outputs.size }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Date:** $(date -u +'%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "✅ Backup uploaded as workflow artifact (retention: 30 days)" >> $GITHUB_STEP_SUMMARY

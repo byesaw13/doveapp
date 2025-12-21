@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { requireAccountContext } from '@/lib/auth-guards';
 import {
   getEstimate,
   updateEstimate,
@@ -15,6 +16,9 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    // Check authentication and account context
+    const context = await requireAccountContext(request);
+
     const { id } = await params;
     const estimate = await getEstimate(id);
 
@@ -23,6 +27,11 @@ export async function GET(
         { error: 'Estimate not found' },
         { status: 404 }
       );
+    }
+
+    // Check if estimate belongs to user's account
+    if (estimate.account_id && estimate.account_id !== context.accountId) {
+      return NextResponse.json({ error: 'Access denied' }, { status: 403 });
     }
 
     return NextResponse.json(estimate);
@@ -60,8 +69,29 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    // Check authentication and account context
+    const context = await requireAccountContext(request);
+
     const { id } = await params;
     const body = await request.json();
+
+    // Get current estimate to check ownership
+    const currentEstimate = await getEstimate(id);
+    if (!currentEstimate) {
+      return NextResponse.json(
+        { error: 'Estimate not found' },
+        { status: 404 }
+      );
+    }
+
+    // Check if estimate belongs to user's account
+    if (
+      currentEstimate.account_id &&
+      currentEstimate.account_id !== context.accountId
+    ) {
+      return NextResponse.json({ error: 'Access denied' }, { status: 403 });
+    }
+
     const estimate = await updateEstimate(id, body);
     return NextResponse.json(estimate);
   } catch (error) {

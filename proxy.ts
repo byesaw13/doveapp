@@ -3,10 +3,10 @@ import type { NextRequest } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
 
 /**
- * Enhanced middleware with authentication and account context validation.
+ * Enhanced proxy with authentication and account context validation.
  * Uses a single NextResponse and forwards account context via request headers.
  */
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const requestHeaders = new Headers(request.headers);
   const pendingCookies: Array<{
     name: string;

@@ -112,7 +112,7 @@ export async function generateInvoicePdf(
   addColoredText('BILL TO:', 20, yPosition, secondaryColor, 12);
   yPosition += 10;
 
-  const customer = invoice.customer;
+  const customer = invoice.client;
   if (customer) {
     addText(`${customer.first_name} ${customer.last_name}`, 20, yPosition);
     if (customer.email) {

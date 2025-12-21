@@ -37,6 +37,6 @@ create index if not exists time_entries_start_time_idx on time_entries(start_tim
 -- Job photos: performance indexes
 create index if not exists job_photos_job_id_idx on job_photos(job_id);
 
--- Activities: performance indexes for recent activity queries
-create index if not exists activities_created_at_idx on activities(created_at desc);
-create index if not exists activities_type_idx on activities(activity_type);
+-- Client Activities: performance indexes for recent activity queries
+create index if not exists client_activities_created_at_idx on client_activities(created_at desc);
+create index if not exists client_activities_type_idx on client_activities(activity_type);

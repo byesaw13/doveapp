@@ -64,7 +64,7 @@ export default function JobHistoryClient() {
         throw new Error('Failed to load job history');
       }
 
-      let data = await jobsResponse.json();
+      const data = await jobsResponse.json();
 
       // Sort the data
       if (sortBy === 'date') {

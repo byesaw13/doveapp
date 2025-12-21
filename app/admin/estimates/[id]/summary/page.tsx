@@ -41,23 +41,63 @@ export default function EstimateSummaryPage() {
   const estimateId = params.id as string;
 
   useEffect(() => {
-    loadEstimate();
+    if (estimateId && typeof estimateId === 'string' && estimateId.length > 0) {
+      loadEstimate();
+    } else {
+      console.error('Invalid estimate ID:', estimateId);
+      toast({
+        title: 'Error',
+        description: 'Invalid estimate ID',
+        variant: 'destructive',
+      });
+      router.push('/admin/estimates');
+    }
   }, [estimateId]);
 
   const loadEstimate = async () => {
     try {
       setLoading(true);
+      console.log('Loading estimate ID:', estimateId);
+
       const response = await fetch(`/api/estimates/${estimateId}`);
-      if (!response.ok) throw new Error('Failed to load estimate');
+      console.log('Response status:', response.status);
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('API Error Response:', response.status, errorText);
+
+        if (response.status === 404) {
+          throw new Error('Estimate not found');
+        } else if (response.status === 403) {
+          throw new Error('You do not have access to this estimate');
+        } else if (response.status === 401) {
+          throw new Error('Authentication required');
+        }
+
+        let errorMessage = 'Failed to load estimate';
+        try {
+          const errorData = JSON.parse(errorText);
+          errorMessage = errorData.error || errorMessage;
+        } catch (e) {
+          errorMessage = errorText || errorMessage;
+        }
+        throw new Error(errorMessage);
+      }
+
       const data = await response.json();
+      console.log('Estimate loaded successfully:', data.id);
       setEstimate(data);
     } catch (error) {
       console.error('Failed to load estimate:', error);
       toast({
         title: 'Error',
-        description: 'Failed to load estimate',
+        description:
+          error instanceof Error ? error.message : 'Failed to load estimate',
         variant: 'destructive',
       });
+
+      // Redirect back to estimates list on error
+      setTimeout(() => router.push('/admin/estimates'), 2000);
     } finally {
       setLoading(false);
     }

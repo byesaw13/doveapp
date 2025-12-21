@@ -11,6 +11,30 @@ const nextConfig: NextConfig = {
     // Set the root directory to silence the lockfile warning
     root: process.cwd(),
   },
+  // Redirects
+  async redirects() {
+    return [
+      {
+        source: '/admin',
+        destination: '/admin/dashboard',
+        permanent: true,
+      },
+      {
+        source: '/login',
+        destination: '/auth/login',
+        permanent: true,
+      },
+      {
+        source: '/settings',
+        destination: '/admin/settings',
+        permanent: true,
+      },
+    ];
+  },
+  // E2E mode flag to disable analytics/payments for stable tests
+  env: {
+    E2E_MODE: process.env.E2E_MODE || 'false',
+  },
   // Security headers
   async headers() {
     return [
@@ -38,32 +62,6 @@ const nextConfig: NextConfig = {
             key: 'X-DNS-Prefetch-Control',
             value: 'on',
           },
-        ],
-      },
-      {
-        // Strict CSP for sensitive routes
-        source: '/admin/:path*',
-        headers: [
-          {
-            key: 'Content-Security-Policy',
-            value: [
-              "default-src 'self'",
-              "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
-              "style-src 'self' 'unsafe-inline'",
-              "img-src 'self' data: https:",
-              "font-src 'self'",
-              "connect-src 'self' https://*.supabase.co https://*.vercel-analytics.com",
-              "frame-ancestors 'none'",
-              "base-uri 'self'",
-              "form-action 'self'",
-            ].join('; '),
-          },
-        ],
-      },
-      {
-        // Relaxed CSP for customer portal
-        source: '/portal/:path*',
-        headers: [
           {
             key: 'Content-Security-Policy',
             value: [
@@ -72,8 +70,30 @@ const nextConfig: NextConfig = {
               "style-src 'self' 'unsafe-inline'",
               "img-src 'self' data: https:",
               "font-src 'self'",
-              "connect-src 'self' https://*.supabase.co",
+              "connect-src 'self' https://*.supabase.co https://*.vercel-analytics.com https://*.vercel-insights.com",
               "frame-ancestors 'none'",
+              "base-uri 'self'",
+              "form-action 'self'",
+            ].join('; '),
+          },
+        ],
+      },
+      {
+        // Strict CSP for admin routes (override default)
+        source: '/admin/:path*',
+        headers: [
+          {
+            key: 'Content-Security-Policy',
+            value: [
+              "default-src 'self'",
+              "script-src 'self' 'unsafe-inline' 'unsafe-eval'", // Allow eval for admin features
+              "style-src 'self' 'unsafe-inline'",
+              "img-src 'self' data: https:",
+              "font-src 'self'",
+              "connect-src 'self' https://*.supabase.co https://*.vercel-analytics.com https://*.vercel-insights.com",
+              "frame-ancestors 'none'",
+              "base-uri 'self'",
+              "form-action 'self'",
             ].join('; '),
           },
         ],

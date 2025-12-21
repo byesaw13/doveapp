@@ -1,5 +1,7 @@
+'use client';
+
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { getDashboardStats } from '@/lib/dashboard';
 import { SmartDashboard } from '@/components/SmartDashboard';
 import { PWARegistration } from '@/components/PWARegistration';
 import { getSpacing, getBorderRadius } from '@/lib/design-tokens-utils';
@@ -17,8 +19,42 @@ import {
   AlertCircle,
 } from 'lucide-react';
 
-export default async function Dashboard() {
-  const stats = await getDashboardStats();
+interface DashboardStats {
+  totalClients: number;
+  totalProperties: number;
+  totalJobs: number;
+  totalEstimates: number;
+  totalLeads: number;
+  totalRevenue?: number;
+  totalOutstanding?: number;
+  recentJobs?: any[];
+}
+
+export default function Dashboard() {
+  const [stats, setStats] = useState<DashboardStats | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const loadStats = async () => {
+      try {
+        setLoading(true);
+        const response = await fetch('/api/dashboard/stats');
+        if (!response.ok) {
+          throw new Error('Failed to load dashboard stats');
+        }
+        const data = await response.json();
+        setStats(data);
+      } catch (err: any) {
+        setError(err.message || 'Failed to load stats');
+        console.error('Failed to load dashboard stats:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadStats();
+  }, []);
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-US', {
@@ -26,6 +62,36 @@ export default async function Dashboard() {
       currency: 'USD',
     }).format(amount);
   };
+
+  if (loading) {
+    return (
+      <div className="p-6 max-w-7xl">
+        <div className="mb-6">
+          <h1 className="text-2xl font-bold flex items-center">
+            <Calendar className="h-6 w-6 mr-2" />
+            Dashboard
+          </h1>
+          <p className="text-muted-foreground">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error || !stats) {
+    return (
+      <div className="p-6 max-w-7xl">
+        <div className="mb-6">
+          <h1 className="text-2xl font-bold flex items-center">
+            <Calendar className="h-6 w-6 mr-2" />
+            Dashboard
+          </h1>
+          <p className="text-red-600">
+            Error: {error || 'Failed to load stats'}
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
@@ -148,7 +214,7 @@ export default async function Dashboard() {
                 </div>
               </div>
               <div className="text-3xl font-bold text-emerald-700 mb-1">
-                {formatCurrency(stats.totalRevenue)}
+                {formatCurrency(stats.totalRevenue || 0)}
               </div>
               <p className="text-sm font-semibold text-emerald-600">
                 Total Revenue
@@ -167,7 +233,7 @@ export default async function Dashboard() {
               </span>
             </div>
             <div className="text-3xl font-bold text-amber-700 mb-1">
-              {formatCurrency(stats.totalOutstanding)}
+              {formatCurrency(stats.totalOutstanding || 0)}
             </div>
             <p className="text-sm font-medium text-slate-600">Outstanding</p>
           </div>

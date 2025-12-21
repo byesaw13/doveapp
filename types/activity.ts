@@ -29,7 +29,8 @@ export interface ClientActivity {
   activity_type: ActivityType;
   title: string;
   description?: string;
-   due_date?: string | null;
+  due_date?: string | null;
+  completed_at?: string | null;
   metadata?: Record<string, any>;
   related_id?: string;
   related_type?: string;
@@ -43,7 +44,8 @@ export interface ClientActivityInsert {
   activity_type: ActivityType;
   title: string;
   description?: string;
-   due_date?: string | null;
+  due_date?: string | null;
+  completed_at?: string | null;
   metadata?: Record<string, any>;
   related_id?: string;
   related_type?: string;

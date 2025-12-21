@@ -16,6 +16,12 @@ import {
   Mail,
   Brain,
   Shield,
+  Search,
+  Clock,
+  FileCheck,
+  Bell,
+  HelpCircle,
+  Bug,
 } from 'lucide-react';
 
 interface AdminPortalSidebarProps {
@@ -53,6 +59,24 @@ export function AdminPortalSidebar({
               icon: <BarChart3 className="h-5 w-5" />,
               shortcut: 'K',
             },
+            {
+              name: 'Business Intelligence',
+              href: '/admin/business-intelligence',
+              icon: <BarChart3 className="h-5 w-5" />,
+              shortcut: 'B',
+            },
+            {
+              name: 'Advanced Analytics',
+              href: '/admin/advanced-analytics',
+              icon: <BarChart3 className="h-5 w-5" />,
+              shortcut: 'A',
+            },
+            {
+              name: 'Customer Analytics',
+              href: '/admin/analytics/customers',
+              icon: <BarChart3 className="h-5 w-5" />,
+              shortcut: 'C',
+            },
           ],
         },
         {
@@ -86,10 +110,28 @@ export function AdminPortalSidebar({
               shortcut: 'T',
             },
             {
+              name: 'Customers',
+              href: '/admin/customers',
+              icon: <UserCog className="h-5 w-5" />,
+              shortcut: 'U',
+            },
+            {
+              name: 'Profile Requests',
+              href: '/admin/profile-change-requests',
+              icon: <UserCog className="h-5 w-5" />,
+              shortcut: 'P',
+            },
+            {
               name: 'Calendar',
               href: '/admin/calendar',
               icon: <Calendar className="h-5 w-5" />,
               shortcut: 'C',
+            },
+            {
+              name: 'Portal Customers',
+              href: '/admin/portal-customers',
+              icon: <UserCog className="h-5 w-5" />,
+              shortcut: 'U',
             },
             {
               name: 'Jobs',
@@ -97,6 +139,18 @@ export function AdminPortalSidebar({
               icon: <Briefcase className="h-5 w-5" />,
               badge: 'overdueJobs',
               shortcut: 'J',
+            },
+            {
+              name: 'Schedule',
+              href: '/admin/schedule',
+              icon: <Calendar className="h-5 w-5" />,
+              shortcut: 'H',
+            },
+            {
+              name: 'Advanced Search',
+              href: '/admin/search',
+              icon: <Search className="h-5 w-5" />,
+              shortcut: 'S',
             },
           ],
         },
@@ -135,6 +189,36 @@ export function AdminPortalSidebar({
               icon: <Zap className="h-5 w-5" />,
               shortcut: 'A',
             },
+            {
+              name: 'Advanced Automation',
+              href: '/admin/advanced-automation',
+              icon: <Zap className="h-5 w-5" />,
+              shortcut: 'V',
+            },
+            {
+              name: 'Job Templates',
+              href: '/admin/job-templates',
+              icon: <FileCheck className="h-5 w-5" />,
+              shortcut: 'T',
+            },
+            {
+              name: 'Job Workflows',
+              href: '/admin/job-workflows',
+              icon: <FileCheck className="h-5 w-5" />,
+              shortcut: 'W',
+            },
+            {
+              name: 'Time Tracking',
+              href: '/admin/time-tracking',
+              icon: <Clock className="h-5 w-5" />,
+              shortcut: 'M',
+            },
+            {
+              name: 'Pricebook Inspector',
+              href: '/admin/pricebook/inspector',
+              icon: <FileText className="h-5 w-5" />,
+              shortcut: 'P',
+            },
           ],
         },
         {
@@ -163,7 +247,7 @@ export function AdminPortalSidebar({
         },
         {
           name: 'Administration',
-          defaultOpen: false,
+          defaultOpen: true,
           items: [
             {
               name: 'Emails',
@@ -172,16 +256,46 @@ export function AdminPortalSidebar({
               shortcut: 'M',
             },
             {
+              name: 'Email Templates',
+              href: '/admin/email-templates',
+              icon: <Mail className="h-5 w-5" />,
+              shortcut: 'E',
+            },
+            {
+              name: 'Invoice Reminders',
+              href: '/admin/invoice-reminders',
+              icon: <Bell className="h-5 w-5" />,
+              shortcut: 'R',
+            },
+            {
               name: 'Team',
               href: '/admin/team',
               icon: <UserCog className="h-5 w-5" />,
               shortcut: 'T',
             },
             {
+              name: 'Team Scheduling',
+              href: '/admin/team/scheduling',
+              icon: <Calendar className="h-5 w-5" />,
+              shortcut: 'S',
+            },
+            {
               name: 'Security & Compliance',
               href: '/admin/security-compliance',
               icon: <Shield className="h-5 w-5" />,
-              shortcut: 'S',
+              shortcut: 'C',
+            },
+            {
+              name: 'Help & Support',
+              href: '/admin/help',
+              icon: <HelpCircle className="h-5 w-5" />,
+              shortcut: 'H',
+            },
+            {
+              name: 'Debug Tools',
+              href: '/admin/debug',
+              icon: <Bug className="h-5 w-5" />,
+              shortcut: 'D',
             },
           ],
         },

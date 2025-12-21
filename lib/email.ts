@@ -35,6 +35,12 @@ export interface SmsParams {
   message: string;
 }
 
+export interface CustomerInvitationEmailParams {
+  to: string;
+  customerName: string;
+  invitationLink: string;
+}
+
 /**
  * Send welcome email to new team member with temporary password
  */
@@ -225,6 +231,109 @@ export async function sendChangeRequestEmail({
       error: error instanceof Error ? error.message : 'Unknown error',
     };
   }
+}
+
+/**
+ * Send customer portal invitation email
+ */
+export async function sendCustomerInvitationEmail({
+  to,
+  customerName,
+  invitationLink,
+}: CustomerInvitationEmailParams) {
+  if (!process.env.RESEND_API_KEY) {
+    console.warn('⚠️  RESEND_API_KEY not configured. Email not sent.');
+    console.log(`📧 Would have sent invitation to: ${to}`);
+    return { success: false, error: 'Email service not configured' };
+  }
+
+  try {
+    const { data, error } = await resend.emails.send({
+      from: process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev',
+      to: [to],
+      subject: 'Welcome to Your Customer Portal',
+      html: getCustomerInvitationEmailHTML({ customerName, invitationLink }),
+    });
+
+    if (error) {
+      console.error('❌ Error sending customer invitation email:', error);
+      return { success: false, error: error.message };
+    }
+
+    console.log('✅ Customer invitation email sent to:', to);
+    return { success: true, data };
+  } catch (error) {
+    console.error('❌ Unexpected error sending email:', error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error',
+    };
+  }
+}
+
+/**
+ * Generate HTML for customer invitation email
+ */
+function getCustomerInvitationEmailHTML({
+  customerName,
+  invitationLink,
+}: Omit<CustomerInvitationEmailParams, 'to'>) {
+  return `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Welcome to Your Customer Portal</title>
+</head>
+<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+
+  <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; border-radius: 8px 8px 0 0; text-align: center;">
+    <h1 style="margin: 0; font-size: 28px;">Welcome to Your Customer Portal! 🎉</h1>
+  </div>
+
+  <div style="background: #ffffff; padding: 30px; border: 1px solid #e0e0e0; border-top: none; border-radius: 0 0 8px 8px;">
+    <p style="font-size: 16px; margin-bottom: 20px;">Hi ${customerName},</p>
+
+    <p style="font-size: 16px; margin-bottom: 20px;">
+      You've been invited to access your customer portal where you can view your service history,
+      estimates, invoices, and communicate with our team.
+    </p>
+
+    <div style="background: #f5f5f5; padding: 20px; border-radius: 6px; margin: 25px 0;">
+      <h2 style="margin: 0 0 15px 0; font-size: 18px; color: #667eea;">Get Started</h2>
+      <p style="margin: 5px 0;">Click the button below to set up your account and access your portal.</p>
+    </div>
+
+    <a href="${invitationLink}" style="display: inline-block; background: #667eea; color: white; padding: 12px 30px; text-decoration: none; border-radius: 6px; font-weight: 600; margin-top: 20px;">
+      Accept Invitation & Set Up Account
+    </a>
+
+    <div style="background: #fff3cd; border-left: 4px solid #ffc107; padding: 15px; margin: 25px 0;">
+      <p style="margin: 0; color: #856404;">
+        <strong>⚠️ Important:</strong> This invitation link will expire in 7 days for security reasons.
+      </p>
+    </div>
+
+    <hr style="border: none; border-top: 1px solid #e0e0e0; margin: 30px 0;">
+
+    <p style="font-size: 14px; color: #666; margin-bottom: 10px;">
+      If you have any questions or need assistance, please don't hesitate to contact us.
+    </p>
+
+    <p style="font-size: 14px; color: #666; margin: 0;">
+      Best regards,<br>
+      <strong>Your Service Team</strong>
+    </p>
+  </div>
+
+  <div style="text-align: center; padding: 20px; font-size: 12px; color: #999;">
+    <p style="margin: 0;">This is an automated message. Please do not reply to this email.</p>
+  </div>
+
+</body>
+</html>
+  `.trim();
 }
 
 /**

@@ -24,6 +24,7 @@ export const RATE_LIMITS = {
   API_STRICT: { maxRequests: 20, windowMs: 60 * 1000 }, // 20 req/min
   AUTH: { maxRequests: 5, windowMs: 60 * 1000 }, // 5 req/min
   EXPORTS: { maxRequests: 10, windowMs: 60 * 1000 }, // 10 req/min
+  AI_OPERATIONS: { maxRequests: 15, windowMs: 60 * 1000 }, // 15 req/min (AI calls are expensive)
 };
 
 /**

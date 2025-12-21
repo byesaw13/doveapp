@@ -1,11 +1,36 @@
 import { NextRequest, NextResponse } from 'next/server';
+import {
+  checkRateLimit,
+  RATE_LIMITS,
+  getRateLimitHeaders,
+} from '@/lib/rate-limit';
 
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID!;
 const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET!;
 const GOOGLE_REDIRECT_URI = process.env.GOOGLE_REDIRECT_URI!;
 
 // GET /api/auth/google - Initiate Google OAuth flow
-export async function GET() {
+export async function GET(request: NextRequest) {
+  // Apply rate limiting to prevent OAuth abuse
+  const ip =
+    request.headers.get('x-forwarded-for') ||
+    request.headers.get('x-real-ip') ||
+    'unknown';
+  const rateLimit = checkRateLimit(`oauth:${ip}`, RATE_LIMITS.AUTH);
+
+  if (!rateLimit.allowed) {
+    return NextResponse.json(
+      {
+        error: 'Too many OAuth attempts',
+        message: 'Please try again later',
+      },
+      {
+        status: 429,
+        headers: getRateLimitHeaders(rateLimit.remaining, rateLimit.resetAt),
+      }
+    );
+  }
+
   // Debug: Check if environment variables are loaded
   // Debug logging for OAuth setup
   console.warn(

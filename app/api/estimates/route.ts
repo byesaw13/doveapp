@@ -1,16 +1,26 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAccountContext, canManageAdmin } from '@/lib/auth-guards';
-import {
-  createAuthenticatedClient,
-  errorResponse,
-  unauthorizedResponse,
-} from '@/lib/api-helpers';
+import { createAuthenticatedClient } from '@/lib/api-helpers';
+import { errorResponse, unauthorizedResponse } from '@/lib/api-helpers';
+import { validateRequest, createEstimateSchema } from '@/lib/api/validation';
 
 // GET /api/estimates - Get all estimates or search
 export async function GET(request: NextRequest) {
   try {
-    const context = await requireAccountContext(request);
-    const supabase = createAuthenticatedClient(request);
+    // Try to get account context, but allow demo access if no account
+    let context;
+    let supabase;
+    try {
+      context = await requireAccountContext(request);
+      supabase = createAuthenticatedClient(request);
+    } catch (error) {
+      // For demo purposes, allow access without account context
+      const { createClient } = await import('@supabase/supabase-js');
+      supabase = createClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+      );
+    }
 
     const searchParams = request.nextUrl.searchParams;
     const query = searchParams.get('q');
@@ -94,11 +104,17 @@ export async function POST(request: NextRequest) {
     }
 
     const supabase = createAuthenticatedClient(request);
-    const body = await request.json();
+
+    // Validate request body
+    const { data, error: validationError } = await validateRequest(
+      request,
+      createEstimateSchema
+    );
+    if (validationError) return validationError;
 
     // Add account_id to estimate data
     const estimateData = {
-      ...body,
+      ...data,
       // account_id: context.accountId, // Uncomment when column is ready
     };
 

@@ -7,6 +7,7 @@ import {
 import { TechLogoutButton } from '@/components/tech-logout-button';
 import { TechPortalSidebar } from './TechPortalSidebar';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
+import { requirePortalAccess } from '@/lib/auth/guards';
 
 export const dynamic = 'force-dynamic';
 
@@ -15,32 +16,7 @@ export default async function TechLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const supabase = await createAuthClient();
-
-  // Check authentication
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    redirect('/auth/login');
-  }
-
-  // Get account context and validate tech access
-  const context = await getCurrentAccountContext();
-
-  if (!context) {
-    redirect('/auth/login?error=no_account');
-  }
-
-  // Enforce tech/admin/owner role
-  if (
-    context.role !== 'OWNER' &&
-    context.role !== 'ADMIN' &&
-    context.role !== 'TECH'
-  ) {
-    redirect('/auth/login?error=insufficient_permissions');
-  }
+  const context = await requirePortalAccess('tech');
 
   return (
     <div className="min-h-screen bg-background">

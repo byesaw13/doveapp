@@ -1,5 +1,5 @@
 import jsPDF from 'jspdf';
-import estimateDisclaimers from '../data/pricebook/estimate_disclaimers.json';
+import estimateDisclaimers from '../scripts/data/pricebook/estimate_disclaimers.json';
 
 interface EstimatePdfOptions {
   estimateId: string;

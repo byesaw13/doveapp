@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, type Dispatch, type SetStateAction } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -58,6 +58,14 @@ interface EmailTemplate {
   updated_at: string;
 }
 
+interface TemplateFormData {
+  name: string;
+  type: 'invoice' | 'estimate' | 'general';
+  subject_template: string;
+  body_template: string;
+  variables: string[];
+}
+
 export function EmailTemplatesManager() {
   const [templates, setTemplates] = useState<EmailTemplate[]>([]);
   const [selectedTemplate, setSelectedTemplate] =
@@ -70,7 +78,7 @@ export function EmailTemplatesManager() {
   const { toast } = useToast();
 
   // Form state
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<TemplateFormData>({
     name: '',
     type: 'invoice' as 'invoice' | 'estimate' | 'general',
     subject_template: '',
@@ -531,14 +539,8 @@ export function EmailTemplatesManager() {
 
 // Shared form component
 interface TemplateFormProps {
-  formData: {
-    name: string;
-    type: 'invoice' | 'estimate' | 'general';
-    subject_template: string;
-    body_template: string;
-    variables: string[];
-  };
-  setFormData: (data: any) => void;
+  formData: TemplateFormData;
+  setFormData: Dispatch<SetStateAction<TemplateFormData>>;
   onSubmit: () => void;
   isSaving: boolean;
   submitLabel: string;

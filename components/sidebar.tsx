@@ -18,7 +18,6 @@ import {
   FileText,
   ChevronDown,
   ChevronRight,
-  Plus,
   TrendingUp,
   DollarSign,
   AlertCircle,
@@ -27,7 +26,6 @@ import {
   Search,
   Mail,
   PieChart,
-  Workflow,
 } from 'lucide-react';
 import { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
@@ -53,7 +51,7 @@ interface NavGroup {
 
 const navigationGroups: NavGroup[] = [
   {
-    name: 'Business Overview',
+    name: 'Overview',
     defaultOpen: true,
     items: [
       {
@@ -62,35 +60,28 @@ const navigationGroups: NavGroup[] = [
         icon: LayoutDashboard,
         shortcut: 'D',
       },
-      { name: 'KPI', href: '/admin/kpi', icon: BarChart3, shortcut: 'K' },
       {
-        name: 'Customer Analytics',
-        href: '/admin/analytics/customers',
-        icon: PieChart,
-        shortcut: 'A',
+        name: 'Today',
+        href: '/admin/today',
+        icon: Calendar,
+        shortcut: 'Y',
       },
       {
-        name: 'Business Intelligence',
-        href: '/admin/business-intelligence',
-        icon: BarChart3,
-        shortcut: 'B',
-      },
-      {
-        name: 'Advanced Analytics',
-        href: '/admin/advanced-analytics',
-        icon: BarChart3,
-        shortcut: 'V',
+        name: 'Search',
+        href: '/admin/search',
+        icon: Search,
+        shortcut: 'F',
       },
     ],
   },
   {
-    name: 'Sales & Opportunities',
+    name: 'Sales & Revenue',
     defaultOpen: true,
     items: [
       {
         name: 'Leads',
         href: '/admin/leads',
-        icon: Users,
+        icon: Target,
         badge: 'newLeads',
         shortcut: 'L',
       },
@@ -101,24 +92,24 @@ const navigationGroups: NavGroup[] = [
         badge: 'pendingEstimates',
         shortcut: 'E',
       },
+      {
+        name: 'Invoices',
+        href: '/admin/invoices',
+        icon: DollarSign,
+        shortcut: 'V',
+      },
+      {
+        name: 'Inbox',
+        href: '/admin/inbox',
+        icon: Mail,
+        shortcut: 'M',
+      },
     ],
   },
   {
     name: 'Operations',
     defaultOpen: true,
     items: [
-      {
-        name: 'Today',
-        href: '/admin/today',
-        icon: Calendar,
-        shortcut: 'T',
-      },
-      {
-        name: 'Calendar',
-        href: '/admin/schedule',
-        icon: Calendar,
-        shortcut: 'C',
-      },
       {
         name: 'Jobs',
         href: '/admin/jobs',
@@ -127,26 +118,71 @@ const navigationGroups: NavGroup[] = [
         shortcut: 'J',
       },
       {
+        name: 'Calendar',
+        href: '/admin/schedule',
+        icon: Calendar,
+        shortcut: 'C',
+      },
+      {
         name: 'Time Tracking',
         href: '/admin/time-tracking',
         icon: Clock,
-        shortcut: 'T',
+        shortcut: 'K',
       },
     ],
   },
   {
-    name: 'Relationships',
+    name: 'Customers & Properties',
     defaultOpen: true,
     items: [
-      { name: 'Search', href: '/admin/search', icon: Search, shortcut: 'F' },
-      { name: 'Clients', href: '/admin/clients', icon: Users, shortcut: 'U' },
-      { name: 'Help', href: '/admin/help', icon: HelpCircle, shortcut: 'H' },
+      {
+        name: 'Clients',
+        href: '/admin/clients',
+        icon: Users,
+        shortcut: 'U',
+      },
+      {
+        name: 'Properties',
+        href: '/admin/properties',
+        icon: LayoutDashboard,
+        shortcut: 'P',
+      },
+    ],
+  },
+  {
+    name: 'Analytics & Reports',
+    defaultOpen: false,
+    items: [
+      {
+        name: 'KPI Dashboard',
+        href: '/admin/kpi',
+        icon: BarChart3,
+        shortcut: '1',
+      },
+      {
+        name: 'Customer Analytics',
+        href: '/admin/analytics/customers',
+        icon: PieChart,
+        shortcut: '2',
+      },
+      {
+        name: 'Business Intelligence',
+        href: '/admin/business-intelligence',
+        icon: TrendingUp,
+        shortcut: '3',
+      },
     ],
   },
   {
     name: 'Resources',
     defaultOpen: false,
     items: [
+      {
+        name: 'Pricebook',
+        href: '/admin/pricebook/inspector',
+        icon: DollarSign,
+        shortcut: 'B',
+      },
       {
         name: 'Inventory',
         href: '/admin/inventory',
@@ -155,94 +191,40 @@ const navigationGroups: NavGroup[] = [
         shortcut: 'I',
       },
       {
-        name: 'Advanced Automation',
-        href: '/admin/advanced-automation',
-        icon: Workflow,
-        shortcut: 'U',
-      },
-      {
-        name: 'Job Templates',
-        href: '/admin/job-templates',
-        icon: Briefcase,
-        shortcut: 'T',
-      },
-      {
-        name: 'Job Workflows',
-        href: '/admin/job-workflows',
-        icon: Workflow,
-        shortcut: 'W',
-      },
-      {
-        name: 'Time Tracking',
-        href: '/admin/time-tracking',
-        icon: Clock,
-        shortcut: 'M',
-      },
-      {
-        name: 'Pricebook Inspector',
-        href: '/admin/pricebook/inspector',
-        icon: FileText,
-        shortcut: 'P',
+        name: 'Invoice Reminders',
+        href: '/admin/invoice-reminders',
+        icon: AlertCircle,
+        shortcut: 'R',
       },
     ],
   },
   {
-    name: 'Administration',
-    defaultOpen: true,
+    name: 'Team & Settings',
+    defaultOpen: false,
     items: [
       {
-        name: 'Team',
+        name: 'Team Members',
         href: '/admin/team',
         icon: Users,
-        shortcut: 'T',
+        shortcut: 'N',
       },
       {
         name: 'Team Scheduling',
         href: '/admin/team/scheduling',
         icon: Calendar,
-        shortcut: 'S',
-      },
-      {
-        name: 'Email Templates',
-        href: '/admin/email-templates',
-        icon: Mail,
-        shortcut: 'E',
-      },
-      {
-        name: 'Job Templates',
-        href: '/admin/job-templates',
-        icon: Briefcase,
-        shortcut: 'J',
-      },
-      {
-        name: 'Invoice Reminders',
-        href: '/admin/invoice-reminders',
-        icon: Mail,
-        shortcut: 'R',
-      },
-      {
-        name: 'Job Workflows',
-        href: '/admin/job-workflows',
-        icon: Workflow,
-        shortcut: 'W',
-      },
-      {
-        name: 'Help & Support',
-        href: '/admin/help',
-        icon: HelpCircle,
         shortcut: 'H',
-      },
-      {
-        name: 'Debug Tools',
-        href: '/admin/debug',
-        icon: Search, // Using Search as debug icon
-        shortcut: 'D',
       },
       {
         name: 'Settings',
         href: '/admin/settings',
         icon: Settings,
         shortcut: 'S',
+      },
+      {
+        name: 'Help & Support',
+        href: '/admin/help',
+        icon: HelpCircle,
+        shortcut: 'Q',
       },
     ],
   },
@@ -482,59 +464,17 @@ export function Sidebar({ className }: SidebarProps) {
         )}
       >
         <div className="flex flex-col h-full">
-          {/* Logo - Monday.com style with blue accent */}
+          {/* Logo - Dovetails style */}
           <div className="flex items-center px-6 h-16 border-b border-border bg-gradient-to-r from-primary/5 to-background">
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center shadow-sm">
-                <span className="text-primary-foreground font-bold text-lg">
-                  H
-                </span>
+              <div className="w-8 h-8 rounded-lg flex items-center justify-center shadow-sm">
+                <img
+                  src="/dovetails-logo.png"
+                  alt="Dovetails Logo"
+                  className="w-full h-full object-contain"
+                />
               </div>
-              <h1 className="text-xl font-bold text-foreground">
-                FieldOps Pro
-              </h1>
-            </div>
-          </div>
-
-          {/* Quick Actions */}
-          <div className="px-3 pt-4 pb-2 border-b border-slate-100">
-            <div className="grid grid-cols-3 gap-2">
-              <Button
-                size="sm"
-                variant="outline"
-                className="flex flex-col h-auto py-2 px-1 text-xs gap-1"
-                onClick={() => {
-                  router.push('/jobs/new');
-                  setIsMobileMenuOpen(false);
-                }}
-              >
-                <Plus className="h-4 w-4" />
-                Job
-              </Button>
-              <Button
-                size="sm"
-                variant="outline"
-                className="flex flex-col h-auto py-2 px-1 text-xs gap-1"
-                onClick={() => {
-                  router.push('/clients?new=true');
-                  setIsMobileMenuOpen(false);
-                }}
-              >
-                <Plus className="h-4 w-4" />
-                Client
-              </Button>
-              <Button
-                size="sm"
-                variant="outline"
-                className="flex flex-col h-auto py-2 px-1 text-xs gap-1"
-                onClick={() => {
-                  router.push('/estimates?new=true');
-                  setIsMobileMenuOpen(false);
-                }}
-              >
-                <Plus className="h-4 w-4" />
-                Estimate
-              </Button>
+              <h1 className="text-xl font-bold text-foreground">DovePro</h1>
             </div>
           </div>
 
@@ -670,31 +610,20 @@ export function Sidebar({ className }: SidebarProps) {
             </div>
           </div>
 
-          {/* Footer - Monday.com style */}
-          <div className="p-4 border-t border-border bg-muted/50">
-            <div className="flex items-center justify-between mb-3">
-              <div className="text-xs text-muted-foreground space-y-1">
-                <div className="font-semibold text-foreground">
-                  FieldOps Pro
-                </div>
-                <div>Field Service Management</div>
-                <div className="text-[10px] text-muted-foreground/70 pt-1">
-                  v0.1.0
-                </div>
-              </div>
+          {/* Footer - Compact */}
+          <div className="p-3 border-t border-border bg-muted/30">
+            <div className="flex items-center justify-between gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleLogout}
+                disabled={isLoggingOut}
+                className="flex-1 text-xs"
+              >
+                {isLoggingOut ? 'Signing Out...' : 'Sign Out'}
+              </Button>
               <ThemeToggle />
             </div>
-
-            {/* Logout Button */}
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleLogout}
-              disabled={isLoggingOut}
-              className="w-full text-sm"
-            >
-              {isLoggingOut ? 'Signing Out...' : 'Sign Out'}
-            </Button>
           </div>
         </div>
       </div>

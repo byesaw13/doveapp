@@ -71,6 +71,27 @@ interface JobTemplate {
   updated_at: string;
 }
 
+type JobTemplateFormData = {
+  name: string;
+  description: string;
+  category: string;
+  estimated_duration_hours: string;
+  estimated_cost: string;
+  default_priority: string;
+  is_public: boolean;
+  template_data: {
+    title: string;
+    description: string;
+    status: string;
+    line_items: Array<{
+      item_type: 'labor' | 'material';
+      description: string;
+      quantity: number;
+      unit_price: number;
+    }>;
+  };
+};
+
 export function JobTemplatesManager() {
   const [templates, setTemplates] = useState<JobTemplate[]>([]);
   const [selectedTemplate, setSelectedTemplate] = useState<JobTemplate | null>(
@@ -84,7 +105,7 @@ export function JobTemplatesManager() {
   const { toast } = useToast();
 
   // Form state
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<JobTemplateFormData>({
     name: '',
     description: '',
     category: 'plumbing',
@@ -332,7 +353,7 @@ export function JobTemplatesManager() {
   };
 
   const addLineItem = () => {
-    setFormData((prev) => ({
+    setFormData((prev: JobTemplateFormData) => ({
       ...prev,
       template_data: {
         ...prev.template_data,
@@ -350,7 +371,7 @@ export function JobTemplatesManager() {
   };
 
   const updateLineItem = (index: number, field: string, value: any) => {
-    setFormData((prev) => ({
+    setFormData((prev: JobTemplateFormData) => ({
       ...prev,
       template_data: {
         ...prev.template_data,
@@ -362,7 +383,7 @@ export function JobTemplatesManager() {
   };
 
   const removeLineItem = (index: number) => {
-    setFormData((prev) => ({
+    setFormData((prev: JobTemplateFormData) => ({
       ...prev,
       template_data: {
         ...prev.template_data,
@@ -585,7 +606,10 @@ export function JobTemplatesManager() {
                       onClick={() => {
                         resetForm();
                         if (category !== 'all') {
-                          setFormData((prev) => ({ ...prev, category }));
+                          setFormData((prev: JobTemplateFormData) => ({
+                            ...prev,
+                            category,
+                          }));
                         }
                         setIsCreateDialogOpen(true);
                       }}
@@ -677,7 +701,10 @@ function TemplateForm({
             id="name"
             value={formData.name}
             onChange={(e) =>
-              setFormData((prev) => ({ ...prev, name: e.target.value }))
+              setFormData((prev: JobTemplateFormData) => ({
+                ...prev,
+                name: e.target.value,
+              }))
             }
             placeholder="e.g., Kitchen Faucet Installation"
           />
@@ -687,7 +714,10 @@ function TemplateForm({
           <Select
             value={formData.category}
             onValueChange={(value) =>
-              setFormData((prev) => ({ ...prev, category: value }))
+              setFormData((prev: JobTemplateFormData) => ({
+                ...prev,
+                category: value,
+              }))
             }
           >
             <SelectTrigger>
@@ -710,7 +740,10 @@ function TemplateForm({
           id="description"
           value={formData.description}
           onChange={(e) =>
-            setFormData((prev) => ({ ...prev, description: e.target.value }))
+            setFormData((prev: JobTemplateFormData) => ({
+              ...prev,
+              description: e.target.value,
+            }))
           }
           placeholder="Brief description of this job template..."
           rows={2}
@@ -727,7 +760,7 @@ function TemplateForm({
             step="0.5"
             value={formData.estimated_duration_hours}
             onChange={(e) =>
-              setFormData((prev) => ({
+              setFormData((prev: JobTemplateFormData) => ({
                 ...prev,
                 estimated_duration_hours: e.target.value,
               }))
@@ -743,7 +776,7 @@ function TemplateForm({
             step="0.01"
             value={formData.estimated_cost}
             onChange={(e) =>
-              setFormData((prev) => ({
+              setFormData((prev: JobTemplateFormData) => ({
                 ...prev,
                 estimated_cost: e.target.value,
               }))
@@ -756,7 +789,10 @@ function TemplateForm({
           <Select
             value={formData.default_priority}
             onValueChange={(value) =>
-              setFormData((prev) => ({ ...prev, default_priority: value }))
+              setFormData((prev: JobTemplateFormData) => ({
+                ...prev,
+                default_priority: value,
+              }))
             }
           >
             <SelectTrigger>
@@ -782,7 +818,7 @@ function TemplateForm({
               id="job-title"
               value={formData.template_data.title}
               onChange={(e) =>
-                setFormData((prev) => ({
+                setFormData((prev: JobTemplateFormData) => ({
                   ...prev,
                   template_data: {
                     ...prev.template_data,
@@ -798,7 +834,7 @@ function TemplateForm({
             <Select
               value={formData.template_data.status}
               onValueChange={(value) =>
-                setFormData((prev) => ({
+                setFormData((prev: JobTemplateFormData) => ({
                   ...prev,
                   template_data: { ...prev.template_data, status: value },
                 }))
@@ -821,7 +857,7 @@ function TemplateForm({
             id="job-description"
             value={formData.template_data.description}
             onChange={(e) =>
-              setFormData((prev) => ({
+              setFormData((prev: JobTemplateFormData) => ({
                 ...prev,
                 template_data: {
                   ...prev.template_data,
@@ -944,7 +980,10 @@ function TemplateForm({
           id="is-public"
           checked={formData.is_public}
           onCheckedChange={(checked) =>
-            setFormData((prev) => ({ ...prev, is_public: !!checked }))
+            setFormData((prev: JobTemplateFormData) => ({
+              ...prev,
+              is_public: !!checked,
+            }))
           }
         />
         <Label htmlFor="is-public">

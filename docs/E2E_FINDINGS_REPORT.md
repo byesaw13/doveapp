@@ -16,6 +16,7 @@ Successfully diagnosed and fixed E2E test infrastructure issues. The test suite 
 ## What Ran
 
 ### Test Discovery
+
 - **Total Tests Found:** 22 tests across 4 spec files
   - `smoke.spec.ts` - 9 tests (6 pass, 3 skipped)
   - `navigation.spec.ts` - 5 tests (4 fail due to URL mismatch - app issue, not test infrastructure)
@@ -23,6 +24,7 @@ Successfully diagnosed and fixed E2E test infrastructure issues. The test suite 
   - `link_audit.spec.ts` - 1 comprehensive audit test
 
 ### Execution Status
+
 - ✅ Smoke tests: **PASSED** (6/6 active tests)
 - ⚠️ Navigation tests: **FAILED** (legitimate app routing issue - redirects to `/admin/dashboard` instead of `/admin`)
 - ⏳ Link audit: Not run in this investigation (requires full suite + extended runtime)
@@ -33,11 +35,13 @@ Successfully diagnosed and fixed E2E test infrastructure issues. The test suite 
 ## What Failed
 
 ### Test Infrastructure Issues (FIXED)
+
 1. **Test directory mismatch** - Tests were in `tests/e2e/` but Playwright config pointed to `e2e/`
 2. **Import path errors** - `smoke.spec.ts` had incorrect import path `../tests/e2e/auth`
 3. **Output directory never created** - Link audit test never ran, so `tests/e2e/output` was never created
 
 ### Application Issues (NOT FIXED - Out of Scope)
+
 1. **Navigation routing mismatch** - App redirects to `/admin/dashboard` but tests expect `/admin`
    - This is a legitimate app behavior vs. test expectation mismatch
    - Requires either:
@@ -66,6 +70,7 @@ Successfully diagnosed and fixed E2E test infrastructure issues. The test suite 
    - No independent verification that audit test was running
 
 ### Detection Gap
+
 - `npx playwright test --list` showed only 9 smoke tests (from `e2e/smoke.spec.ts`)
 - Link audit and other tests in `tests/e2e/` were completely invisible to Playwright
 
@@ -74,9 +79,11 @@ Successfully diagnosed and fixed E2E test infrastructure issues. The test suite 
 ## Changes Made
 
 ### 1. Directory Consolidation
+
 **Action:** Moved all files from `tests/e2e/` to `e2e/`
 
 **Files Moved:**
+
 - `link_audit.spec.ts`
 - `navigation.spec.ts`
 - `role_access.spec.ts`
@@ -86,19 +93,24 @@ Successfully diagnosed and fixed E2E test infrastructure issues. The test suite 
 - `utils.ts`
 
 **Removed:**
+
 - `tests/e2e/` directory (now empty)
 
 ### 2. Fixed Import Paths
+
 **File:** `e2e/smoke.spec.ts`
+
 ```diff
 - import { loginAsAdmin, loginAsTech, loginAsCustomer } from '../tests/e2e/auth';
 + import { loginAsAdmin, loginAsTech, loginAsCustomer } from './auth';
 ```
 
 ### 3. Enhanced Output Generation
+
 **File:** `e2e/link_audit.spec.ts`
 
 **Changes:**
+
 - ✅ Changed output path from `tests/e2e/output` to `e2e/output`
 - ✅ Added timestamped output directories: `e2e/output/<YYYYMMDD-HHMMSS>/`
 - ✅ Added latest symlink directory: `e2e/output/latest/`
@@ -107,6 +119,7 @@ Successfully diagnosed and fixed E2E test infrastructure issues. The test suite 
 - ✅ Added timestamp to QA summary report header
 
 **Output Structure:**
+
 ```
 e2e/
 ├── output/
@@ -119,9 +132,11 @@ e2e/
 ```
 
 ### 4. Updated Package Scripts
+
 **File:** `package.json`
 
 **Added:**
+
 ```json
 {
   "test:e2e:headed": "playwright test --headed",
@@ -130,34 +145,41 @@ e2e/
 ```
 
 **Existing (unchanged):**
+
 - `test:e2e` - Headless mode (default)
 - `test:e2e:ui` - UI mode (requires X server)
 - `test:e2e:report` - Show HTML report
 
 ### 5. Improved CI Configuration
+
 **File:** `playwright.config.ts`
 
 **Changed:**
+
 ```diff
 - reporter: 'html',
 + reporter: process.env.CI ? 'line' : 'html',
 ```
 
 **Benefits:**
+
 - CI environments get concise line output
 - Local development gets rich HTML reports
 - Reduces CI log noise
 
 ### 6. Documentation
+
 **Added:** `e2e/README.md`
 
 **Contents:**
+
 - Running tests in different modes (headless, headed, UI)
 - X server / xvfb requirements for UI mode
 - Output directory structure
 - Quick reference for common commands
 
 **Added:** `.gitignore` entries
+
 ```
 # E2E Test Output
 e2e/output/
@@ -169,18 +191,21 @@ test-results/
 ## Verification
 
 ### Test Discovery (Before Fix)
+
 ```
 $ npx playwright test --list
 Total: 9 tests in 1 file
 ```
 
 ### Test Discovery (After Fix)
+
 ```
 $ npx playwright test --list
 Total: 22 tests in 4 files
 ```
 
 ### Test Execution
+
 ```
 $ npm run test:e2e
 Running 9 tests using 6 workers
@@ -197,17 +222,20 @@ Running 9 tests using 6 workers
 ### Investigation Results
 
 **Environment Check:**
+
 ```bash
 $ xdpyinfo >/dev/null && echo X_OK || echo X_NOT_OK
 X_NOT_OK
 ```
 
 **Conclusion:**
+
 - ✅ Headless mode works perfectly (no X server needed)
 - ❌ UI mode requires X server or xvfb-run
 - ✅ Documentation added to explain workaround
 
 **Workaround for UI mode:**
+
 ```bash
 xvfb-run -a npm run test:e2e:ui
 ```
@@ -219,6 +247,7 @@ xvfb-run -a npm run test:e2e:ui
 **Issue:** `npx playwright install chromium --with-deps` failed due to missing sudo access
 
 **Resolution:** Installed browser only (without system dependencies)
+
 ```bash
 npx playwright install chromium
 ```
@@ -230,11 +259,13 @@ npx playwright install chromium
 ## Recommendations
 
 ### Immediate Actions
+
 1. ✅ **DONE:** Consolidate test directories to single `e2e/` location
 2. ✅ **DONE:** Fix output path generation with timestamps
 3. ✅ **DONE:** Add documentation for X server requirements
 
 ### Follow-Up Actions (Not Implemented)
+
 1. **Fix Navigation Tests:**
    - Update auth helpers to expect `/admin/dashboard` instead of `/admin`
    - OR update app routing to use `/admin` as canonical path
@@ -259,6 +290,7 @@ npx playwright install chromium
 ## Files Changed (PR-Ready)
 
 ### Modified Files
+
 1. `playwright.config.ts` - Updated reporter for CI
 2. `package.json` - Added test:e2e:audit and test:e2e:headed scripts
 3. `e2e/smoke.spec.ts` - Fixed import path
@@ -266,12 +298,15 @@ npx playwright install chromium
 5. `.gitignore` - Added e2e output exclusions
 
 ### Added Files
+
 1. `e2e/README.md` - E2E test documentation
 
 ### Moved Files
+
 1. `tests/e2e/*` → `e2e/*` (7 files consolidated)
 
 ### Removed Directories
+
 1. `tests/e2e/` - No longer needed
 
 ---
@@ -283,7 +318,7 @@ npx playwright install chromium
 ✅ **Output Generation:** Now creates timestamped + latest directories  
 ✅ **Error Handling:** try/catch/finally ensures reports always write  
 ✅ **Documentation:** Clear instructions for all execution modes  
-✅ **CI Ready:** Proper reporter configuration for automated environments  
+✅ **CI Ready:** Proper reporter configuration for automated environments
 
 ---
 

@@ -99,9 +99,13 @@ export async function calculateBusinessMetrics(
 
   // Calculate revenue metrics
   const totalRevenue =
-    currentJobs?.reduce((sum, job) => sum + (job.total || 0), 0) || 0;
+    currentJobs?.reduce((sum: number, job: any) => sum + (job.total || 0), 0) ||
+    0;
   const previousRevenue =
-    previousJobs?.reduce((sum, job) => sum + (job.total || 0), 0) || 0;
+    previousJobs?.reduce(
+      (sum: number, job: any) => sum + (job.total || 0),
+      0
+    ) || 0;
   const revenueGrowth =
     previousRevenue > 0
       ? ((totalRevenue - previousRevenue) / previousRevenue) * 100
@@ -110,7 +114,7 @@ export async function calculateBusinessMetrics(
   // Calculate service type performance
   const servicePerformance: Record<string, { revenue: number; count: number }> =
     {};
-  currentJobs?.forEach((job) => {
+  currentJobs?.forEach((job: any) => {
     // Try to determine service type from job line items or title
     const serviceType = determineServiceType(job);
     if (!servicePerformance[serviceType]) {
@@ -327,7 +331,7 @@ async function calculateRetentionRate(
   if (!customers || customers.length === 0) return 0;
 
   let retainedCustomers = 0;
-  customers.forEach((customer) => {
+  customers.forEach((customer: any) => {
     if (customer.jobs && customer.jobs.length > 1) {
       retainedCustomers++;
     }
@@ -362,7 +366,7 @@ async function calculateRepeatBusinessRate(
   if (!jobs || jobs.length === 0) return 0;
 
   let repeatJobs = 0;
-  jobs.forEach((job) => {
+  jobs.forEach((job: any) => {
     if (job.clients?.jobs && job.clients.jobs.length > 1) {
       repeatJobs++;
     }
@@ -390,7 +394,8 @@ async function calculateMonthlyRevenue(
       .lte('service_date', monthEnd.toISOString().split('T')[0])
       .eq('status', 'completed');
 
-    const revenue = jobs?.reduce((sum, job) => sum + (job.total || 0), 0) || 0;
+    const revenue =
+      jobs?.reduce((sum: number, job: any) => sum + (job.total || 0), 0) || 0;
 
     months.push({
       month: monthStart.toLocaleDateString('en-US', {
@@ -423,7 +428,10 @@ async function calculateCashflowProjection(
       .neq('status', 'paid');
 
     const amount =
-      invoices?.reduce((sum, invoice) => sum + (invoice.total || 0), 0) || 0;
+      invoices?.reduce(
+        (sum: number, invoice: any) => sum + (invoice.total || 0),
+        0
+      ) || 0;
     projection.push({
       date: date.toISOString().split('T')[0],
       amount,
@@ -443,7 +451,7 @@ async function calculateDaysOutstanding(supabase: any): Promise<number> {
 
   if (!invoices || invoices.length === 0) return 0;
 
-  const totalDays = invoices.reduce((sum, invoice) => {
+  const totalDays = invoices.reduce((sum: number, invoice: any) => {
     const created = new Date(invoice.created_at);
     const paid = new Date(invoice.paid_at);
     const days = (paid.getTime() - created.getTime()) / (1000 * 60 * 60 * 24);
@@ -460,7 +468,12 @@ async function calculateOverdueAmount(supabase: any): Promise<number> {
     .lt('due_date', new Date().toISOString().split('T')[0])
     .neq('status', 'paid');
 
-  return invoices?.reduce((sum, invoice) => sum + (invoice.total || 0), 0) || 0;
+  return (
+    invoices?.reduce(
+      (sum: number, invoice: any) => sum + (invoice.total || 0),
+      0
+    ) || 0
+  );
 }
 
 function calculateCAC(totalRevenue: number, jobCount: number): number {

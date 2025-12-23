@@ -308,3 +308,4 @@ storybook-static/
 # E2E Test Output
 e2e/output/
 test-results/
+.env*.local

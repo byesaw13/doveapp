@@ -1,6 +1,5 @@
-import { redirect } from 'next/navigation';
-import { createAuthClient, getCurrentUser } from '@/lib/supabase-auth';
 import { CustomerPortalSidebar } from './CustomerPortalSidebar';
+import { requirePortalAccess } from '@/lib/auth/guards';
 
 export const dynamic = 'force-dynamic';
 
@@ -9,26 +8,12 @@ export default async function PortalLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const supabase = await createAuthClient();
-
-  // Check authentication
-  const user = await getCurrentUser();
-
-  if (!user) {
-    redirect('/auth/login');
-  }
-
-  // Get user profile for display
-  const { data: userProfile } = await supabase
-    .from('users')
-    .select('full_name, email')
-    .eq('id', user.id)
-    .single();
+  const context = await requirePortalAccess('customer');
 
   return (
     <div className="flex h-screen bg-background">
       <CustomerPortalSidebar
-        userName={userProfile?.full_name || userProfile?.email || 'Customer'}
+        userName={context.user.full_name || context.user.email || 'Customer'}
       />
       <main className="flex-1 overflow-auto">
         <div className="min-h-full">

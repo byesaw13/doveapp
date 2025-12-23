@@ -16,7 +16,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/components/ui/toast';
 import type { EstimateWithRelations } from '@/types/estimate';
-import estimateDisclaimers from '@/data/pricebook/estimate_disclaimers.json';
+import estimateDisclaimers from '@/scripts/data/pricebook/estimate_disclaimers.json';
 import {
   ArrowLeft,
   Download,

@@ -1,6 +1,8 @@
 import { Resend } from 'resend';
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+const getResend = () =>
+  new Resend(process.env.RESEND_API_KEY || 'dummy-key-for-build');
+const resend = getResend();
 
 export interface WelcomeEmailParams {
   to: string;

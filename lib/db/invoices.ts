@@ -1,17 +1,5 @@
-import type {
-  Invoice,
-  InvoiceWithRelations,
-  InvoiceLineItem,
-  InvoicePayment,
-  InvoiceStatus,
-  PaymentMethod,
-} from '@/types/invoice';
-import { supabase } from '@/lib/supabase';
-import { scheduleInvoiceFollowUps } from '@/lib/db/automation_triggers';
-
-export interface CreateInvoiceFromJobOptions {
-  dueDate?: string; // Optional custom due date
-}
+// Re-export from organized modules
+export * from './invoices/index';
 
 /**
  * Create an invoice from a completed job

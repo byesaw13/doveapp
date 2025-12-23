@@ -3,7 +3,8 @@ require('dotenv').config({ path: '.env.local' });
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  process.env.SUPABASE_SERVICE_ROLE_KEY ||
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 );
 
 async function checkSchema() {
@@ -12,7 +13,7 @@ async function checkSchema() {
     .from('leads')
     .select('id, first_name, last_name, email, phone, source, status, priority')
     .limit(1);
-  
+
   if (error) {
     console.log('❌ Error querying leads table:', error.message);
     console.log('\nThe leads table exists but is missing columns.');
@@ -23,13 +24,13 @@ async function checkSchema() {
     console.log('✅ Leads table has all required columns!');
     console.log('Sample data:', data);
   }
-  
+
   // Check estimates
   const { data: estData, error: estError } = await supabase
     .from('estimates')
     .select('id, estimate_number, title, status')
     .limit(1);
-  
+
   if (estError) {
     console.log('❌ Error querying estimates table:', estError.message);
   } else {

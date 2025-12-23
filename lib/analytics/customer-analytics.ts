@@ -65,7 +65,10 @@ export async function calculateCustomerLifetimeValue(
     };
   }
 
-  const totalRevenue = jobs.reduce((sum, job) => sum + (job.total || 0), 0);
+  const totalRevenue = jobs.reduce(
+    (sum: number, job: any) => sum + (job.total || 0),
+    0
+  );
   const averageJobValue = totalRevenue / jobs.length;
 
   // Calculate job frequency (jobs per month)
@@ -140,7 +143,7 @@ export async function getCustomerSegmentSummary(
     if (!customer.jobs || customer.jobs.length === 0) continue;
 
     const completedJobs = customer.jobs.filter(
-      (job) => job.status === 'completed'
+      (job: any) => job.status === 'completed'
     );
     if (completedJobs.length === 0) continue;
 
@@ -257,13 +260,13 @@ export async function calculateRetentionMetrics(
     if (!customer.jobs || customer.jobs.length === 0) continue;
 
     const completedJobs = customer.jobs.filter(
-      (job) => job.status === 'completed'
+      (job: any) => job.status === 'completed'
     );
     if (completedJobs.length === 0) continue;
 
     // Check if active (job in last 6 months)
     const recentJobs = completedJobs.filter(
-      (job) => new Date(job.created_at) >= sixMonthsAgo
+      (job: any) => new Date(job.created_at) >= sixMonthsAgo
     );
     if (recentJobs.length > 0) {
       activeCustomers++;
@@ -276,10 +279,14 @@ export async function calculateRetentionMetrics(
 
       // Calculate retention period
       const firstJob = new Date(
-        Math.min(...completedJobs.map((j) => new Date(j.created_at).getTime()))
+        Math.min(
+          ...completedJobs.map((j: any) => new Date(j.created_at).getTime())
+        )
       );
       const lastJob = new Date(
-        Math.max(...completedJobs.map((j) => new Date(j.created_at).getTime()))
+        Math.max(
+          ...completedJobs.map((j: any) => new Date(j.created_at).getTime())
+        )
       );
       const retentionMonths =
         (lastJob.getTime() - firstJob.getTime()) / (1000 * 60 * 60 * 24 * 30);
@@ -336,7 +343,8 @@ export async function predictNextCustomerJob(
   if (intervals.length === 0) return null;
 
   const averageInterval =
-    intervals.reduce((sum, interval) => sum + interval, 0) / intervals.length;
+    intervals.reduce((sum: number, interval: number) => sum + interval, 0) /
+    intervals.length;
   const lastJobDate = new Date(jobs[jobs.length - 1].created_at);
   const predictedDate = new Date(
     lastJobDate.getTime() + averageInterval * 24 * 60 * 60 * 1000

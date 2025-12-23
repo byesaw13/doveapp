@@ -1,7 +1,7 @@
-import serviceItems from '../data/pricebook/service_items.json';
-import serviceCategories from '../data/pricebook/service_categories.json';
-import pricingRules from '../data/pricebook/pricing_rules.json';
-import materialPrices from '../data/pricebook/material_prices.json';
+import serviceItems from '../scripts/data/pricebook/service_items.json';
+import serviceCategories from '../scripts/data/pricebook/service_categories.json';
+import pricingRules from '../scripts/data/pricebook/pricing_rules.json';
+import materialPrices from '../scripts/data/pricebook/material_prices.json';
 
 // ============================================================================
 // TYPE DEFINITIONS

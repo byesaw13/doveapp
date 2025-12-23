@@ -8,23 +8,10 @@ import { DesignTokensShowcase } from '@/components/design-tokens/DesignTokensSho
 export default async function DebugPage() {
   const supabase = await createAuthClient();
 
-  // Check authentication
+  // Get user (already authenticated by layout)
   const {
     data: { user },
-    error: authError,
   } = await supabase.auth.getUser();
-
-  if (authError || !user) {
-    return (
-      <div className="p-8">
-        <h1 className="text-2xl font-bold mb-4">Debug: Not Authenticated</h1>
-        <p>Please log in first.</p>
-        <a href="/auth/login" className="text-blue-500 underline">
-          Go to Login
-        </a>
-      </div>
-    );
-  }
 
   // Get account context
   const context = await getCurrentAccountContext();

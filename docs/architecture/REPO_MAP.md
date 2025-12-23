@@ -2,7 +2,7 @@
 
 Short map of where common things go:
 
-- Authentication: features/auth/
+- Authentication: lib/auth/ (session management, roles, guards). Portal access enforced at layout level.
 
 - Jobs: features/jobs/
 

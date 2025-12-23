@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
+import { createAdminClient } from '@/lib/supabase/admin';
 import { requireAccountContext } from '@/lib/auth-guards';
 import { z } from 'zod';
 
@@ -47,7 +47,7 @@ const automationSettingsSchema = z.object({
 export async function GET(request: NextRequest) {
   try {
     const context = await requireAccountContext(request);
-    const supabase = createClient();
+    const supabase = createAdminClient();
 
     // Get business settings (there's only one row)
     const { data: settings, error } = await supabase
@@ -123,7 +123,7 @@ export async function PUT(request: NextRequest) {
     // Validate the settings
     const validatedSettings = automationSettingsSchema.parse(body);
 
-    const supabase = createClient();
+    const supabase = createAdminClient();
 
     // Get current business settings
     const { data: currentSettings, error: fetchError } = await supabase

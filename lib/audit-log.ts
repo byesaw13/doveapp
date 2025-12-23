@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase-server';
+import { createAdminClient } from '@/lib/supabase/admin';
 
 export type AuditAction =
   | 'CREATE'
@@ -39,7 +39,7 @@ export interface AuditLogEntry {
  */
 export async function logAuditEvent(entry: AuditLogEntry): Promise<void> {
   try {
-    const supabase = createClient();
+    const supabase = createAdminClient();
 
     const auditEntry = {
       ...entry,

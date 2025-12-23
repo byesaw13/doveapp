@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
+import { createAdminClient } from '@/lib/supabase/admin';
 import { z } from 'zod';
 
 // Validation schemas
@@ -32,7 +32,7 @@ const scheduleSchema = z.object({
 // GET /api/admin/team/schedules - Get team schedules with filtering
 export async function GET(request: NextRequest) {
   try {
-    const supabase = createClient();
+    const supabase = createAdminClient();
     const { searchParams } = new URL(request.url);
 
     const userId = searchParams.get('user_id');
@@ -90,7 +90,7 @@ export async function GET(request: NextRequest) {
 // POST /api/admin/team/schedules - Create a new schedule entry
 export async function POST(request: NextRequest) {
   try {
-    const supabase = createClient();
+    const supabase = createAdminClient();
     const body = await request.json();
 
     const validatedData = scheduleSchema.parse(body);

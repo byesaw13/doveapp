@@ -3,36 +3,7 @@
  * Source of truth for authorization across the application
  */
 
-export type Permission =
-  // System/Admin
-  | 'admin:access'
-  | 'admin:read'
-  | 'admin:write'
-  // Team
-  | 'team:read'
-  | 'team:manage'
-  // Jobs
-  | 'jobs:read'
-  | 'jobs:write'
-  | 'jobs:assign'
-  // Clients
-  | 'clients:read'
-  | 'clients:write'
-  // Estimates
-  | 'estimates:read'
-  | 'estimates:write'
-  // Invoices
-  | 'invoices:read'
-  | 'invoices:write'
-  // Billing
-  | 'billing:read'
-  | 'billing:manage'
-  // Inbox
-  | 'inbox:read'
-  | 'inbox:write'
-  // Settings
-  | 'settings:read'
-  | 'settings:manage';
+export type Permission = string;
 
 export type Role = 'OWNER' | 'ADMIN' | 'DISPATCHER' | 'TECH' | 'CUSTOMER';
 

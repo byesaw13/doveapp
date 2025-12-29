@@ -1,6 +1,6 @@
 import { cookies } from 'next/headers';
 import { createServerClient } from '@supabase/ssr';
-import { DEFAULT_ROLE_PERMISSIONS, type Permission } from '../auth-guards';
+import { ROLE_PERMISSIONS, type Permission } from '../authz/permissions';
 import type { Role } from './roles';
 
 export interface AccountContext {
@@ -90,7 +90,7 @@ export async function getServerSessionOrNull(): Promise<AccountContext | null> {
     const userRole = membership.role as 'OWNER' | 'ADMIN' | 'TECH';
     role = userRole as Role;
     // No custom permissions column - always use defaults
-    permissions = DEFAULT_ROLE_PERMISSIONS[userRole];
+    permissions = ROLE_PERMISSIONS[userRole];
 
     // Fetch account and user details separately
     const { data: accountData } = await supabase

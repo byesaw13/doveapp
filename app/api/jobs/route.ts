@@ -93,6 +93,16 @@ export async function POST(request: NextRequest) {
     );
     if (validationError) return validationError;
 
+    if (!data!.client_id) {
+      return NextResponse.json(
+        {
+          error:
+            'client_id is required. Select a client before creating a job.',
+        },
+        { status: 400 }
+      );
+    }
+
     // Generate job_number
     const jobNumber = `JOB-${Date.now()}`;
 

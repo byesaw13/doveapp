@@ -31,15 +31,12 @@ export async function GET(request: NextRequest) {
     const query = searchParams.get('q');
 
     let queryBuilder = supabaseClient
-      .from('clients')
+      .from('customers') // Updated to customers table
       .select('*')
       .order('created_at', { ascending: false });
 
     // Filter by account - CRITICAL for multi-tenancy
-    // Note: clients table will be migrated to customers, this is temporary
-    // Temporarily disabled due to account_id backfill mismatch
-    // TODO: Fix account_id backfill to match user memberships
-    // queryBuilder = queryBuilder.eq('account_id', context.accountId);
+    queryBuilder = queryBuilder.eq('account_id', context.accountId);
 
     if (query) {
       queryBuilder = queryBuilder.or(
@@ -107,14 +104,23 @@ export async function POST(request: NextRequest) {
       await validateRequest(request, createClientSchema);
     if (validationError) return validationError;
 
-    // Add account_id to the client data
+    if (!validatedData) {
+      return NextResponse.json(
+        { error: 'Invalid request data' },
+        { status: 400 }
+      );
+    }
+
+    // Add account_id and map postal_code to zip_code
     const clientData = {
       ...validatedData,
-      // account_id: context.accountId, // Uncomment when column exists
+      account_id: context.accountId,
+      zip_code: validatedData.postal_code, // Map to DB field
     };
+    delete (clientData as any).postal_code; // Remove the validation field
 
     const { data: client, error } = await supabaseClient
-      .from('clients')
+      .from('customers') // Updated to customers table
       .insert(clientData)
       .select()
       .single();

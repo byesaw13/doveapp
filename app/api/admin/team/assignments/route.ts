@@ -24,7 +24,7 @@ const assignmentSchema = z.object({
 // GET /api/admin/team/assignments - Get team assignments with filtering
 export async function GET(request: NextRequest) {
   try {
-    const supabase = createClient();
+    const supabase = await createClient();
     const { searchParams } = new URL(request.url);
 
     const jobId = searchParams.get('job_id');
@@ -78,7 +78,7 @@ export async function GET(request: NextRequest) {
 // POST /api/admin/team/assignments - Create a new assignment
 export async function POST(request: NextRequest) {
   try {
-    const supabase = createClient();
+    const supabase = await createClient();
     const body = await request.json();
 
     const validatedData = assignmentSchema.parse(body);

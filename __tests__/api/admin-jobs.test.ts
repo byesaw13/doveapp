@@ -24,6 +24,8 @@ jest.mock('next/server', () => ({
 import { GET, POST } from '@/app/api/admin/jobs/route';
 import { NextRequest } from 'next/server';
 import { createAuthenticatedClient } from '@/lib/api-helpers';
+import type { Permission } from '@/lib/auth-guards';
+import type { JobStatus } from '@/types/job';
 
 // Mock the auth guards
 jest.mock('@/lib/auth-guards', () => ({
@@ -93,7 +95,7 @@ describe('/api/admin/jobs', () => {
         accountId: 'test-account',
         userId: 'admin-user',
         role: 'ADMIN' as const,
-        permissions: ['manage_business'],
+        permissions: ['manage_business'] as Permission[],
         user: { id: 'admin-user', email: 'admin@test.com' },
         account: { id: 'test-account', name: 'Test Account' },
       };
@@ -102,13 +104,19 @@ describe('/api/admin/jobs', () => {
         {
           id: 'job-1',
           title: 'Test Job',
-          status: 'scheduled',
+          status: 'scheduled' as JobStatus,
           client: { first_name: 'John', last_name: 'Doe' },
         },
       ];
 
       mockRequireAdminContext.mockResolvedValue(mockContext);
-      mockListJobs.mockResolvedValue({ data: mockJobs, error: null });
+      mockListJobs.mockResolvedValue({
+        data: mockJobs,
+        page: 1,
+        pageSize: 20,
+        total: mockJobs.length,
+        error: null,
+      });
 
       const response = await GET(mockRequest);
       const data = await response.json();
@@ -131,13 +139,19 @@ describe('/api/admin/jobs', () => {
         accountId: 'test-account',
         userId: 'admin-user',
         role: 'ADMIN' as const,
-        permissions: ['manage_business'],
+        permissions: ['manage_business'] as Permission[],
         user: { id: 'admin-user', email: 'admin@test.com' },
         account: { id: 'test-account', name: 'Test Account' },
       };
 
       mockRequireAdminContext.mockResolvedValue(mockContext);
-      mockListJobs.mockResolvedValue({ data: [], error: null });
+      mockListJobs.mockResolvedValue({
+        data: [],
+        page: 1,
+        pageSize: 20,
+        total: 0,
+        error: null,
+      });
 
       const { NextRequest } = require('next/server');
       const requestWithParams = new NextRequest(
@@ -161,7 +175,7 @@ describe('/api/admin/jobs', () => {
         accountId: 'test-account',
         userId: 'admin-user',
         role: 'ADMIN' as const,
-        permissions: ['manage_business'],
+        permissions: ['manage_business'] as Permission[],
         user: { id: 'admin-user', email: 'admin@test.com' },
         account: { id: 'test-account', name: 'Test Account' },
       };
@@ -169,6 +183,9 @@ describe('/api/admin/jobs', () => {
       mockRequireAdminContext.mockResolvedValue(mockContext);
       mockListJobs.mockResolvedValue({
         data: null,
+        page: 1,
+        pageSize: 20,
+        total: 0,
         error: new Error('Database connection failed'),
       });
 
@@ -186,7 +203,7 @@ describe('/api/admin/jobs', () => {
         accountId: 'test-account',
         userId: 'admin-user',
         role: 'ADMIN' as const,
-        permissions: ['manage_business'],
+        permissions: ['manage_business'] as Permission[],
         user: { id: 'admin-user', email: 'admin@test.com' },
         account: { id: 'test-account', name: 'Test Account' },
       };
@@ -261,7 +278,7 @@ describe('/api/admin/jobs', () => {
         accountId: 'test-account',
         userId: 'admin-user',
         role: 'ADMIN' as const,
-        permissions: ['manage_business'],
+        permissions: ['manage_business'] as Permission[],
         user: { id: 'admin-user', email: 'admin@test.com' },
         account: { id: 'test-account', name: 'Test Account' },
       };

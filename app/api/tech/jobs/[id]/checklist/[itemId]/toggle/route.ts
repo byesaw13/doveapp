@@ -6,7 +6,7 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string; itemId: string }> }
 ) {
   try {
-    const supabase = createClient();
+    const supabase = await createClient();
     const { id: jobId, itemId } = await params;
 
     // Get current user

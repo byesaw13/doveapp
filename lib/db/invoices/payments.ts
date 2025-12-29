@@ -38,8 +38,8 @@ export async function addInvoicePayment(
     .insert({
       invoice_id: invoiceId,
       amount: payment.amount,
-      payment_method: payment.payment_method,
-      payment_date: payment.payment_date,
+      method: payment.method,
+      paid_at: payment.paid_at,
       notes: payment.notes,
     })
     .select()

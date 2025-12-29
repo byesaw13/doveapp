@@ -11,7 +11,7 @@ interface EmergencyRequestData {
 
 export async function POST(request: NextRequest) {
   try {
-    const supabase = createClient();
+    const supabase = await createClient();
     const body: EmergencyRequestData = await request.json();
 
     // Get current user

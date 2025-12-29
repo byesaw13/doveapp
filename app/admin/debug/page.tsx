@@ -23,8 +23,14 @@ export default async function DebugPage() {
       <div className="space-y-4">
         <div className="bg-gray-100 p-4 rounded">
           <h2 className="font-semibold">User Info:</h2>
-          <p>ID: {user.id}</p>
-          <p>Email: {user.email}</p>
+          {user ? (
+            <>
+              <p>ID: {user.id}</p>
+              <p>Email: {user.email}</p>
+            </>
+          ) : (
+            <p>No user logged in</p>
+          )}
         </div>
 
         <div className="bg-blue-100 p-4 rounded">

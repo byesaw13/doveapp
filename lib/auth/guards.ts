@@ -15,9 +15,9 @@ export async function requirePortalAccess(
 ) {
   const allowedRoles: Role[] =
     portal === 'admin'
-      ? ['owner', 'admin']
+      ? ['OWNER', 'ADMIN']
       : portal === 'tech'
-        ? ['tech']
-        : ['customer'];
+        ? ['TECH']
+        : ['CUSTOMER'];
   return requireRole(allowedRoles);
 }

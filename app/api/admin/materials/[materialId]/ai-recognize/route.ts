@@ -17,7 +17,7 @@ export async function POST(
   { params }: { params: Promise<{ materialId: string }> }
 ) {
   try {
-    const supabase = createClient();
+    const supabase = await createClient();
     const { materialId } = await params;
     const body = await request.json();
     const { imageUrl, provider = 'openai_vision' } = body;

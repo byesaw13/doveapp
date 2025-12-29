@@ -6,7 +6,7 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string; noteId: string }> }
 ) {
   try {
-    const supabase = createClient();
+    const supabase = await createClient();
     const { id: jobId, noteId } = await params;
 
     // Get current user

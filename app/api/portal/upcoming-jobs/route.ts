@@ -16,7 +16,7 @@ export async function GET(request: NextRequest) {
     // Validate customer access
     const context = await requireCustomerContext(request, customerId);
 
-    const supabase = createClient();
+    const supabase = await createClient();
 
     // Get upcoming jobs for this customer
     const now = new Date();

@@ -16,7 +16,7 @@ const bulkAvailabilitySchema = z.object({
 // GET /api/admin/team/availability - Get team availability
 export async function GET(request: NextRequest) {
   try {
-    const supabase = createClient();
+    const supabase = await createClient();
     const { searchParams } = new URL(request.url);
 
     const userId = searchParams.get('user_id');
@@ -59,7 +59,7 @@ export async function GET(request: NextRequest) {
 // POST /api/admin/team/availability - Create availability entry
 export async function POST(request: NextRequest) {
   try {
-    const supabase = createClient();
+    const supabase = await createClient();
     const body = await request.json();
 
     // Check if it's bulk or single

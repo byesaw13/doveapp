@@ -1,5 +1,9 @@
 import jsPDF from 'jspdf';
-import type { InvoiceWithRelations } from '@/types/invoice';
+import type {
+  InvoiceWithRelations,
+  InvoiceLineItem,
+  InvoicePayment,
+} from '@/types/invoice';
 
 interface InvoicePdfOptions {
   invoiceId: string;
@@ -171,26 +175,40 @@ export async function generateInvoicePdf(
 
   // Table rows
   if (invoice.invoice_line_items && invoice.invoice_line_items.length > 0) {
-    invoice.invoice_line_items.forEach((item, index) => {
-      const rowY = yPosition + index * 12;
+    invoice.invoice_line_items.forEach(
+      (item: InvoiceLineItem, index: number) => {
+        const rowY = yPosition + index * 12;
 
-      // Alternate row colors
-      if (index % 2 === 0) {
-        doc.setFillColor(250, 250, 250);
-        doc.rect(20, rowY - 4, 170, 10, 'F');
+        // Alternate row colors
+        if (index % 2 === 0) {
+          doc.setFillColor(250, 250, 250);
+          doc.rect(20, rowY - 4, 170, 10, 'F');
+        }
+
+        addText(item.description, colPositions[0] + 2, rowY + 3, {
+          fontSize: 8,
+        });
+        addText(item.quantity.toString(), colPositions[1] + 2, rowY + 3, {
+          fontSize: 8,
+        });
+        addText(
+          `$${item.unit_price.toFixed(2)}`,
+          colPositions[2] + 2,
+          rowY + 3,
+          {
+            fontSize: 8,
+          }
+        );
+        addText(
+          `$${item.line_total.toFixed(2)}`,
+          colPositions[3] + 2,
+          rowY + 3,
+          {
+            fontSize: 8,
+          }
+        );
       }
-
-      addText(item.description, colPositions[0] + 2, rowY + 3, { fontSize: 8 });
-      addText(item.quantity.toString(), colPositions[1] + 2, rowY + 3, {
-        fontSize: 8,
-      });
-      addText(`$${item.unit_price.toFixed(2)}`, colPositions[2] + 2, rowY + 3, {
-        fontSize: 8,
-      });
-      addText(`$${item.line_total.toFixed(2)}`, colPositions[3] + 2, rowY + 3, {
-        fontSize: 8,
-      });
-    });
+    );
 
     yPosition += invoice.invoice_line_items.length * 12 + 10;
   }
@@ -211,7 +229,7 @@ export async function generateInvoicePdf(
 
   // Payments applied
   const totalPaid = (invoice.invoice_payments || []).reduce(
-    (sum, payment) => sum + payment.amount,
+    (sum: number, payment: InvoicePayment) => sum + payment.amount,
     0
   );
   if (totalPaid > 0) {

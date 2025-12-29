@@ -39,6 +39,12 @@ describe('/api/tech/visits/[id]', () => {
       accountId: '6785bba1-553c-4886-9638-460033ad6b01',
       userId: 'demo-tech-user',
       role: 'TECH',
+      permissions: ['manage_business'],
+      user: { id: 'demo-tech-user', email: 'tech@test.com' },
+      account: {
+        id: '6785bba1-553c-4886-9638-460033ad6b01',
+        name: 'Test Account',
+      },
     });
   });
 

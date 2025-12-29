@@ -1,6 +1,17 @@
 // Re-export from organized modules
 export * from './invoices/index';
 
+import type {
+  Invoice,
+  InvoiceStatus,
+  InvoiceWithRelations,
+  PaymentMethod,
+  InvoicePayment,
+} from '@/types/invoice';
+import type { CreateInvoiceFromJobOptions } from './invoices/creation';
+import { scheduleInvoiceFollowUps } from '@/lib/db/automation_triggers';
+import { supabase } from '@/lib/supabase';
+
 /**
  * Create an invoice from a completed job
  */
@@ -269,8 +280,10 @@ export async function addInvoicePayment(
 
   // Calculate new balance and status
   const totalPaid =
-    (invoice.invoice_payments || []).reduce((sum, p) => sum + p.amount, 0) +
-    paymentData.amount;
+    (invoice.invoice_payments || []).reduce(
+      (sum: number, p: InvoicePayment) => sum + p.amount,
+      0
+    ) + paymentData.amount;
   const newBalanceDue = Math.max(0, invoice.total - totalPaid);
 
   let newStatus: InvoiceStatus = invoice.status;
@@ -324,10 +337,14 @@ export async function getInvoiceStats(): Promise<{
     sent_invoices: data.filter((inv) => inv.status === 'sent').length,
     paid_invoices: data.filter((inv) => inv.status === 'paid').length,
     total_revenue: data.reduce(
-      (sum, inv) => sum + (inv.total - inv.balance_due),
+      (sum: number, inv: InvoiceWithRelations) =>
+        sum + (inv.total - inv.balance_due),
       0
     ),
-    outstanding_balance: data.reduce((sum, inv) => sum + inv.balance_due, 0),
+    outstanding_balance: data.reduce(
+      (sum: number, inv: InvoiceWithRelations) => sum + inv.balance_due,
+      0
+    ),
   };
 
   return stats;
@@ -363,7 +380,7 @@ export async function deleteInvoicePayment(paymentId: string): Promise<void> {
   const invoice = await getInvoiceByIdWithRelations(payment.invoice_id);
   if (invoice) {
     const totalPaid = (invoice.invoice_payments || []).reduce(
-      (sum, p) => sum + p.amount,
+      (sum: number, p: InvoicePayment) => sum + p.amount,
       0
     );
     const newBalanceDue = Math.max(0, invoice.total - totalPaid);

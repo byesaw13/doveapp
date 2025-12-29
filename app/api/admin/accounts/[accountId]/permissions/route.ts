@@ -7,7 +7,7 @@ export async function GET(
   { params }: { params: Promise<{ accountId: string }> }
 ) {
   try {
-    const supabase = createClient();
+    const supabase = await createClient();
     const { accountId } = await params;
 
     // Get current user and verify they have permission to manage users
@@ -75,7 +75,7 @@ export async function PATCH(
   { params }: { params: Promise<{ accountId: string }> }
 ) {
   try {
-    const supabase = createClient();
+    const supabase = await createClient();
     const { accountId } = await params;
     const body = await request.json();
     const { userId, permissions } = body;

@@ -29,6 +29,8 @@ jest.mock('@/lib/api/jobs', () => ({
 
 import { requireTechContext } from '@/lib/auth-guards';
 import { listJobs, getJobById, updateJob } from '@/lib/api/jobs';
+import type { Permission } from '@/lib/auth-guards';
+import type { JobStatus } from '@/types/job';
 
 const mockRequireTechContext = requireTechContext as jest.MockedFunction<
   typeof requireTechContext
@@ -75,7 +77,7 @@ describe('/api/tech/jobs', () => {
         accountId: 'test-account',
         userId: 'tech-user',
         role: 'TECH' as const,
-        permissions: ['manage_business'],
+        permissions: ['manage_business'] as Permission[],
         user: { id: 'tech-user', email: 'tech@test.com' },
         account: { id: 'test-account', name: 'Test Account' },
       };
@@ -83,15 +85,21 @@ describe('/api/tech/jobs', () => {
       const mockJobs = [
         {
           id: 'job-1',
-          title: 'Assigned Job',
-          status: 'scheduled',
+          title: 'Test Job',
+          status: 'scheduled' as JobStatus,
           assigned_tech_id: 'tech-user',
           client: { first_name: 'John', last_name: 'Doe' },
         },
       ];
 
       mockRequireTechContext.mockResolvedValue(mockContext);
-      mockListJobs.mockResolvedValue({ data: mockJobs, error: null });
+      mockListJobs.mockResolvedValue({
+        data: mockJobs,
+        page: 1,
+        pageSize: 20,
+        total: mockJobs.length,
+        error: null,
+      });
 
       const response = await getJobs(mockRequest);
       const data = await response.json();
@@ -119,13 +127,19 @@ describe('/api/tech/jobs', () => {
         accountId: 'test-account',
         userId: 'tech-user',
         role: 'TECH' as const,
-        permissions: ['manage_business'],
+        permissions: ['manage_business'] as Permission[],
         user: { id: 'tech-user', email: 'tech@test.com' },
         account: { id: 'test-account', name: 'Test Account' },
       };
 
       mockRequireTechContext.mockResolvedValue(mockContext);
-      mockListJobs.mockResolvedValue({ data: [], error: null });
+      mockListJobs.mockResolvedValue({
+        data: [],
+        page: 1,
+        pageSize: 20,
+        total: 0,
+        error: null,
+      });
 
       const requestWithParams = new NextRequest(
         'http://localhost:3000/api/tech/jobs?status=in_progress&search=plumbing'
@@ -158,15 +172,15 @@ describe('/api/tech/jobs', () => {
         accountId: 'test-account',
         userId: 'tech-user',
         role: 'TECH' as const,
-        permissions: ['manage_business'],
+        permissions: ['manage_business'] as Permission[],
         user: { id: 'tech-user', email: 'tech@test.com' },
         account: { id: 'test-account', name: 'Test Account' },
       };
 
       const mockJob = {
         id: 'job-1',
-        title: 'Assigned Job',
-        status: 'scheduled',
+        title: 'Test Job',
+        status: 'scheduled' as JobStatus,
         assigned_tech_id: 'tech-user',
         client: { first_name: 'John', last_name: 'Doe' },
       };
@@ -192,7 +206,7 @@ describe('/api/tech/jobs', () => {
         accountId: 'test-account',
         userId: 'tech-user',
         role: 'TECH' as const,
-        permissions: ['manage_business'],
+        permissions: ['manage_business'] as Permission[],
         user: { id: 'tech-user', email: 'tech@test.com' },
         account: { id: 'test-account', name: 'Test Account' },
       };
@@ -220,7 +234,7 @@ describe('/api/tech/jobs', () => {
         accountId: 'test-account',
         userId: 'tech-user',
         role: 'TECH' as const,
-        permissions: ['manage_business'],
+        permissions: ['manage_business'] as Permission[],
         user: { id: 'tech-user', email: 'tech@test.com' },
         account: { id: 'test-account', name: 'Test Account' },
       };
@@ -244,7 +258,9 @@ describe('/api/tech/jobs', () => {
         }
       );
 
-      const response = await PATCH(patchRequest, { params: { id: 'job-1' } });
+      const response = await PATCH(patchRequest, {
+        params: Promise.resolve({ id: 'job-1' }),
+      });
       const data = await response.json();
 
       expect(response.status).toBe(200);
@@ -259,7 +275,7 @@ describe('/api/tech/jobs', () => {
         accountId: 'test-account',
         userId: 'tech-user',
         role: 'TECH' as const,
-        permissions: ['manage_business'],
+        permissions: ['manage_business'] as Permission[],
         user: { id: 'tech-user', email: 'tech@test.com' },
         account: { id: 'test-account', name: 'Test Account' },
       };
@@ -276,7 +292,7 @@ describe('/api/tech/jobs', () => {
         }
       );
 
-      await PATCH(patchRequest, { params: { id: 'job-1' } });
+      await PATCH(patchRequest, { params: Promise.resolve({ id: 'job-1' }) });
 
       expect(mockUpdateJob).toHaveBeenCalledWith(expect.any(Object), 'job-1', {
         notes: 'Updated notes',
@@ -288,7 +304,7 @@ describe('/api/tech/jobs', () => {
         accountId: 'test-account',
         userId: 'tech-user',
         role: 'TECH' as const,
-        permissions: ['manage_business'],
+        permissions: ['manage_business'] as Permission[],
         user: { id: 'tech-user', email: 'tech@test.com' },
         account: { id: 'test-account', name: 'Test Account' },
       };
@@ -308,7 +324,7 @@ describe('/api/tech/jobs', () => {
         }
       );
 
-      await PATCH(patchRequest, { params: { id: 'job-1' } });
+      await PATCH(patchRequest, { params: Promise.resolve({ id: 'job-1' }) });
 
       // Only allowed fields should be passed through
       expect(mockUpdateJob).toHaveBeenCalledWith(

@@ -8,7 +8,7 @@ export async function GET(
   }: { params: Promise<{ messageId: string; attachmentIndex: string }> }
 ) {
   try {
-    const supabase = createClient();
+    const supabase = await createClient();
     const { messageId, attachmentIndex } = await params;
 
     // Get current user

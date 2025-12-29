@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
-import { supabase } from '@/lib/supabase';
+
 import {
   LayoutDashboard,
   Users,
@@ -409,8 +409,8 @@ export function Sidebar({ className }: SidebarProps) {
   const handleLogout = async () => {
     setIsLoggingOut(true);
     try {
-      // Sign out from Supabase
-      await supabase.auth.signOut();
+      // Sign out via API route
+      await fetch('/api/auth/logout', { method: 'POST' });
 
       // Clear local storage
       if (typeof window !== 'undefined') {

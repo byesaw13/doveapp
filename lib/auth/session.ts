@@ -24,7 +24,7 @@ export interface AccountContext {
 }
 
 export async function getServerSessionOrNull(): Promise<AccountContext | null> {
-  const cookieStore = cookies();
+  const cookieStore = await cookies();
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -83,7 +83,7 @@ export async function getServerSessionOrNull(): Promise<AccountContext | null> {
   if (membershipError || !membership) {
     // For users without membership, assign customer role
     accountId = '6785bba1-553c-4886-9638-460033ad6b01';
-    role = 'customer';
+    role = 'CUSTOMER';
     permissions = [];
     account = {
       id: accountId,
@@ -99,13 +99,13 @@ export async function getServerSessionOrNull(): Promise<AccountContext | null> {
       avatar_url: null,
     };
   } else {
-    accountId = membership.account_id;
+    accountId = (membership as any).account_id;
     const userRole = membership.role as 'OWNER' | 'ADMIN' | 'TECH';
-    role = userRole.toLowerCase() as Role;
+    role = userRole as Role;
     const customPermissions = membership.permissions as Permission[] | null;
     permissions = customPermissions || DEFAULT_ROLE_PERMISSIONS[userRole];
-    account = membership.accounts;
-    userDetails = membership.users;
+    account = (membership as any).accounts;
+    userDetails = (membership as any).users;
   }
 
   return {
@@ -124,5 +124,5 @@ export async function requireUser(): Promise<AccountContext> {
     const { redirect } = await import('next/navigation');
     redirect('/auth/login');
   }
-  return session;
+  return session!;
 }

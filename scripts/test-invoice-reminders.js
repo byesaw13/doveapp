@@ -5,7 +5,7 @@ import { createClient } from '@/lib/supabase/server';
 
 export async function testInvoiceRemindersAPI() {
   try {
-    const supabase = createClient();
+    const supabase = await createClient();
 
     console.log('Testing invoice reminders API...');
 

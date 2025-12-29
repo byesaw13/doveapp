@@ -74,7 +74,7 @@ export async function createInvoiceFromJob(
     total: item.quantity * item.unit_price,
   }));
 
-  const subtotal = lineItems.reduce((sum, item) => sum + item.total, 0);
+  const subtotal = lineItems.reduce((sum, item) => sum + item.line_total, 0);
   const taxRate = 0.08; // Default 8% tax - should be configurable
   const taxAmount = subtotal * taxRate;
   const total = subtotal + taxAmount;

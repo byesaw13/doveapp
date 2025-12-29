@@ -313,3 +313,7 @@ test-results/
 # Playwright
 playwright-report/
 test-results/
+
+# Playwright
+playwright-report/
+test-results/

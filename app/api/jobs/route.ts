@@ -93,12 +93,20 @@ export async function POST(request: NextRequest) {
     );
     if (validationError) return validationError;
 
+    // Debug logging (development only)
+    if (process.env.NODE_ENV !== 'production') {
+      const body = await request
+        .clone()
+        .json()
+        .catch(() => ({}));
+      console.log('Job create request keys:', Object.keys(body));
+      console.log('Validated data keys:', Object.keys(data || {}));
+      console.log('Validated client_id:', data?.client_id);
+    }
+
     if (!data!.client_id) {
       return NextResponse.json(
-        {
-          error:
-            'client_id is required. Select a client before creating a job.',
-        },
+        { error: 'client_id is required' },
         { status: 400 }
       );
     }
@@ -121,6 +129,12 @@ export async function POST(request: NextRequest) {
       tax: 0,
       total: 0,
     };
+
+    // Debug logging (development only)
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('Final job insert payload keys:', Object.keys(jobData));
+      console.log('Final customer_id:', jobData.customer_id);
+    }
 
     const { data: job, error } = await supabase
       .from('jobs')

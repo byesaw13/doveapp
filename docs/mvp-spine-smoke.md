@@ -28,10 +28,11 @@
 6. Add a property with address fields
 7. Navigate to `/admin/jobs`
 8. Create a new job linked to the client/property with title, description, scheduled date (job_number auto-generated, status defaults to 'scheduled', client_id required)
-9. Attempt creating job without client - should return 400 error "client_id is required. Select a client before creating a job."
-10. Click on the job to view details
-11. Assign a technician using the dropdown
-12. Verify the assigned tech can see the job
+9. Attempt creating job without client - should return 400 error "client_id is required" (no DB 23502 error)
+10. Create job with client selected - should return 201 success
+11. Click on the job to view details
+12. Assign a technician using the dropdown
+13. Verify the assigned tech can see the job
 
 ### Tech Flow
 

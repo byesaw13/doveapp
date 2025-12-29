@@ -85,18 +85,28 @@ export async function createClient(
       data: { user },
     } = await supabase.auth.getUser();
     if (user) {
-      const { data: membership } = await supabase
+      // Fetch all active memberships and prioritize by role
+      const { data: memberships } = await supabase
         .from('account_memberships')
-        .select('account_id')
+        .select('account_id, role')
         .eq('user_id', user.id)
-        .eq('is_active', true)
-        .single();
-      accountId = membership?.account_id;
+        .eq('is_active', true);
+
+      if (memberships && memberships.length > 0) {
+        // Sort by role priority: OWNER > ADMIN > TECH
+        const rolePriority = { OWNER: 1, ADMIN: 2, TECH: 3 };
+        memberships.sort(
+          (a, b) =>
+            rolePriority[a.role as keyof typeof rolePriority] -
+            rolePriority[b.role as keyof typeof rolePriority]
+        );
+        accountId = memberships[0].account_id;
+      }
     }
   }
 
   if (!accountId) {
-    throw new Error('No account found for current user');
+    throw new Error('No active account membership found for user');
   }
 
   // Map name to first_name and last_name

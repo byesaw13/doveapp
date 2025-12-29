@@ -109,9 +109,28 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Add account_id to the client data
+    // Normalize name to first_name/last_name if needed
+    let firstName = validatedData.first_name;
+    let lastName = validatedData.last_name;
+    if ((validatedData as any).name && (!firstName || !lastName)) {
+      const parts = (validatedData as any).name.trim().split(/\s+/);
+      firstName = parts[0] || '';
+      lastName = parts.slice(1).join(' ') || 'Unknown';
+    }
+
+    // Ensure required fields
+    if (!firstName || !lastName) {
+      return NextResponse.json(
+        { error: 'first_name and last_name are required' },
+        { status: 400 }
+      );
+    }
+
+    // Prepare client data
     const clientData = {
       ...validatedData,
+      first_name: firstName,
+      last_name: lastName,
       account_id: context.accountId,
     };
 
@@ -123,10 +142,7 @@ export async function POST(request: NextRequest) {
 
     if (error) {
       console.error('Error creating client:', error);
-      return NextResponse.json(
-        { error: 'Failed to create client' },
-        { status: 500 }
-      );
+      return errorResponse(error, 'Failed to create client');
     }
 
     return NextResponse.json(client, { status: 201 });

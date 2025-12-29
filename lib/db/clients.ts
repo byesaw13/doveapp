@@ -93,14 +93,17 @@ export async function createClient(
         .eq('is_active', true);
 
       if (memberships && memberships.length > 0) {
-        // Sort by role priority: OWNER > ADMIN > TECH
-        const rolePriority = { OWNER: 1, ADMIN: 2, TECH: 3 };
-        memberships.sort(
-          (a, b) =>
-            rolePriority[a.role as keyof typeof rolePriority] -
-            rolePriority[b.role as keyof typeof rolePriority]
+        // Filter to only known roles and sort by priority: OWNER > ADMIN > TECH
+        const rolePriority: Record<string, number> = {
+          OWNER: 1,
+          ADMIN: 2,
+          TECH: 3,
+        };
+        const eligible = memberships.filter(
+          (m) => m.account_id && rolePriority[m.role] !== undefined
         );
-        accountId = memberships[0].account_id;
+        eligible.sort((a, b) => rolePriority[a.role] - rolePriority[b.role]);
+        accountId = eligible[0]?.account_id;
       }
     }
   }

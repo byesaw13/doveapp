@@ -114,16 +114,18 @@ export async function POST(request: NextRequest) {
     // Generate job_number
     const jobNumber = `JOB-${Date.now()}`;
 
-    // Add account_id to job data
     const jobData = {
       account_id: context.accountId,
-      client_id: data!.client_id, // REQUIRED: set client_id column
+      // ✅ REQUIRED by DB
+      client_id: data!.client_id,
+      // Optional: only keep if you actually use portal customers here
+      customer_id: null,
       property_id: data!.property_id || null,
       job_number: jobNumber,
       title: data!.title,
       description: data!.description || null,
       status: data!.status || 'scheduled',
-      service_date: data!.scheduled_date, // Map scheduled_date to service_date
+      service_date: data!.scheduled_date,
       assigned_tech_id: null,
       subtotal: 0,
       tax: 0,
@@ -134,6 +136,7 @@ export async function POST(request: NextRequest) {
     if (process.env.NODE_ENV !== 'production') {
       console.log('Final job insert payload keys:', Object.keys(jobData));
       console.log('Final client_id:', jobData.client_id);
+      console.log('Final customer_id:', jobData.customer_id);
     }
 
     const { data: job, error } = await supabase

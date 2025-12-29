@@ -309,3 +309,15 @@ storybook-static/
 e2e/output/
 test-results/
 .env*.local
+
+# Playwright
+playwright-report/
+test-results/
+
+# Playwright
+playwright-report/
+test-results/
+
+# Playwright
+playwright-report/
+test-results/

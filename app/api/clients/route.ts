@@ -111,13 +111,18 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Add account_id and map postal_code to zip_code
+    // Map validation fields to customers table schema
     const clientData = {
-      ...validatedData,
       account_id: context.accountId,
-      zip_code: validatedData.postal_code, // Map to DB field
+      name: `${validatedData.first_name} ${validatedData.last_name}`.trim(),
+      email: validatedData.email,
+      phone: validatedData.phone,
+      address_line1: validatedData.address_line1,
+      address_line2: validatedData.address_line2,
+      city: validatedData.city,
+      state: validatedData.state,
+      zip_code: validatedData.postal_code,
     };
-    delete (clientData as any).postal_code; // Remove the validation field
 
     const { data: client, error } = await supabaseClient
       .from('customers') // Updated to customers table

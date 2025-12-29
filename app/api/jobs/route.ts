@@ -29,11 +29,9 @@ export async function GET(request: NextRequest) {
       .select(
         `
         *,
-        clients!jobs_client_id_fkey (
+        customer:customers!jobs_customer_id_fkey (
           id,
-          first_name,
-          last_name,
-          company_name,
+          name,
           email,
           phone
         )
@@ -42,10 +40,7 @@ export async function GET(request: NextRequest) {
       .order('created_at', { ascending: false });
 
     // CRITICAL: Filter by account_id for multi-tenancy
-    const accountIdColumn = 'account_id';
-    // Temporarily allowing jobs without account_id filtering (data consistency issue)
-    // TODO: Fix account_id backfill to match user memberships
-    // query = query.eq(accountIdColumn, context.accountId);
+    query = query.eq('account_id', context.accountId);
 
     if (clientId) {
       query = query.eq('client_id', clientId);
@@ -110,18 +105,17 @@ export async function POST(request: NextRequest) {
 
     // Add account_id to job data
     const jobData = {
-      client_id: data!.client_id,
+      account_id: context.accountId,
+      customer_id: data!.client_id, // Map client_id to customer_id
       property_id: data!.property_id || null,
       title: data!.title,
       description: data!.description || null,
       status: data!.status || 'scheduled',
       service_date: data!.scheduled_date, // Map scheduled_date to service_date
-      scheduled_time: null, // Keep for backward compatibility
-      notes: null,
+      assigned_tech_id: null,
       subtotal: 0,
       tax: 0,
       total: 0,
-      // account_id: context.accountId, // Uncomment when column exists
     };
 
     const { data: job, error } = await supabase

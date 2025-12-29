@@ -117,7 +117,7 @@ export async function POST(request: NextRequest) {
     // Add account_id to job data
     const jobData = {
       account_id: context.accountId,
-      customer_id: data!.client_id, // Map client_id to customer_id
+      client_id: data!.client_id, // REQUIRED: set client_id column
       property_id: data!.property_id || null,
       job_number: jobNumber,
       title: data!.title,
@@ -133,7 +133,7 @@ export async function POST(request: NextRequest) {
     // Debug logging (development only)
     if (process.env.NODE_ENV !== 'production') {
       console.log('Final job insert payload keys:', Object.keys(jobData));
-      console.log('Final customer_id:', jobData.customer_id);
+      console.log('Final client_id:', jobData.client_id);
     }
 
     const { data: job, error } = await supabase

@@ -23,13 +23,14 @@
 1. Login as admin user
 2. Navigate to `/admin/clients`
 3. Create a new client with name, phone, email (account_id is auto-set from logged-in admin's account)
-4. Click on the client to view details
-5. Add a property with address fields
-6. Navigate to `/admin/jobs`
-7. Create a new job linked to the client/property with title, description, scheduled date
-8. Click on the job to view details
-9. Assign a technician using the dropdown
-10. Verify the assigned tech can see the job
+4. Call GET /api/clients and verify the new client is returned in the list
+5. Click on the client to view details
+6. Add a property with address fields
+7. Navigate to `/admin/jobs`
+8. Create a new job linked to the client/property with title, description, scheduled date
+9. Click on the job to view details
+10. Assign a technician using the dropdown
+11. Verify the assigned tech can see the job
 
 ### Tech Flow
 
@@ -47,3 +48,4 @@
 - Tech status updates use RPC function for security
 - RLS policies enforce org + role access
 - No direct job status updates from tech UI
+- clients = CRM records (public.clients); customers = portal users (non-MVP)

@@ -32,7 +32,7 @@ export async function GET(request: NextRequest) {
     const query = searchParams.get('q');
 
     let queryBuilder = supabaseClient
-      .from('customers') // Updated to customers table
+      .from('clients')
       .select('*')
       .order('created_at', { ascending: false });
 
@@ -41,7 +41,7 @@ export async function GET(request: NextRequest) {
 
     if (query) {
       queryBuilder = queryBuilder.or(
-        `name.ilike.%${query}%,email.ilike.%${query}%,company.ilike.%${query}%`
+        `first_name.ilike.%${query}%,last_name.ilike.%${query}%,email.ilike.%${query}%,company_name.ilike.%${query}%`
       );
     }
 
@@ -54,15 +54,8 @@ export async function GET(request: NextRequest) {
       return errorResponse(error, 'Failed to fetch clients');
     }
 
-    // Map customers to clients format
-    const mappedClients = clients?.map((c) => ({
-      ...c,
-      first_name: c.name?.split(' ')[0] || '',
-      last_name: c.name?.split(' ').slice(1).join(' ') || '',
-    }));
-
     const metrics = perfLogger.complete(200);
-    const response = NextResponse.json(mappedClients || []);
+    const response = NextResponse.json(clients || []);
     response.headers.set('X-Response-Time', `${metrics.duration}ms`);
     if (metrics.queryCount) {
       response.headers.set('X-Query-Count', metrics.queryCount.toString());
@@ -116,21 +109,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Map validation fields to customers table schema
+    // Add account_id to the client data
     const clientData = {
+      ...validatedData,
       account_id: context.accountId,
-      name: `${validatedData.first_name} ${validatedData.last_name}`.trim(),
-      email: validatedData.email,
-      phone: validatedData.phone,
-      address_line1: validatedData.address_line1,
-      address_line2: validatedData.address_line2,
-      city: validatedData.city,
-      state: validatedData.state,
-      zip_code: validatedData.postal_code,
     };
 
     const { data: client, error } = await supabaseClient
-      .from('customers') // Updated to customers table
+      .from('clients')
       .insert(clientData)
       .select()
       .single();

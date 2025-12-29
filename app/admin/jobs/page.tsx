@@ -220,9 +220,7 @@ export default function JobsPage() {
   };
 
   const renderKanbanCard = (job: JobWithClient) => {
-    const clientName = job.client
-      ? `${job.client.first_name} ${job.client.last_name}`
-      : 'No Client';
+    const clientName = job.client ? job.client.name || 'No Name' : 'No Client';
     const isSelected = selectedJob?.id === job.id;
 
     return (
@@ -256,9 +254,9 @@ export default function JobsPage() {
             </span>
           </div>
 
-          {job.scheduled_for && (
+          {job.service_date && (
             <div className="text-xs text-slate-500">
-              📅 {formatDate(job.scheduled_for)}
+              📅 {formatDate(job.service_date)}
             </div>
           )}
 
@@ -442,7 +440,9 @@ export default function JobsPage() {
             }
             clientOptions={clients.map((client) => ({
               id: client.id,
-              label: `${client.first_name} ${client.last_name}`,
+              label:
+                (client as any).name ||
+                `${client.first_name} ${client.last_name}`,
               value: client.id,
             }))}
             selectedClients={selectedClients}
@@ -621,10 +621,10 @@ export default function JobsPage() {
                           <strong>Total:</strong> $
                           {selectedJob.total.toLocaleString()}
                         </div>
-                        {selectedJob.scheduled_for && (
+                        {selectedJob.service_date && (
                           <div>
                             <strong>Scheduled:</strong>{' '}
-                            {formatDate(selectedJob.scheduled_for)}
+                            {formatDate(selectedJob.service_date)}
                           </div>
                         )}
                       </div>
@@ -642,8 +642,8 @@ export default function JobsPage() {
                           <>
                             <div>
                               <strong>Name:</strong>{' '}
-                              {selectedJob.client.first_name}{' '}
-                              {selectedJob.client.last_name}
+                              {(selectedJob.client as any).name ||
+                                `${selectedJob.client.first_name} ${selectedJob.client.last_name}`}
                             </div>
                             <div>
                               <strong>Phone:</strong>{' '}

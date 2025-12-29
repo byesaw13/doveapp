@@ -54,8 +54,9 @@ export interface Job {
 export interface JobWithClient extends Job {
   client: {
     id: string;
-    first_name: string;
-    last_name: string;
+    name?: string;
+    first_name?: string;
+    last_name?: string;
     email?: string | null;
     phone?: string | null;
   };

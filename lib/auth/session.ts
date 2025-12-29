@@ -48,31 +48,18 @@ export async function getServerSessionOrNull(): Promise<AccountContext | null> {
   // Fetch membership
   const { data: membership, error: membershipError } = await supabase
     .from('account_memberships')
-    .select(
-      `
-      role,
-      is_active,
-      permissions,
-      accounts (
-        id,
-        name,
-        subdomain,
-        custom_domain,
-        logo_url
-      ),
-      users (
-        id,
-        email,
-        full_name,
-        avatar_url
-      )
-    `
-    )
+    .select('role, is_active, account_id, user_id')
     .eq('user_id', user.id)
     .eq('is_active', true)
     .order('created_at', { ascending: false })
     .limit(1)
     .maybeSingle();
+
+  console.log('Membership query result:', {
+    membership,
+    membershipError,
+    userId: user.id,
+  });
 
   let accountId: string;
   let role: Role;
@@ -102,10 +89,35 @@ export async function getServerSessionOrNull(): Promise<AccountContext | null> {
     accountId = (membership as any).account_id;
     const userRole = membership.role as 'OWNER' | 'ADMIN' | 'TECH';
     role = userRole as Role;
-    const customPermissions = membership.permissions as Permission[] | null;
-    permissions = customPermissions || DEFAULT_ROLE_PERMISSIONS[userRole];
-    account = (membership as any).accounts;
-    userDetails = (membership as any).users;
+    // No custom permissions column - always use defaults
+    permissions = DEFAULT_ROLE_PERMISSIONS[userRole];
+
+    // Fetch account and user details separately
+    const { data: accountData } = await supabase
+      .from('accounts')
+      .select('id, name, subdomain, custom_domain, logo_url')
+      .eq('id', accountId)
+      .single();
+
+    const { data: userData } = await supabase
+      .from('users')
+      .select('id, email, full_name, avatar_url')
+      .eq('id', user.id)
+      .single();
+
+    account = accountData || {
+      id: accountId,
+      name: 'Unknown Account',
+      subdomain: null,
+      custom_domain: null,
+      logo_url: null,
+    };
+    userDetails = userData || {
+      id: user.id,
+      email: user.email || '',
+      full_name: null,
+      avatar_url: null,
+    };
   }
 
   return {
@@ -120,6 +132,7 @@ export async function getServerSessionOrNull(): Promise<AccountContext | null> {
 
 export async function requireUser(): Promise<AccountContext> {
   const session = await getServerSessionOrNull();
+  console.log('requireUser session:', session);
   if (!session) {
     const { redirect } = await import('next/navigation');
     redirect('/auth/login');

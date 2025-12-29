@@ -123,10 +123,16 @@ export default function LoginPage() {
       const { email: demoEmail, password: demoPassword } =
         demoCredentials[role];
 
+      // Sign out first to clear any existing session
+      const signOutResult = await supabase.auth.signOut();
+      console.log('Sign out result:', signOutResult);
+
       const { data, error } = await supabase.auth.signInWithPassword({
         email: demoEmail,
         password: demoPassword,
       });
+
+      console.log('Sign in result:', { data: data?.user?.email, error });
 
       if (error) {
         console.error('❌ Demo login error:', error);
@@ -135,14 +141,18 @@ export default function LoginPage() {
       }
 
       if (data.user) {
-        // Redirect based on role using window.location for hard navigation
-        if (role === 'admin') {
-          window.location.href = '/admin/dashboard';
-        } else if (role === 'tech') {
-          window.location.href = '/tech/today';
-        } else {
-          window.location.href = '/portal/home';
-        }
+        console.log('Demo login successful for:', data.user.email);
+        // Small delay to ensure session is set
+        setTimeout(() => {
+          // Redirect based on role using window.location for hard navigation
+          if (role === 'admin') {
+            window.location.href = '/admin/dashboard';
+          } else if (role === 'tech') {
+            window.location.href = '/tech/today';
+          } else {
+            window.location.href = '/portal/home';
+          }
+        }, 1000);
       }
     } catch (err: any) {
       console.error('❌ Demo login error:', err);

@@ -27,7 +27,7 @@
 5. Click on the client to view details
 6. Add a property with address fields
 7. Navigate to `/admin/jobs`
-8. Create a new job linked to the client/property with title, description, scheduled date
+8. Create a new job linked to the client/property with title, description, scheduled date (job_number auto-generated, status defaults to 'scheduled')
 9. Click on the job to view details
 10. Assign a technician using the dropdown
 11. Verify the assigned tech can see the job

@@ -93,11 +93,15 @@ export async function POST(request: NextRequest) {
     );
     if (validationError) return validationError;
 
+    // Generate job_number
+    const jobNumber = `JOB-${Date.now()}`;
+
     // Add account_id to job data
     const jobData = {
       account_id: context.accountId,
       customer_id: data!.client_id, // Map client_id to customer_id
       property_id: data!.property_id || null,
+      job_number: jobNumber,
       title: data!.title,
       description: data!.description || null,
       status: data!.status || 'scheduled',

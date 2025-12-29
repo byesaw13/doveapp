@@ -56,7 +56,7 @@ export const createJobSchema = z.object({
     .default('scheduled'),
   scheduled_date: dateSchema.optional(),
   priority: z.enum(['low', 'medium', 'high', 'urgent']).default('medium'),
-  property_id: uuidSchema.optional(),
+  property_id: uuidSchema.nullable().optional(),
 });
 
 export const updateJobSchema = z.object({

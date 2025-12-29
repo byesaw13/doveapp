@@ -76,11 +76,30 @@ export async function getClient(id: string): Promise<Client | null> {
  * Create a new client
  */
 export async function createClient(
-  client: ClientInsert
+  client: ClientInsert & { account_id?: string }
 ): Promise<Client | null> {
+  // If account_id not provided, try to get from session (client-side)
+  let accountId = client.account_id;
+  if (!accountId) {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (user) {
+      const { data: membership } = await supabase
+        .from('account_memberships')
+        .select('account_id')
+        .eq('user_id', user.id)
+        .eq('is_active', true)
+        .single();
+      accountId = membership?.account_id;
+    }
+  }
+
+  const clientData = { ...client, account_id: accountId };
+
   const { data, error } = await supabase
-    .from('clients')
-    .insert(client)
+    .from('customers') // Use customers table as per migrations
+    .insert(clientData)
     .select()
     .single();
 

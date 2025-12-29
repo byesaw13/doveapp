@@ -26,17 +26,7 @@ export async function GET(request: NextRequest) {
     // Build query with account filtering
     let query = supabase
       .from('jobs')
-      .select(
-        `
-        *,
-        client:customers (
-          id,
-          name,
-          email,
-          phone
-        )
-      `
-      )
+      .select('*')
       .order('created_at', { ascending: false });
 
     // CRITICAL: Filter by account_id for multi-tenancy

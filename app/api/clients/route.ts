@@ -3,6 +3,7 @@ import { requireAccountContext, canManageAdmin } from '@/lib/auth-guards';
 import { createServerClient } from '@supabase/ssr';
 import { PerformanceLogger } from '@/lib/api/performance';
 import { validateRequest, createClientSchema } from '@/lib/api/validation';
+import { errorResponse } from '@/lib/api-helpers';
 
 // GET /api/clients - Get all clients or search
 export async function GET(request: NextRequest) {
@@ -50,14 +51,18 @@ export async function GET(request: NextRequest) {
     if (error) {
       console.error('Error fetching clients:', error);
       perfLogger.complete(500);
-      return NextResponse.json(
-        { error: 'Failed to fetch clients' },
-        { status: 500 }
-      );
+      return errorResponse(error, 'Failed to fetch clients');
     }
 
+    // Map customers to clients format
+    const mappedClients = clients?.map((c) => ({
+      ...c,
+      first_name: c.name?.split(' ')[0] || '',
+      last_name: c.name?.split(' ').slice(1).join(' ') || '',
+    }));
+
     const metrics = perfLogger.complete(200);
-    const response = NextResponse.json(clients || []);
+    const response = NextResponse.json(mappedClients || []);
     response.headers.set('X-Response-Time', `${metrics.duration}ms`);
     if (metrics.queryCount) {
       response.headers.set('X-Query-Count', metrics.queryCount.toString());

@@ -44,7 +44,15 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import Link from 'next/link';
+import { supabase } from '@/lib/supabase';
 
 export default function JobDetailPage() {
   const params = useParams();
@@ -63,6 +71,8 @@ export default function JobDetailPage() {
   const [automationSuggestions, setAutomationSuggestions] = useState<string[]>(
     []
   );
+  const [techs, setTechs] = useState<any[]>([]);
+  const [notes, setNotes] = useState<any[]>([]);
 
   useEffect(() => {
     loadJob();
@@ -88,6 +98,24 @@ export default function JobDetailPage() {
         const suggestions = await getJobAutomationSuggestions(jobData.id);
         setAutomationSuggestions(suggestions);
       }
+
+      // Load techs and notes
+      const [techsData, notesData] = await Promise.all([
+        supabase
+          .from('account_memberships')
+          .select('user_id, user:users(full_name, email)')
+          .eq('role', 'TECH')
+          .eq('is_active', true),
+        supabase
+          .from('job_notes')
+          .select(
+            'id, note, created_at, technician_id, user:users(full_name, email)'
+          )
+          .eq('job_id', params.id)
+          .order('created_at', { ascending: false }),
+      ]);
+      setTechs(techsData.data || []);
+      setNotes(notesData.data || []);
     } catch (error) {
       console.error('Failed to load job:', error);
       alert('Failed to load job');
@@ -310,6 +338,38 @@ export default function JobDetailPage() {
         </CardContent>
       </Card>
 
+      {/* Assign Tech */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Assign Technician</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Select
+            value={job?.assigned_tech_id || ''}
+            onValueChange={async (value) => {
+              if (!job) return;
+              await supabase
+                .from('jobs')
+                .update({ assigned_tech_id: value || null })
+                .eq('id', job.id);
+              await loadJob();
+            }}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Select technician" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="">Unassigned</SelectItem>
+              {techs.map((tech: any) => (
+                <SelectItem key={tech.user_id} value={tech.user_id}>
+                  {tech.user?.full_name || tech.user?.email}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </CardContent>
+      </Card>
+
       {/* Automation Suggestions */}
       {automationSuggestions.length > 0 && (
         <Card>
@@ -333,6 +393,24 @@ export default function JobDetailPage() {
           </CardContent>
         </Card>
       )}
+
+      {/* Notes */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Notes</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {notes.map((note: any) => (
+            <div key={note.id} className="border-b pb-2 mb-2">
+              <p>{note.note}</p>
+              <p className="text-sm text-gray-500">
+                {note.user?.full_name || note.user?.email} -{' '}
+                {new Date(note.created_at).toLocaleString()}
+              </p>
+            </div>
+          ))}
+        </CardContent>
+      </Card>
 
       {/* Client Info */}
       <Card>

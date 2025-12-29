@@ -22,7 +22,7 @@
 
 1. Login as admin user
 2. Navigate to `/admin/clients`
-3. Create a new client with name, phone, email
+3. Create a new client with name, phone, email (account_id is auto-set from logged-in admin's account)
 4. Click on the client to view details
 5. Add a property with address fields
 6. Navigate to `/admin/jobs`

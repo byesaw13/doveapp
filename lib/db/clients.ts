@@ -76,7 +76,7 @@ export async function getClient(id: string): Promise<Client | null> {
  * Create a new client
  */
 export async function createClient(
-  client: ClientInsert & { account_id?: string }
+  client: ClientInsert & { account_id?: string; name?: string }
 ): Promise<Client | null> {
   // If account_id not provided, try to get from session (client-side)
   let accountId = client.account_id;
@@ -95,17 +95,35 @@ export async function createClient(
     }
   }
 
-  const clientData = { ...client, account_id: accountId };
+  if (!accountId) {
+    throw new Error('No account found for current user');
+  }
+
+  // Map name to first_name and last_name
+  let firstName = client.first_name;
+  let lastName = client.last_name;
+  if (client.name && (!firstName || !lastName)) {
+    const parts = client.name.trim().split(/\s+/);
+    firstName = parts[0] || '';
+    lastName = parts.slice(1).join(' ') || 'Unknown';
+  }
+
+  const clientData = {
+    ...client,
+    account_id: accountId,
+    first_name: firstName,
+    last_name: lastName,
+  };
 
   const { data, error } = await supabase
-    .from('customers') // Use customers table as per migrations
+    .from('clients')
     .insert(clientData)
     .select()
     .single();
 
   if (error) {
     console.error('Error creating client:', error);
-    throw new Error('Failed to create client');
+    throw new Error(error?.message ?? JSON.stringify(error));
   }
 
   return data;

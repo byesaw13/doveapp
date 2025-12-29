@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/admin';
+import { requireAccountContext, requirePermission } from '@/lib/authz';
 import { z } from 'zod';
 
 // Validation schemas
@@ -32,6 +33,9 @@ const scheduleSchema = z.object({
 // GET /api/admin/team/schedules - Get team schedules with filtering
 export async function GET(request: NextRequest) {
   try {
+    const ctx = await requireAccountContext(request);
+    requirePermission(ctx, 'team:read');
+
     const supabase = createAdminClient();
     const { searchParams } = new URL(request.url);
 
@@ -48,6 +52,7 @@ export async function GET(request: NextRequest) {
         created_by_user:auth.users!created_by(full_name, email)
       `
       )
+      .eq('account_id', ctx.accountId)
       .order('scheduled_date', { ascending: true })
       .order('start_time', { ascending: true });
 
@@ -90,26 +95,21 @@ export async function GET(request: NextRequest) {
 // POST /api/admin/team/schedules - Create a new schedule entry
 export async function POST(request: NextRequest) {
   try {
+    const ctx = await requireAccountContext(request);
+    requirePermission(ctx, 'team:manage');
+
     const supabase = createAdminClient();
     const body = await request.json();
 
     const validatedData = scheduleSchema.parse(body);
 
-    // Get current user
-    const {
-      data: { user },
-      error: userError,
-    } = await supabase.auth.getUser();
-    if (userError || !user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
     const scheduleData = {
       ...validatedData,
+      account_id: ctx.accountId,
       scheduled_date: new Date(validatedData.scheduled_date)
         .toISOString()
         .split('T')[0],
-      created_by: user.id,
+      created_by: ctx.userId,
     };
 
     const { data, error } = await supabase

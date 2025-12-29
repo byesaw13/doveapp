@@ -74,7 +74,6 @@ export function QuickAddJob({ open = false, onOpenChange }: QuickAddJobProps) {
           subtotal: 0,
           tax: 0,
           total: 0,
-          property_id: null,
         }),
       });
 

@@ -67,3 +67,6 @@ $$;
 -- Lock down function privileges
 REVOKE ALL ON FUNCTION tech_update_job_status(uuid, text) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION tech_update_job_status(uuid, text) TO authenticated;
+
+-- Harden function security
+ALTER FUNCTION tech_update_job_status(uuid, text) SET search_path = public;

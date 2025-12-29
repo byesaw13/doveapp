@@ -16,8 +16,7 @@ CREATE POLICY "Admins can view jobs"
   FOR SELECT
   USING (
     account_id IN (
-      SELECT account_id
-      FROM account_memberships
+      SELECT account_id FROM account_memberships
       WHERE user_id = auth.uid()
         AND role IN ('OWNER', 'ADMIN')
         AND is_active = true
@@ -30,8 +29,7 @@ CREATE POLICY "Admins can manage jobs"
   FOR ALL
   USING (
     account_id IN (
-      SELECT account_id
-      FROM account_memberships
+      SELECT account_id FROM account_memberships
       WHERE user_id = auth.uid()
         AND role IN ('OWNER', 'ADMIN')
         AND is_active = true
@@ -39,8 +37,7 @@ CREATE POLICY "Admins can manage jobs"
   )
   WITH CHECK (
     account_id IN (
-      SELECT account_id
-      FROM account_memberships
+      SELECT account_id FROM account_memberships
       WHERE user_id = auth.uid()
         AND role IN ('OWNER', 'ADMIN')
         AND is_active = true

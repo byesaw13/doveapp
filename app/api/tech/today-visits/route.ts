@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { requireTechContext } from '@/lib/auth-guards';
-import { createAuthenticatedClient } from '@/lib/api-helpers';
+import { requireTechContext } from '@/lib/auth-guards-api';
 import { listTodayVisits, type VisitFilters } from '@/lib/api/visits';
+import { createRouteHandlerClient } from '@/lib/supabase/route-handler';
 
 export async function GET(request: NextRequest): Promise<NextResponse> {
   try {
     const context = await requireTechContext(request);
-    const supabase = createAuthenticatedClient(request);
+    const supabase = await createRouteHandlerClient();
     const { searchParams } = new URL(request.url);
 
     const filters: VisitFilters = {

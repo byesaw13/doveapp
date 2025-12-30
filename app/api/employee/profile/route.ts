@@ -1,14 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createAuthClient, getCurrentUser } from '@/lib/supabase-auth';
-import { supabase } from '@/lib/supabase';
-import { canManageAdmin } from '@/lib/auth-guards';
+import { createRouteHandlerClient } from '@/lib/supabase/route-handler';
 
 export async function GET(request: NextRequest) {
   try {
-    const supabaseAuth = await createAuthClient();
-    const user = await getCurrentUser();
+    const supabase = await createRouteHandlerClient();
+    const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser();
 
-    if (!user) {
+    if (userError || !user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -61,10 +62,13 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const supabaseAuth = await createAuthClient();
-    const user = await getCurrentUser();
+    const supabase = await createRouteHandlerClient();
+    const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser();
 
-    if (!user) {
+    if (userError || !user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -249,10 +253,13 @@ export async function POST(request: NextRequest) {
 
 export async function PUT(request: NextRequest) {
   try {
-    const supabaseAuth = await createAuthClient();
-    const user = await getCurrentUser();
+    const supabase = await createRouteHandlerClient();
+    const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser();
 
-    if (!user) {
+    if (userError || !user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 

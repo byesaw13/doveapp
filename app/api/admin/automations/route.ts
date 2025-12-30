@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/admin';
-import { requireAccountContext } from '@/lib/auth-guards';
+import { requireAccountContext } from '@/lib/auth-guards-api';
 import { z } from 'zod';
 
 // Schema for automation settings

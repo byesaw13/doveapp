@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { requireTechContext } from '@/lib/auth-guards';
+import { requireTechContext } from '@/lib/auth-guards-api';
+import { isDemoMode } from '@/lib/auth/demo';
 import { createClient } from '@/lib/supabase-server';
 
 export async function GET(request: NextRequest) {
@@ -11,6 +12,12 @@ export async function GET(request: NextRequest) {
       context = await requireTechContext(request);
       supabase = createClient();
     } catch (error) {
+      if (!isDemoMode()) {
+        return NextResponse.json(
+          { error: 'Authentication required' },
+          { status: 401 }
+        );
+      }
       // For demo purposes, allow access without tech context
       const { createClient: createSupabaseClient } =
         await import('@supabase/supabase-js');

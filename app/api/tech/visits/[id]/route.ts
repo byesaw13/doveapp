@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { requireTechContext } from '@/lib/auth-guards';
-import { createAuthenticatedClient } from '@/lib/api-helpers';
+import { requireTechContext } from '@/lib/auth-guards-api';
 import { z } from 'zod';
+import { createRouteHandlerClient } from '@/lib/supabase/route-handler';
 
 const updateVisitSchema = z
   .object({
@@ -16,7 +16,7 @@ export async function PATCH(
 ): Promise<NextResponse> {
   try {
     const context = await requireTechContext(request);
-    const supabase = createAuthenticatedClient(request);
+    const supabase = await createRouteHandlerClient();
     const { id } = await params;
 
     // Parse and validate body

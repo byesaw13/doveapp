@@ -1,27 +1,12 @@
 import { redirect } from 'next/navigation';
-import { cookies } from 'next/headers';
-import { createServerClient } from '@supabase/ssr';
+import { createServerClient } from '@/lib/supabase/server';
 
 /**
  * Root landing page - redirects to appropriate portal based on user role
  */
 export default async function RootPage() {
-  const cookieStore = await cookies();
-
   // Create Supabase client to check auth
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        get(name: string) {
-          return cookieStore.get(name)?.value;
-        },
-        set() {},
-        remove() {},
-      },
-    }
-  );
+  const supabase = await createServerClient();
 
   const {
     data: { user },

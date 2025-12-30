@@ -1,21 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createServerClient } from '@supabase/ssr';
+import { createRouteHandlerClient } from '@/lib/supabase/route-handler';
 
 export async function GET(request: NextRequest) {
   try {
-    const supabase = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      {
-        cookies: {
-          get(name: string) {
-            return request.cookies.get(name)?.value;
-          },
-          set() {},
-          remove() {},
-        },
-      }
-    );
+    const supabase = await createRouteHandlerClient();
 
     // Check user permissions
     const {
@@ -94,19 +82,7 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
 
-    const supabase = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      {
-        cookies: {
-          get(name: string) {
-            return request.cookies.get(name)?.value;
-          },
-          set() {},
-          remove() {},
-        },
-      }
-    );
+    const supabase = await createRouteHandlerClient();
 
     // Get user info and IP
     const {

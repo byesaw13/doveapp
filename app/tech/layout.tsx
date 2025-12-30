@@ -1,9 +1,4 @@
-import { redirect } from 'next/navigation';
 import Link from 'next/link';
-import {
-  createAuthClient,
-  getCurrentAccountContext,
-} from '@/lib/supabase-auth';
 import { TechLogoutButton } from '@/components/tech-logout-button';
 import { TechPortalSidebar } from './TechPortalSidebar';
 import { ErrorBoundary } from '@/components/ErrorBoundary';

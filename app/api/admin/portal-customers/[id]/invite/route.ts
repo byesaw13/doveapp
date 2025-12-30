@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createAuthClient, getCurrentUser } from '@/lib/supabase-auth';
-import { supabase } from '@/lib/supabase';
+import { createRouteHandlerClient } from '@/lib/supabase/route-handler';
 import { sendCustomerInvitationEmail } from '@/lib/email';
 
 export async function POST(
@@ -8,10 +7,13 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const supabaseAuth = await createAuthClient();
-    const user = await getCurrentUser();
+    const supabase = await createRouteHandlerClient();
+    const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser();
 
-    if (!user) {
+    if (userError || !user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 

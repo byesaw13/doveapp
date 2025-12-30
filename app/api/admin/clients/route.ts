@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { requireAdminContext } from '@/lib/auth-guards';
-import { createAuthenticatedClient } from '@/lib/api-helpers';
+import { requireAdminContext } from '@/lib/auth-guards-api';
 import {
   listClients,
   createClient,
   type ClientFilters,
 } from '@/lib/api/clients';
+import { createRouteHandlerClient } from '@/lib/supabase/route-handler';
+import { isDemoMode } from '@/lib/auth/demo';
 
 /**
  * GET /api/admin/clients - List all clients (admin full access)
@@ -17,8 +18,13 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     try {
       context = await requireAdminContext(request);
     } catch (error) {
+      if (!isDemoMode()) {
+        return NextResponse.json(
+          { error: 'Authentication required' },
+          { status: 401 }
+        );
+      }
       // For demo purposes, allow access without account context
-      // Create a mock context for demo
       context = {
         accountId: 'demo',
         userId: 'demo-user',
@@ -28,7 +34,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
         account: { id: 'demo', name: 'Demo Account' },
       };
     }
-    const supabase = createAuthenticatedClient(request);
+    const supabase = await createRouteHandlerClient();
     const { searchParams } = new URL(request.url);
 
     const filters: ClientFilters = {
@@ -69,7 +75,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
 export async function POST(request: NextRequest): Promise<NextResponse> {
   try {
     const context = await requireAdminContext(request);
-    const supabase = createAuthenticatedClient(request);
+    const supabase = await createRouteHandlerClient();
     const body = await request.json();
 
     const { data, error } = await createClient(

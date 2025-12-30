@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { requireAccountContext, canManageAdmin } from '@/lib/auth-guards';
-import { createServerClient } from '@supabase/ssr';
+import { requireAccountContext } from '@/lib/auth-guards-api';
+import { canManageAdmin } from '@/lib/auth-guards';
+import { createRouteHandlerClient } from '@/lib/supabase/route-handler';
 import { PerformanceLogger } from '@/lib/api/performance';
 import { validateRequest, createClientSchema } from '@/lib/api/validation';
 import { errorResponse } from '@/lib/api-helpers';
@@ -14,19 +15,7 @@ export async function GET(request: NextRequest) {
     // Validate authentication and get account context
     const context = await requireAccountContext(request);
 
-    const supabaseClient = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      {
-        cookies: {
-          get(name: string) {
-            return request.cookies.get(name)?.value;
-          },
-          set() {},
-          remove() {},
-        },
-      }
-    );
+    const supabaseClient = await createRouteHandlerClient();
 
     const searchParams = request.nextUrl.searchParams;
     const query = searchParams.get('q');
@@ -83,19 +72,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const supabaseClient = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      {
-        cookies: {
-          get(name: string) {
-            return request.cookies.get(name)?.value;
-          },
-          set() {},
-          remove() {},
-        },
-      }
-    );
+    const supabaseClient = await createRouteHandlerClient();
 
     // Validate request body
     const { data: validatedData, error: validationError } =

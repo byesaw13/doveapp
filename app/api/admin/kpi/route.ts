@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { requireAdminContext } from '@/lib/auth-guards';
-import { createAuthenticatedClient } from '@/lib/api-helpers';
+import { requireAdminContext } from '@/lib/auth-guards-api';
+import { createRouteHandlerClient } from '@/lib/supabase/route-handler';
 
 export async function GET(request: NextRequest): Promise<NextResponse> {
   try {
     const context = await requireAdminContext(request);
-    const supabase = createAuthenticatedClient(request);
+    const supabase = await createRouteHandlerClient();
 
     // Get all metrics in parallel for efficiency
     const [

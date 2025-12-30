@@ -1,11 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createServerClient } from '@supabase/ssr';
-import { requireAccountContext } from '@/lib/auth-guards';
-import {
-  createAuthenticatedClient,
-  unauthorizedResponse,
-} from '@/lib/api-helpers';
+import { requireAccountContext } from '@/lib/auth-guards-api';
+import { unauthorizedResponse } from '@/lib/api-helpers';
 import { memoryCache } from '@/lib/utils';
+import { createRouteHandlerClient } from '@/lib/supabase/route-handler';
+import { isDemoMode } from '@/lib/auth/demo';
 
 export async function GET(request: NextRequest) {
   try {
@@ -15,9 +13,15 @@ export async function GET(request: NextRequest) {
     let cacheKey = 'dashboard-stats-demo';
     try {
       context = await requireAccountContext(request);
-      supabase = createAuthenticatedClient(request);
+      supabase = await createRouteHandlerClient();
       cacheKey = `dashboard-stats-${context.accountId}`;
     } catch (error) {
+      if (!isDemoMode()) {
+        return NextResponse.json(
+          { error: 'Authentication required' },
+          { status: 401 }
+        );
+      }
       // For demo purposes, allow access without account context
       // Use a basic supabase client without auth
       const { createClient } = await import('@supabase/supabase-js');

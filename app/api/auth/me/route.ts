@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { requireCustomerContext } from '@/lib/auth-guards';
+import { requireCustomerContext } from '@/lib/auth-guards-api';
+import { isDemoMode } from '@/lib/auth/demo';
 
 /**
  * GET /api/auth/me - Get current authenticated user info for portal
@@ -11,6 +12,12 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     try {
       context = await requireCustomerContext(request);
     } catch (error) {
+      if (!isDemoMode()) {
+        return NextResponse.json(
+          { error: 'Authentication required' },
+          { status: 401 }
+        );
+      }
       // For demo purposes, allow access without customer context
       context = {
         userId: 'demo-customer',

@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { requireAccountContext } from '@/lib/auth-guards';
-import { createAuthenticatedClient } from '@/lib/api-helpers';
+import { requireAccountContext } from '@/lib/auth-guards-api';
 import { PerformanceLogger } from '@/lib/api/performance';
 import { z } from 'zod';
+import { createRouteHandlerClient } from '@/lib/supabase/route-handler';
 
 // Schema for job template validation
 const jobTemplateSchema = z.object({
@@ -42,7 +42,7 @@ export async function GET(request: NextRequest) {
   try {
     // Validate authentication
     const context = await requireAccountContext(request);
-    const supabase = createAuthenticatedClient(request);
+    const supabase = await createRouteHandlerClient();
 
     const searchParams = url.searchParams;
     const category = searchParams.get('category');
@@ -103,7 +103,7 @@ export async function POST(request: NextRequest) {
   try {
     // Validate authentication
     const context = await requireAccountContext(request);
-    const supabase = createAuthenticatedClient(request);
+    const supabase = await createRouteHandlerClient();
 
     // Validate request body
     const body = await request.json();

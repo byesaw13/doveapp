@@ -1,10 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { requireAccountContext } from '@/lib/auth-guards';
-import {
-  createAuthenticatedClient,
-  errorResponse,
-  unauthorizedResponse,
-} from '@/lib/api-helpers';
+import { requireAccountContext } from '@/lib/auth-guards-api';
+import { errorResponse, unauthorizedResponse } from '@/lib/api-helpers';
+import { createRouteHandlerClient } from '@/lib/supabase/route-handler';
 
 // GET /api/jobs/[id]/notes - Get all notes for a job
 export async function GET(
@@ -14,7 +11,7 @@ export async function GET(
   try {
     const { id: jobId } = await params;
     const context = await requireAccountContext(request);
-    const supabase = createAuthenticatedClient(request);
+    const supabase = await createRouteHandlerClient();
 
     // Verify job exists and belongs to account
     const { data: job, error: jobError } = await supabase
@@ -65,7 +62,7 @@ export async function POST(
   try {
     const { id: jobId } = await params;
     const context = await requireAccountContext(request);
-    const supabase = createAuthenticatedClient(request);
+    const supabase = await createRouteHandlerClient();
     const body = await request.json();
 
     // Verify job exists and belongs to account

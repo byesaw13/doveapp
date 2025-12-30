@@ -6,18 +6,17 @@ jest.mock('@/lib/auth-guards', () => ({
   requireTechContext: jest.fn(),
 }));
 
-// Mock the API helpers
-jest.mock('@/lib/api-helpers', () => ({
-  createAuthenticatedClient: jest.fn(),
+jest.mock('@/lib/supabase/route-handler', () => ({
+  createRouteHandlerClient: jest.fn(),
 }));
 
-import { requireTechContext } from '@/lib/auth-guards';
-import { createAuthenticatedClient } from '@/lib/api-helpers';
+import { requireTechContext } from '@/lib/auth-guards-api';
+import { createRouteHandlerClient } from '@/lib/supabase/route-handler';
 
 const mockRequireTechContext = requireTechContext as jest.MockedFunction<
   typeof requireTechContext
 >;
-const mockCreateAuthenticatedClient = createAuthenticatedClient as jest.Mock;
+const mockCreateAuthenticatedClient = createRouteHandlerClient as jest.Mock;
 
 describe('/api/tech/visits/[id]', () => {
   let mockSupabase: any;

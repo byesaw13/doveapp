@@ -1,7 +1,9 @@
 import { createServerClient as createSupabaseServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
+import type { SupabaseClient } from '@supabase/supabase-js';
 
-export async function createServerClient() {
+// For Server Components and server-only helpers. Use createRouteHandlerClient in route handlers.
+export async function createServerClient(): Promise<SupabaseClient> {
   const cookieStore = await cookies();
 
   return createSupabaseServerClient(
@@ -12,8 +14,20 @@ export async function createServerClient() {
         get(name) {
           return cookieStore.get(name)?.value;
         },
-        set() {},
-        remove() {},
+        set(name, value, options) {
+          try {
+            cookieStore.set({ name, value, ...(options || {}) });
+          } catch (error) {
+            // Ignore when cookies are read-only (e.g. Server Components).
+          }
+        },
+        remove(name, options) {
+          try {
+            cookieStore.set({ name, value: '', ...(options || {}), maxAge: 0 });
+          } catch (error) {
+            // Ignore when cookies are read-only (e.g. Server Components).
+          }
+        },
       },
     }
   );

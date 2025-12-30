@@ -1,8 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { requireAccountContext, canManageAdmin } from '@/lib/auth-guards';
-import { createAuthenticatedClient } from '@/lib/api-helpers';
+import { requireAccountContext } from '@/lib/auth-guards-api';
+import { canManageAdmin } from '@/lib/auth-guards';
 import { errorResponse, unauthorizedResponse } from '@/lib/api-helpers';
 import { validateRequest, createEstimateSchema } from '@/lib/api/validation';
+import { createRouteHandlerClient } from '@/lib/supabase/route-handler';
+import { isDemoMode } from '@/lib/auth/demo';
 
 // GET /api/estimates - Get all estimates or search
 export async function GET(request: NextRequest) {
@@ -12,8 +14,14 @@ export async function GET(request: NextRequest) {
     let supabase;
     try {
       context = await requireAccountContext(request);
-      supabase = createAuthenticatedClient(request);
+      supabase = await createRouteHandlerClient();
     } catch (error) {
+      if (!isDemoMode()) {
+        return NextResponse.json(
+          { error: 'Authentication required' },
+          { status: 401 }
+        );
+      }
       // For demo purposes, allow access without account context
       const { createClient } = await import('@supabase/supabase-js');
       supabase = createClient(
@@ -103,7 +111,7 @@ export async function POST(request: NextRequest) {
       return Response.json({ error: 'Admin access required' }, { status: 403 });
     }
 
-    const supabase = createAuthenticatedClient(request);
+    const supabase = await createRouteHandlerClient();
 
     // Validate request body
     const { data, error: validationError } = await validateRequest(

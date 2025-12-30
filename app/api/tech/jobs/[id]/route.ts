@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { requireTechContext } from '@/lib/auth-guards';
-import { createAuthenticatedClient } from '@/lib/api-helpers';
+import { requireTechContext } from '@/lib/auth-guards-api';
 import { getJobById, updateJob } from '@/lib/api/jobs';
+import { createRouteHandlerClient } from '@/lib/supabase/route-handler';
 
 /**
  * GET /api/tech/jobs/[id] - Get a single assigned job
@@ -12,7 +12,7 @@ export async function GET(
 ): Promise<NextResponse> {
   try {
     const context = await requireTechContext(request);
-    const supabase = createAuthenticatedClient(request);
+    const supabase = await createRouteHandlerClient();
     const { id } = await params;
 
     const { data, error } = await getJobById(
@@ -51,7 +51,7 @@ export async function PATCH(
 ): Promise<NextResponse> {
   try {
     const context = await requireTechContext(request);
-    const supabase = createAuthenticatedClient(request);
+    const supabase = await createRouteHandlerClient();
     const body = await request.json();
     const { id } = await params;
 

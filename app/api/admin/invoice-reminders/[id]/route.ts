@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { requireAccountContext } from '@/lib/auth-guards';
-import { createAuthenticatedClient } from '@/lib/api-helpers';
+import { requireAccountContext } from '@/lib/auth-guards-api';
 import { PerformanceLogger } from '@/lib/api/performance';
+import { createRouteHandlerClient } from '@/lib/supabase/route-handler';
 
 // GET /api/admin/invoice-reminders/[id] - Get a specific reminder
 export async function GET(
@@ -13,7 +13,7 @@ export async function GET(
 
   try {
     const context = await requireAccountContext(request);
-    const supabase = createAuthenticatedClient(request);
+    const supabase = await createRouteHandlerClient();
     const { id } = await params;
 
     perfLogger.incrementQueryCount();
@@ -75,7 +75,7 @@ export async function PUT(
 
   try {
     const context = await requireAccountContext(request);
-    const supabase = createAuthenticatedClient(request);
+    const supabase = await createRouteHandlerClient();
     const { id } = await params;
 
     const body = await request.json();
@@ -145,7 +145,7 @@ export async function DELETE(
 
   try {
     const context = await requireAccountContext(request);
-    const supabase = createAuthenticatedClient(request);
+    const supabase = await createRouteHandlerClient();
     const { id } = await params;
 
     perfLogger.incrementQueryCount();

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { requireAccountContext } from '@/lib/auth-guards';
-import { createAuthenticatedClient } from '@/lib/api-helpers';
+import { requireAccountContext } from '@/lib/auth-guards-api';
 import { PerformanceLogger } from '@/lib/api/performance';
+import { createRouteHandlerClient } from '@/lib/supabase/route-handler';
 
 /**
  * POST /api/admin/job-templates/[id]/use - Track template usage
@@ -16,7 +16,7 @@ export async function POST(
   try {
     // Validate authentication
     const context = await requireAccountContext(request);
-    const supabase = createAuthenticatedClient(request);
+    const supabase = await createRouteHandlerClient();
     const { id } = await params;
 
     // Increment usage count

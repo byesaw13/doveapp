@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
+import { DEMO_ACCOUNT_ID, isDemoMode } from '@/lib/auth/demo';
 
 /**
  * Enhanced proxy with authentication and account context validation.
@@ -8,6 +9,10 @@ import { createServerClient } from '@supabase/ssr';
  */
 export async function proxy(request: NextRequest) {
   const requestHeaders = new Headers(request.headers);
+  // Strip any client-supplied auth context; proxy will re-inject verified values.
+  requestHeaders.delete('x-account-id');
+  requestHeaders.delete('x-user-id');
+  requestHeaders.delete('x-user-role');
   const pendingCookies: Array<{
     name: string;
     value: string;
@@ -76,6 +81,7 @@ export async function proxy(request: NextRequest) {
     .eq('is_active', true);
 
   if (!memberships || memberships.length === 0) {
+    const pathname = request.nextUrl.pathname;
     // Check if user exists in users table (making them a customer)
     const { data: userProfile } = await supabase
       .from('users')
@@ -84,9 +90,25 @@ export async function proxy(request: NextRequest) {
       .single();
 
     const isCustomer = !!userProfile;
+    const isPortalRoute =
+      pathname.startsWith('/portal') || pathname.startsWith('/api/portal');
+
+    if (isDemoMode()) {
+      const demoRole = isPortalRoute ? 'CUSTOMER' : 'OWNER';
+      requestHeaders.set('x-user-role', demoRole);
+      requestHeaders.set('x-user-id', user.id);
+      requestHeaders.set('x-account-id', DEMO_ACCOUNT_ID);
+      return applyCookies(
+        NextResponse.next({
+          request: {
+            headers: requestHeaders,
+          },
+        })
+      );
+    }
 
     // Allow customers to access portal routes
-    if (request.nextUrl.pathname.startsWith('/portal') && isCustomer) {
+    if (isPortalRoute && isCustomer) {
       // Find customer record to get account_id
       const { data: customer } = await supabase
         .from('customers')
@@ -95,7 +117,15 @@ export async function proxy(request: NextRequest) {
         .single();
 
       const accountId =
-        customer?.account_id || '6785bba1-553c-4886-9638-460033ad6b01'; // Default to Dovetails Services LLC
+        customer?.account_id || (isDemoMode() ? DEMO_ACCOUNT_ID : null);
+
+      if (!accountId) {
+        return applyCookies(
+          NextResponse.redirect(
+            new URL('/auth/login?error=no_account', request.url)
+          )
+        );
+      }
 
       // Add customer context for portal routes
       requestHeaders.set('x-user-role', 'CUSTOMER');
@@ -112,9 +142,9 @@ export async function proxy(request: NextRequest) {
 
     // Redirect non-customers without memberships
     if (
-      request.nextUrl.pathname.startsWith('/admin') ||
-      request.nextUrl.pathname.startsWith('/tech') ||
-      request.nextUrl.pathname.startsWith('/portal')
+      pathname.startsWith('/admin') ||
+      pathname.startsWith('/tech') ||
+      pathname.startsWith('/portal')
     ) {
       return applyCookies(
         NextResponse.redirect(
@@ -123,7 +153,7 @@ export async function proxy(request: NextRequest) {
       );
     }
 
-    if (request.nextUrl.pathname.startsWith('/api/')) {
+    if (pathname.startsWith('/api/')) {
       return applyCookies(
         NextResponse.json(
           { error: 'No account membership found' },
@@ -173,8 +203,25 @@ export async function proxy(request: NextRequest) {
       }
     }
 
-    // Portal route is accessible to customers (users with user_id linked)
-    // This will be validated in the layout
+    const isPortalUi = pathname.startsWith('/portal');
+    const isPortalApi = pathname.startsWith('/api/portal');
+    if (isPortalUi || isPortalApi) {
+      if (primaryMembership.role !== 'CUSTOMER') {
+        return applyCookies(
+          isPortalApi
+            ? NextResponse.json(
+                { error: 'Customer access required' },
+                { status: 403 }
+              )
+            : NextResponse.redirect(
+                new URL(
+                  '/auth/login?error=insufficient_permissions',
+                  request.url
+                )
+              )
+        );
+      }
+    }
   }
 
   return applyCookies(

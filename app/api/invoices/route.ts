@@ -1,15 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { requireAccountContext } from '@/lib/auth-guards';
-import {
-  createAuthenticatedClient,
-  errorResponse,
-  unauthorizedResponse,
-} from '@/lib/api-helpers';
+import { requireAccountContext } from '@/lib/auth-guards-api';
+import { errorResponse, unauthorizedResponse } from '@/lib/api-helpers';
+import { createRouteHandlerClient } from '@/lib/supabase/route-handler';
 
 export async function GET(request: NextRequest) {
   try {
     const context = await requireAccountContext(request);
-    const supabase = createAuthenticatedClient(request);
+    const supabase = await createRouteHandlerClient();
 
     const { searchParams } = new URL(request.url);
     const status = searchParams.get('status');

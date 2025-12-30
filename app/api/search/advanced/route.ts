@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { requireAccountContext } from '@/lib/auth-guards';
-import { createAuthenticatedClient } from '@/lib/api-helpers';
+import { requireAccountContext } from '@/lib/auth-guards-api';
 import { PerformanceLogger } from '@/lib/api/performance';
+import { createRouteHandlerClient } from '@/lib/supabase/route-handler';
 
 interface SearchResult {
   id: string;
@@ -25,7 +25,7 @@ export async function GET(request: NextRequest) {
   try {
     // Validate authentication and get account context
     const context = await requireAccountContext(request);
-    const supabase = createAuthenticatedClient(request);
+    const supabase = await createRouteHandlerClient();
 
     const searchParams = url.searchParams;
     const query = searchParams.get('q') || '';

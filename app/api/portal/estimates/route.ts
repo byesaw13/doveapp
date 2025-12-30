@@ -1,12 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { requireCustomerContext } from '@/lib/auth-guards';
-import { createAuthenticatedClient } from '@/lib/api-helpers';
+import { requireCustomerContext } from '@/lib/auth-guards-api';
+import { isDemoMode } from '@/lib/auth/demo';
 import {
   listEstimates,
   getEstimateById,
   updateEstimate,
   type EstimateFilters,
 } from '@/lib/api/estimates';
+import { createRouteHandlerClient } from '@/lib/supabase/route-handler';
 
 /**
  * GET /api/portal/estimates - List estimates for customer (read-only)
@@ -18,8 +19,14 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     let supabase;
     try {
       context = await requireCustomerContext(request);
-      supabase = createAuthenticatedClient(request);
+      supabase = await createRouteHandlerClient();
     } catch (error) {
+      if (!isDemoMode()) {
+        return NextResponse.json(
+          { error: 'Authentication required' },
+          { status: 401 }
+        );
+      }
       // For demo purposes, allow access without customer context
       const { createClient } = await import('@supabase/supabase-js');
       supabase = createClient(
@@ -54,7 +61,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     }
 
     // For demo, return mock data if no real data
-    if (!data || data.length === 0) {
+    if (isDemoMode() && (!data || data.length === 0)) {
       return NextResponse.json([
         {
           id: 'demo-estimate-1',

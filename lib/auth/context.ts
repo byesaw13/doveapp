@@ -1,3 +1,6 @@
+'use client';
+// Client-only. Do not import from Server Components or server utilities.
+
 import { createBrowserClient } from '@/lib/supabase/client';
 
 type JwtClaims = Record<string, unknown> & {

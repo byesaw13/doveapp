@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { requireAdminContext } from '@/lib/auth-guards';
-import { createAuthenticatedClient } from '@/lib/api-helpers';
+import { requireAdminContext } from '@/lib/auth-guards-api';
 import { getJobById, updateJob, deleteJob } from '@/lib/api/jobs';
+import { createRouteHandlerClient } from '@/lib/supabase/route-handler';
 
 /**
  * GET /api/admin/jobs/[id] - Get a single job (admin full access)
@@ -12,7 +12,7 @@ export async function GET(
 ): Promise<NextResponse> {
   try {
     const context = await requireAdminContext(request);
-    const supabase = createAuthenticatedClient(request);
+    const supabase = await createRouteHandlerClient();
     const { id } = await params;
 
     const { data, error } = await getJobById(
@@ -48,7 +48,7 @@ export async function PATCH(
 ): Promise<NextResponse> {
   try {
     const context = await requireAdminContext(request);
-    const supabase = createAuthenticatedClient(request);
+    const supabase = await createRouteHandlerClient();
     const body = await request.json();
     const { id } = await params;
 
@@ -86,7 +86,7 @@ export async function DELETE(
 ): Promise<NextResponse> {
   try {
     const context = await requireAdminContext(request);
-    const supabase = createAuthenticatedClient(request);
+    const supabase = await createRouteHandlerClient();
     const { id } = await params;
 
     const { success, error } = await deleteJob(

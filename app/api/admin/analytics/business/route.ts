@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { requireAccountContext, canViewReports } from '@/lib/auth-guards';
-import { createAuthenticatedClient } from '@/lib/api-helpers';
+import { requireAccountContext } from '@/lib/auth-guards-api';
+import { canViewReports } from '@/lib/auth-guards';
 import { PerformanceLogger } from '@/lib/api/performance';
 import {
   calculateBusinessMetrics,
   type BusinessMetrics,
 } from '@/lib/analytics/business-intelligence';
+import { createRouteHandlerClient } from '@/lib/supabase/route-handler';
 
 /**
  * GET /api/admin/analytics/business - Get comprehensive business intelligence metrics
@@ -25,7 +26,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const supabase = createAuthenticatedClient(request);
+    const supabase = await createRouteHandlerClient();
     const searchParams = url.searchParams;
     const period = (searchParams.get('period') || 'month') as
       | 'month'

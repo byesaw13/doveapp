@@ -1,13 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { requireAccountContext, canAccessTech } from '@/lib/auth-guards';
-import {
-  createAuthenticatedClient,
-  errorResponse,
-  unauthorizedResponse,
-} from '@/lib/api-helpers';
+import { requireAccountContext } from '@/lib/auth-guards-api';
+import { canAccessTech } from '@/lib/auth-guards';
+import { errorResponse, unauthorizedResponse } from '@/lib/api-helpers';
 import { PerformanceLogger } from '@/lib/api/performance';
 import { validateRequest, createJobSchema } from '@/lib/api/validation';
 import type { JobStatus } from '@/types/job';
+import { createRouteHandlerClient } from '@/lib/supabase/route-handler';
 
 // GET /api/jobs - Get all jobs with optional filtering
 export async function GET(request: NextRequest) {
@@ -17,7 +15,7 @@ export async function GET(request: NextRequest) {
   try {
     // Validate authentication and get account context
     const context = await requireAccountContext(request);
-    const supabase = createAuthenticatedClient(request);
+    const supabase = await createRouteHandlerClient();
     const { searchParams } = url;
     const clientId = searchParams.get('client_id');
     const statusParam = searchParams.get('status');
@@ -86,7 +84,7 @@ export async function POST(request: NextRequest) {
       return Response.json({ error: 'Tech access required' }, { status: 403 });
     }
 
-    const supabase = createAuthenticatedClient(request);
+    const supabase = await createRouteHandlerClient();
 
     // Validate request body
     const { data, error: validationError } = await validateRequest(

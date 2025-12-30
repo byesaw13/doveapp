@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { requireCustomerContext } from '@/lib/auth-guards';
+import { requireCustomerContext } from '@/lib/auth-guards-api';
 import { createClient } from '@/lib/supabase-server';
 
 export async function GET(request: NextRequest) {

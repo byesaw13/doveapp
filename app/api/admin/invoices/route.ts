@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { requireAdminContext } from '@/lib/auth-guards';
-import { createAuthenticatedClient } from '@/lib/api-helpers';
+import { requireAdminContext } from '@/lib/auth-guards-api';
 import { listInvoices, type InvoiceFilters } from '@/lib/api/invoices';
+import { createRouteHandlerClient } from '@/lib/supabase/route-handler';
 
 export async function GET(request: NextRequest): Promise<NextResponse> {
   try {
     const context = await requireAdminContext(request);
-    const supabase = createAuthenticatedClient(request);
+    const supabase = await createRouteHandlerClient();
     const { searchParams } = new URL(request.url);
 
     const filters: InvoiceFilters = {

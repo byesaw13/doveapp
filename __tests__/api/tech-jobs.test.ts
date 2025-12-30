@@ -15,9 +15,8 @@ jest.mock('@/lib/auth-guards', () => ({
   requireTechContext: jest.fn(),
 }));
 
-// Mock the API helpers
-jest.mock('@/lib/api-helpers', () => ({
-  createAuthenticatedClient: jest.fn(),
+jest.mock('@/lib/supabase/route-handler', () => ({
+  createRouteHandlerClient: jest.fn(),
 }));
 
 // Mock the jobs service
@@ -27,10 +26,11 @@ jest.mock('@/lib/api/jobs', () => ({
   updateJob: jest.fn(),
 }));
 
-import { requireTechContext } from '@/lib/auth-guards';
+import { requireTechContext } from '@/lib/auth-guards-api';
 import { listJobs, getJobById, updateJob } from '@/lib/api/jobs';
 import type { Permission } from '@/lib/auth-guards';
 import type { JobStatus } from '@/types/job';
+import { createRouteHandlerClient } from '@/lib/supabase/route-handler';
 
 const mockRequireTechContext = requireTechContext as jest.MockedFunction<
   typeof requireTechContext

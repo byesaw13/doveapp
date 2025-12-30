@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { requireCustomerContext } from '@/lib/auth-guards';
-import { createAuthenticatedClient } from '@/lib/api-helpers';
+import { requireCustomerContext } from '@/lib/auth-guards-api';
 import {
   listEstimates,
   getEstimateById,
   updateEstimate,
   type EstimateFilters,
 } from '@/lib/api/estimates';
+import { createRouteHandlerClient } from '@/lib/supabase/route-handler';
 
 /**
  * GET /api/portal/estimates - List estimates for customer (read-only)
@@ -18,7 +18,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     let supabase;
     try {
       context = await requireCustomerContext(request);
-      supabase = createAuthenticatedClient(request);
+      supabase = await createRouteHandlerClient();
     } catch (error) {
       // For demo purposes, allow access without customer context
       const { createClient } = await import('@supabase/supabase-js');

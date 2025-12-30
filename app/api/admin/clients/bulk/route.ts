@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { requireAccountContext, canManageAdmin } from '@/lib/auth-guards';
-import { createAuthenticatedClient } from '@/lib/api-helpers';
+import { requireAccountContext } from '@/lib/auth-guards-api';
+import { canManageAdmin } from '@/lib/auth-guards';
 import { importClientsFromCSV, exportClientsToCSV } from '@/lib/csv-export';
 import { validateRequest, createClientSchema } from '@/lib/api/validation';
 import { PerformanceLogger } from '@/lib/api/performance';
 import { z } from 'zod';
+import { createRouteHandlerClient } from '@/lib/supabase/route-handler';
 
 // Schema for bulk import validation
 const bulkImportSchema = z.object({
@@ -29,7 +30,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const supabase = createAuthenticatedClient(request);
+    const supabase = await createRouteHandlerClient();
 
     // Get all clients (temporarily disabled account filtering)
     perfLogger.incrementQueryCount();
@@ -85,7 +86,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const supabase = createAuthenticatedClient(request);
+    const supabase = await createRouteHandlerClient();
 
     // Get the CSV content from request body
     const body = await request.json();

@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { requireAccountContext } from '@/lib/auth-guards';
-import { createAuthenticatedClient } from '@/lib/api-helpers';
+import { requireAccountContext } from '@/lib/auth-guards-api';
 import { PerformanceLogger } from '@/lib/api/performance';
 import { z } from 'zod';
+import { createRouteHandlerClient } from '@/lib/supabase/route-handler';
 
 // Schema for job template update validation
 const updateJobTemplateSchema = z.object({
@@ -45,7 +45,7 @@ export async function GET(
   try {
     // Validate authentication
     const context = await requireAccountContext(request);
-    const supabase = createAuthenticatedClient(request);
+    const supabase = await createRouteHandlerClient();
     const { id } = await params;
 
     perfLogger.incrementQueryCount();
@@ -94,7 +94,7 @@ export async function PUT(
   try {
     // Validate authentication
     const context = await requireAccountContext(request);
-    const supabase = createAuthenticatedClient(request);
+    const supabase = await createRouteHandlerClient();
     const { id } = await params;
 
     // Validate request body
@@ -162,7 +162,7 @@ export async function DELETE(
   try {
     // Validate authentication
     const context = await requireAccountContext(request);
-    const supabase = createAuthenticatedClient(request);
+    const supabase = await createRouteHandlerClient();
     const { id } = await params;
 
     perfLogger.incrementQueryCount();

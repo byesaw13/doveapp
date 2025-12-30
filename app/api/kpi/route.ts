@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { requireAccountContext, canViewReports } from '@/lib/auth-guards';
+import { requireAccountContext } from '@/lib/auth-guards-api';
+import { canViewReports } from '@/lib/auth-guards';
 import { getAllKPIs } from '@/lib/kpi';
 import type { KPIPeriod } from '@/types/kpi';
 import { unauthorizedResponse } from '@/lib/api-helpers';

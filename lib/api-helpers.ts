@@ -1,25 +1,18 @@
 import { NextRequest } from 'next/server';
-import { createServerClient } from '@supabase/ssr';
-import { createClient } from '@supabase/supabase-js';
+import { createRouteHandlerClient } from '@/lib/supabase/route-handler';
+import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 
 /**
  * Create authenticated Supabase client from request
  * Uses user's session cookies to enforce RLS
  */
-export function createAuthenticatedClient(request: NextRequest) {
-  return createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        get(name: string) {
-          return request.cookies.get(name)?.value;
-        },
-        set() {},
-        remove() {},
-      },
-    }
-  );
+/**
+ * @deprecated Use createRouteHandlerClient from lib/supabase/route-handler.
+ */
+export async function createAuthenticatedClient(
+  _request: NextRequest
+): Promise<SupabaseClient> {
+  return await createRouteHandlerClient();
 }
 
 /**

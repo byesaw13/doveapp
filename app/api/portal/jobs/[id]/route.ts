@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { requireCustomerContext } from '@/lib/auth-guards';
-import { createAuthenticatedClient } from '@/lib/api-helpers';
+import { requireCustomerContext } from '@/lib/auth-guards-api';
 import { getJobById } from '@/lib/api/jobs';
+import { createRouteHandlerClient } from '@/lib/supabase/route-handler';
 
 /**
  * GET /api/portal/jobs/[id] - Get a single job for customer (read-only)
@@ -12,7 +12,7 @@ export async function GET(
 ): Promise<NextResponse> {
   try {
     const context = await requireCustomerContext(request);
-    const supabase = createAuthenticatedClient(request);
+    const supabase = await createRouteHandlerClient();
     const { id: jobId } = await params;
 
     const { data, error } = await getJobById(

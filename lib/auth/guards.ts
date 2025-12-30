@@ -17,7 +17,7 @@ export async function requirePortalAccess(
     portal === 'admin'
       ? ['OWNER', 'ADMIN']
       : portal === 'tech'
-        ? ['TECH']
+        ? ['OWNER', 'ADMIN', 'TECH']
         : ['CUSTOMER'];
   return requireRole(allowedRoles);
 }

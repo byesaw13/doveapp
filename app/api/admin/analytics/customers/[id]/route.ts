@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { requireAccountContext, canViewReports } from '@/lib/auth-guards';
-import { createAuthenticatedClient } from '@/lib/api-helpers';
+import { requireAccountContext } from '@/lib/auth-guards-api';
+import { canViewReports } from '@/lib/auth-guards';
 import { PerformanceLogger } from '@/lib/api/performance';
 import {
   calculateCustomerLifetimeValue,
   predictNextCustomerJob,
 } from '@/lib/analytics/customer-analytics';
+import { createRouteHandlerClient } from '@/lib/supabase/route-handler';
 
 /**
  * GET /api/admin/analytics/customers/[id] - Get detailed analytics for a specific customer
@@ -28,7 +29,7 @@ export async function GET(
       );
     }
 
-    const supabase = createAuthenticatedClient(request);
+    const supabase = await createRouteHandlerClient();
     const { id: customerId } = await params;
 
     perfLogger.incrementQueryCount();

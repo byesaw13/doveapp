@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { requireCustomerContext } from '@/lib/auth-guards';
-import { createAuthenticatedClient } from '@/lib/api-helpers';
+import { requireCustomerContext } from '@/lib/auth-guards-api';
 import Stripe from 'stripe';
+import { createRouteHandlerClient } from '@/lib/supabase/route-handler';
 
 const STRIPE_API_VERSION: Stripe.StripeConfig['apiVersion'] =
   '2025-11-17.clover';
@@ -26,7 +26,7 @@ export async function POST(
     }
 
     const context = await requireCustomerContext(request);
-    const supabase = createAuthenticatedClient(request);
+    const supabase = await createRouteHandlerClient();
     const { id: invoiceId } = await params;
 
     // Verify ownership

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { requireTechContext } from '@/lib/auth-guards';
-import { createAuthenticatedClient } from '@/lib/api-helpers';
+import { requireTechContext } from '@/lib/auth-guards-api';
 import { listJobs, type JobFilters } from '@/lib/api/jobs';
+import { createRouteHandlerClient } from '@/lib/supabase/route-handler';
 
 /**
  * GET /api/tech/jobs - List jobs assigned to the tech (read-only)
@@ -13,7 +13,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     let supabase;
     try {
       context = await requireTechContext(request);
-      supabase = createAuthenticatedClient(request);
+      supabase = await createRouteHandlerClient();
     } catch (error) {
       // For demo purposes, allow access without tech context
       const { createClient } = await import('@supabase/supabase-js');

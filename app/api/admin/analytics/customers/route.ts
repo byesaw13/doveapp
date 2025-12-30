@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { requireAccountContext, canViewReports } from '@/lib/auth-guards';
-import { createAuthenticatedClient } from '@/lib/api-helpers';
+import { requireAccountContext } from '@/lib/auth-guards-api';
+import { canViewReports } from '@/lib/auth-guards';
 import { PerformanceLogger } from '@/lib/api/performance';
 import {
   calculateCustomerLifetimeValue,
@@ -11,6 +11,7 @@ import {
   type CustomerAnalytics,
   type RetentionMetrics,
 } from '@/lib/analytics/customer-analytics';
+import { createRouteHandlerClient } from '@/lib/supabase/route-handler';
 
 /**
  * GET /api/admin/analytics/customers - Get customer analytics overview
@@ -30,7 +31,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const supabase = createAuthenticatedClient(request);
+    const supabase = await createRouteHandlerClient();
     const searchParams = url.searchParams;
     const type = searchParams.get('type') || 'overview';
     const limit = Math.min(parseInt(searchParams.get('limit') || '10'), 50);

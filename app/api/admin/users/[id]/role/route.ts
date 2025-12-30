@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { requireAccountContext, canManageAdmin } from '@/lib/auth-guards';
+import { requireAccountContext } from '@/lib/auth-guards-api';
+import { canManageAdmin } from '@/lib/auth-guards';
 import { createAdminClient, errorResponse } from '@/lib/api-helpers';
 import { logAuditEvent } from '@/lib/audit-log';
 

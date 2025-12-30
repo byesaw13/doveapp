@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { requireCustomerContext } from '@/lib/auth-guards';
-import { createAuthenticatedClient } from '@/lib/api-helpers';
+import { requireCustomerContext } from '@/lib/auth-guards-api';
 import { logActivity } from '@/lib/logger';
+import { createRouteHandlerClient } from '@/lib/supabase/route-handler';
 
 export async function POST(
   request: NextRequest,
@@ -9,7 +9,7 @@ export async function POST(
 ) {
   try {
     const context = await requireCustomerContext(request);
-    const supabase = createAuthenticatedClient(request);
+    const supabase = await createRouteHandlerClient();
     const { id: estimateId } = await params;
 
     // Verify ownership

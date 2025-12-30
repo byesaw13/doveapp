@@ -23,7 +23,6 @@ jest.mock('next/server', () => ({
 
 import { GET, POST } from '@/app/api/admin/jobs/route';
 import { NextRequest } from 'next/server';
-import { createAuthenticatedClient } from '@/lib/api-helpers';
 import type { Permission } from '@/lib/auth-guards';
 import type { JobStatus } from '@/types/job';
 
@@ -34,11 +33,14 @@ jest.mock('@/lib/auth-guards', () => ({
 
 // Mock the API helpers
 jest.mock('@/lib/api-helpers', () => ({
-  createAuthenticatedClient: jest.fn(() => ({
-    /* mock supabase client */
-  })),
   errorResponse: jest.fn(),
   unauthorizedResponse: jest.fn(),
+}));
+
+jest.mock('@/lib/supabase/route-handler', () => ({
+  createRouteHandlerClient: jest.fn(() => ({
+    /* mock supabase client */
+  })),
 }));
 
 // Mock the jobs service
@@ -47,8 +49,9 @@ jest.mock('@/lib/api/jobs', () => ({
   createJob: jest.fn(),
 }));
 
-import { requireAdminContext } from '@/lib/auth-guards';
+import { requireAdminContext } from '@/lib/auth-guards-api';
 import { listJobs, createJob } from '@/lib/api/jobs';
+import { createRouteHandlerClient } from '@/lib/supabase/route-handler';
 
 const mockRequireAdminContext = requireAdminContext as jest.MockedFunction<
   typeof requireAdminContext

@@ -4,10 +4,8 @@
  */
 
 import { NextRequest } from 'next/server';
-import {
-  requireAccountContext as baseRequireAccountContext,
-  AccountContext,
-} from '@/lib/auth-guards';
+import { requireAccountContext as baseRequireAccountContext } from '@/lib/auth-guards-api';
+import { AccountContext } from '@/lib/auth-guards';
 import { Permission } from './permissions';
 
 /**

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
+import { createRouteHandlerClient } from '@/lib/supabase/route-handler';
 import { z } from 'zod';
 
 const availabilitySchema = z.object({
@@ -16,7 +16,7 @@ const bulkAvailabilitySchema = z.object({
 // GET /api/admin/team/availability - Get team availability
 export async function GET(request: NextRequest) {
   try {
-    const supabase = await createClient();
+    const supabase = await createRouteHandlerClient();
     const { searchParams } = new URL(request.url);
 
     const userId = searchParams.get('user_id');
@@ -59,7 +59,7 @@ export async function GET(request: NextRequest) {
 // POST /api/admin/team/availability - Create availability entry
 export async function POST(request: NextRequest) {
   try {
-    const supabase = await createClient();
+    const supabase = await createRouteHandlerClient();
     const body = await request.json();
 
     // Check if it's bulk or single

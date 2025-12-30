@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { requireAdminContext } from '@/lib/auth-guards';
-import { createAuthenticatedClient } from '@/lib/api-helpers';
+import { requireAdminContext } from '@/lib/auth-guards-api';
 import { listEstimates, type EstimateFilters } from '@/lib/api/estimates';
+import { createRouteHandlerClient } from '@/lib/supabase/route-handler';
 
 export async function GET(request: NextRequest): Promise<NextResponse> {
   try {
@@ -10,7 +10,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     let supabase;
     try {
       context = await requireAdminContext(request);
-      supabase = createAuthenticatedClient(request);
+      supabase = await createRouteHandlerClient();
     } catch (error) {
       // For demo purposes, allow access without account context
       const { createClient } = await import('@supabase/supabase-js');

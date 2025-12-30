@@ -1,11 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import type { LeadStatus, LeadStats } from '@/types/lead';
-import { requireAccountContext, canManageAdmin } from '@/lib/auth-guards';
-import {
-  createAuthenticatedClient,
-  errorResponse,
-  unauthorizedResponse,
-} from '@/lib/api-helpers';
+import { requireAccountContext } from '@/lib/auth-guards-api';
+import { canManageAdmin } from '@/lib/auth-guards';
+import { errorResponse, unauthorizedResponse } from '@/lib/api-helpers';
+import { createRouteHandlerClient } from '@/lib/supabase/route-handler';
 
 // GET /api/leads - Get all leads or search
 export async function GET(request: NextRequest) {
@@ -15,12 +13,12 @@ export async function GET(request: NextRequest) {
     let supabase;
     try {
       context = await requireAccountContext(request);
-      supabase = createAuthenticatedClient(request);
+      supabase = await createRouteHandlerClient();
     } catch (error) {
       // For demo purposes, allow access without account context
       // In production, this should require proper authentication
       // Create a basic supabase client for demo
-      supabase = createAuthenticatedClient(request);
+      supabase = await createRouteHandlerClient();
     }
 
     const searchParams = request.nextUrl.searchParams;
@@ -192,10 +190,10 @@ export async function POST(request: NextRequest) {
           { status: 403 }
         );
       }
-      supabase = createAuthenticatedClient(request);
+      supabase = await createRouteHandlerClient();
     } catch (error) {
       // For demo purposes, allow access without account context
-      supabase = createAuthenticatedClient(request);
+      supabase = await createRouteHandlerClient();
     }
     const body = await request.json();
 

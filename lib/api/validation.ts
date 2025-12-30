@@ -111,11 +111,12 @@ export const updateEstimateSchema = z.object({
  */
 export async function validateRequest<T extends z.ZodType>(
   request: NextRequest,
-  schema: T
+  schema: T,
+  body?: unknown
 ): Promise<{ data?: z.infer<T>; error?: Response }> {
   try {
-    const body = await request.json();
-    const data = schema.parse(body);
+    const parsedBody = body !== undefined ? body : await request.json();
+    const data = schema.parse(parsedBody);
     return { data };
   } catch (error) {
     if (error instanceof z.ZodError) {

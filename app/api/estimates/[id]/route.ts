@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { requireAccountContext } from '@/lib/auth-guards';
+import { requireAccountContext } from '@/lib/auth-guards-api';
 import {
   getEstimate,
   updateEstimate,

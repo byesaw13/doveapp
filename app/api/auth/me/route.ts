@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { requireCustomerContext } from '@/lib/auth-guards';
+import { requireCustomerContext } from '@/lib/auth-guards-api';
 
 /**
  * GET /api/auth/me - Get current authenticated user info for portal

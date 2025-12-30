@@ -1,11 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { requireAccountContext, canManageAdmin } from '@/lib/auth-guards';
-import {
-  createAuthenticatedClient,
-  errorResponse,
-  unauthorizedResponse,
-} from '@/lib/api-helpers';
+import { requireAccountContext } from '@/lib/auth-guards-api';
+import { canManageAdmin } from '@/lib/auth-guards';
+import { errorResponse, unauthorizedResponse } from '@/lib/api-helpers';
 import { validateRequest, updateJobSchema } from '@/lib/api/validation';
+import { createRouteHandlerClient } from '@/lib/supabase/route-handler';
 
 // GET /api/jobs/[id] - Get job details with line items and client
 export async function GET(
@@ -15,11 +13,10 @@ export async function GET(
   try {
     const { id } = await params;
     const context = await requireAccountContext(request);
-    const supabase = createAuthenticatedClient(request);
+    const supabase = await createRouteHandlerClient();
 
     // Fetch job with client and line items
-    // Note: We explicitly specify the relationship name to avoid ambiguity
-    // since both client_id and technician_id reference clients table
+    // Note: We explicitly specify the relationship name to avoid ambiguity.
     const { data: job, error } = await supabase
       .from('jobs')
       .select(
@@ -64,7 +61,7 @@ export async function PATCH(
       );
     }
 
-    const supabase = createAuthenticatedClient(request);
+    const supabase = await createRouteHandlerClient();
 
     // Validate request body
     const { data, error: validationError } = await validateRequest(

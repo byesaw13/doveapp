@@ -3,8 +3,9 @@ import {
   getOrCreateBusinessSettings,
   updateBusinessSettings,
 } from '@/lib/db/business-settings';
-import { requireAccountContext, canManageAdmin } from '@/lib/auth-guards';
-import { createAuthenticatedClient } from '@/lib/api-helpers';
+import { requireAccountContext } from '@/lib/auth-guards-api';
+import { canManageAdmin } from '@/lib/auth-guards';
+import { createRouteHandlerClient } from '@/lib/supabase/route-handler';
 
 // GET /api/settings - Get business settings
 export async function GET(request: NextRequest) {
@@ -20,7 +21,7 @@ export async function GET(request: NextRequest) {
           { status: 403 }
         );
       }
-      supabase = createAuthenticatedClient(request);
+      supabase = await createRouteHandlerClient();
     } catch (error) {
       // For demo purposes, return default settings
       return NextResponse.json({
@@ -64,7 +65,7 @@ export async function PUT(request: NextRequest) {
       );
     }
 
-    const supabase = createAuthenticatedClient(request);
+    const supabase = await createRouteHandlerClient();
     const updates = await request.json();
     const settings = await updateBusinessSettings(updates, supabase);
     return NextResponse.json(settings);

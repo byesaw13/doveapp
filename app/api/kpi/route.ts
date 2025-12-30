@@ -5,6 +5,7 @@ import { getAllKPIs } from '@/lib/kpi';
 import type { KPIPeriod } from '@/types/kpi';
 import { unauthorizedResponse } from '@/lib/api-helpers';
 import { PerformanceLogger } from '@/lib/api/performance';
+import { isDemoMode } from '@/lib/auth/demo';
 
 // GET /api/kpi?period=month - Get all KPIs for a period
 export async function GET(request: NextRequest) {
@@ -24,8 +25,14 @@ export async function GET(request: NextRequest) {
         );
       }
     } catch (error) {
+      if (!isDemoMode()) {
+        perfLogger.complete(401);
+        return NextResponse.json(
+          { error: 'Authentication required' },
+          { status: 401 }
+        );
+      }
       // For demo purposes, allow access without account context
-      // In production, this should require proper authentication
     }
     const searchParams = request.nextUrl.searchParams;
     const period = (searchParams.get('period') || 'month') as KPIPeriod;

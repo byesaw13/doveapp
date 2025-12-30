@@ -4,6 +4,7 @@ import { requireAccountContext } from '@/lib/auth-guards-api';
 import { canManageAdmin } from '@/lib/auth-guards';
 import { errorResponse, unauthorizedResponse } from '@/lib/api-helpers';
 import { createRouteHandlerClient } from '@/lib/supabase/route-handler';
+import { isDemoMode } from '@/lib/auth/demo';
 
 // GET /api/leads - Get all leads or search
 export async function GET(request: NextRequest) {
@@ -15,9 +16,13 @@ export async function GET(request: NextRequest) {
       context = await requireAccountContext(request);
       supabase = await createRouteHandlerClient();
     } catch (error) {
+      if (!isDemoMode()) {
+        return NextResponse.json(
+          { error: 'Authentication required' },
+          { status: 401 }
+        );
+      }
       // For demo purposes, allow access without account context
-      // In production, this should require proper authentication
-      // Create a basic supabase client for demo
       supabase = await createRouteHandlerClient();
     }
 
@@ -192,6 +197,12 @@ export async function POST(request: NextRequest) {
       }
       supabase = await createRouteHandlerClient();
     } catch (error) {
+      if (!isDemoMode()) {
+        return NextResponse.json(
+          { error: 'Authentication required' },
+          { status: 401 }
+        );
+      }
       // For demo purposes, allow access without account context
       supabase = await createRouteHandlerClient();
     }

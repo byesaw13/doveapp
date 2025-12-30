@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { requireAdminContext } from '@/lib/auth-guards-api';
 import { listJobs, createJob, type JobFilters } from '@/lib/api/jobs';
 import { createRouteHandlerClient } from '@/lib/supabase/route-handler';
+import { isDemoMode } from '@/lib/auth/demo';
 
 /**
  * GET /api/admin/jobs - List all jobs (admin full access)
@@ -15,6 +16,12 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       context = await requireAdminContext(request);
       supabase = await createRouteHandlerClient();
     } catch (error) {
+      if (!isDemoMode()) {
+        return NextResponse.json(
+          { error: 'Authentication required' },
+          { status: 401 }
+        );
+      }
       // For demo purposes, allow access without account context
       const { createClient } = await import('@supabase/supabase-js');
       supabase = createClient(

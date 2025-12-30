@@ -9,6 +9,10 @@ import { DEMO_ACCOUNT_ID, isDemoMode } from '@/lib/auth/demo';
  */
 export async function proxy(request: NextRequest) {
   const requestHeaders = new Headers(request.headers);
+  // Strip any client-supplied auth context; proxy will re-inject verified values.
+  requestHeaders.delete('x-account-id');
+  requestHeaders.delete('x-user-id');
+  requestHeaders.delete('x-user-role');
   const pendingCookies: Array<{
     name: string;
     value: string;

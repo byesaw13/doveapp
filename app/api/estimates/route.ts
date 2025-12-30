@@ -4,6 +4,7 @@ import { canManageAdmin } from '@/lib/auth-guards';
 import { errorResponse, unauthorizedResponse } from '@/lib/api-helpers';
 import { validateRequest, createEstimateSchema } from '@/lib/api/validation';
 import { createRouteHandlerClient } from '@/lib/supabase/route-handler';
+import { isDemoMode } from '@/lib/auth/demo';
 
 // GET /api/estimates - Get all estimates or search
 export async function GET(request: NextRequest) {
@@ -15,6 +16,12 @@ export async function GET(request: NextRequest) {
       context = await requireAccountContext(request);
       supabase = await createRouteHandlerClient();
     } catch (error) {
+      if (!isDemoMode()) {
+        return NextResponse.json(
+          { error: 'Authentication required' },
+          { status: 401 }
+        );
+      }
       // For demo purposes, allow access without account context
       const { createClient } = await import('@supabase/supabase-js');
       supabase = createClient(

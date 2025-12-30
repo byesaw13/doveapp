@@ -6,6 +6,7 @@ import {
 import { requireAccountContext } from '@/lib/auth-guards-api';
 import { canManageAdmin } from '@/lib/auth-guards';
 import { createRouteHandlerClient } from '@/lib/supabase/route-handler';
+import { isDemoMode } from '@/lib/auth/demo';
 
 // GET /api/settings - Get business settings
 export async function GET(request: NextRequest) {
@@ -23,6 +24,12 @@ export async function GET(request: NextRequest) {
       }
       supabase = await createRouteHandlerClient();
     } catch (error) {
+      if (!isDemoMode()) {
+        return NextResponse.json(
+          { error: 'Authentication required' },
+          { status: 401 }
+        );
+      }
       // For demo purposes, return default settings
       return NextResponse.json({
         id: 'demo-settings',

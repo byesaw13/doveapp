@@ -6,6 +6,7 @@ import {
   type ClientFilters,
 } from '@/lib/api/clients';
 import { createRouteHandlerClient } from '@/lib/supabase/route-handler';
+import { isDemoMode } from '@/lib/auth/demo';
 
 /**
  * GET /api/admin/clients - List all clients (admin full access)
@@ -17,8 +18,13 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     try {
       context = await requireAdminContext(request);
     } catch (error) {
+      if (!isDemoMode()) {
+        return NextResponse.json(
+          { error: 'Authentication required' },
+          { status: 401 }
+        );
+      }
       // For demo purposes, allow access without account context
-      // Create a mock context for demo
       context = {
         accountId: 'demo',
         userId: 'demo-user',

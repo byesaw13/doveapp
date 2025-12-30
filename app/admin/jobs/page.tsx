@@ -8,6 +8,23 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import type { JobWithClient, JobStatus } from '@/types/job';
 import {
   Search,
@@ -58,10 +75,18 @@ export default function JobsPage() {
   const [selectedStatuses, setSelectedStatuses] = useState<JobStatus[]>([]);
   const [selectedClients, setSelectedClients] = useState<string[]>([]);
   const [clients, setClients] = useState<any[]>([]);
+  const [techs, setTechs] = useState<any[]>([]);
 
   // Bulk actions
   const [selectedJobs, setSelectedJobs] = useState<string[]>([]);
   const [bulkActionLoading, setBulkActionLoading] = useState(false);
+
+  // Quick action states
+  const [assignTechDialogOpen, setAssignTechDialogOpen] = useState(false);
+  const [addPhotosDialogOpen, setAddPhotosDialogOpen] = useState(false);
+  const [addNotesDialogOpen, setAddNotesDialogOpen] = useState(false);
+  const [selectedTechId, setSelectedTechId] = useState('');
+  const [noteText, setNoteText] = useState('');
 
   const statusTabs = [
     { value: 'all', label: 'All Jobs' },
@@ -75,6 +100,7 @@ export default function JobsPage() {
   useEffect(() => {
     loadJobs();
     loadClients();
+    loadTechs();
   }, [
     searchQuery,
     statusFilter,
@@ -108,7 +134,7 @@ export default function JobsPage() {
       }
 
       const data = await response.json();
-      setJobs(data.jobs || []);
+      setJobs(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error('Failed to load jobs:', error);
       toast({
@@ -131,6 +157,19 @@ export default function JobsPage() {
     } catch (error) {
       console.error('Failed to load clients:', error);
       setClients([]);
+    }
+  };
+
+  const loadTechs = async () => {
+    try {
+      const response = await fetch('/api/admin/users?role=TECH');
+      if (response.ok) {
+        const data = await response.json();
+        setTechs(Array.isArray(data) ? data : []);
+      }
+    } catch (error) {
+      console.error('Failed to load techs:', error);
+      setTechs([]);
     }
   };
 
@@ -363,6 +402,69 @@ export default function JobsPage() {
       });
     } finally {
       setBulkActionLoading(false);
+    }
+  };
+
+  const handleAssignTech = async () => {
+    if (!selectedJob || !selectedTechId) return;
+
+    try {
+      const response = await fetch(`/api/jobs/${selectedJob.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ assigned_tech_id: selectedTechId }),
+      });
+
+      if (!response.ok) throw new Error('Failed to assign tech');
+
+      toast({
+        title: 'Success',
+        description: 'Technician assigned successfully',
+      });
+
+      setAssignTechDialogOpen(false);
+      setSelectedTechId('');
+      loadJobs();
+    } catch (error) {
+      console.error('Failed to assign tech:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to assign technician',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handleAddNote = async () => {
+    if (!selectedJob || !noteText.trim()) return;
+
+    try {
+      const response = await fetch(`/api/jobs/${selectedJob.id}/notes`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          note: noteText,
+          internalNotes: noteText,
+        }),
+      });
+
+      if (!response.ok) throw new Error('Failed to add note');
+
+      toast({
+        title: 'Success',
+        description: 'Note added successfully',
+      });
+
+      setAddNotesDialogOpen(false);
+      setNoteText('');
+      loadJobs();
+    } catch (error) {
+      console.error('Failed to add note:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to add note',
+        variant: 'destructive',
+      });
     }
   };
 
@@ -668,17 +770,37 @@ export default function JobsPage() {
                         Quick Actions
                       </h4>
                       <div className="flex flex-wrap gap-2">
-                        <Button size="sm" variant="outline">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => setAssignTechDialogOpen(true)}
+                        >
                           <User className="w-4 h-4 mr-1" />
                           Assign Tech
                         </Button>
-                        <Button size="sm" variant="outline">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() =>
+                            router.push(`/admin/jobs/${selectedJob.id}`)
+                          }
+                        >
                           📷 Add Photos
                         </Button>
-                        <Button size="sm" variant="outline">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => setAddNotesDialogOpen(true)}
+                        >
                           💬 Add Notes
                         </Button>
-                        <Button size="sm" variant="outline">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() =>
+                            router.push(`/admin/jobs/${selectedJob.id}`)
+                          }
+                        >
                           ⏱️ Start Timer
                         </Button>
                       </div>
@@ -701,17 +823,214 @@ export default function JobsPage() {
             </div>
           )}
 
-          {/* List View (if needed) */}
+          {/* List View */}
           {viewMode === 'list' && (
-            <div className="flex-1 bg-white rounded-lg border border-border">
-              {/* List view implementation would go here */}
-              <div className="p-8 text-center text-muted-foreground">
-                List view coming soon. Please use Kanban view for now.
-              </div>
+            <div className="flex-1 bg-white rounded-lg border border-border overflow-hidden">
+              {loading ? (
+                <div className="p-8 text-center">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+                </div>
+              ) : jobs.length === 0 ? (
+                <div className="p-8 text-center text-muted-foreground">
+                  <p className="text-lg mb-2">No jobs found</p>
+                  <p className="text-sm">
+                    Try adjusting your filters or create a new job to get
+                    started.
+                  </p>
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead className="bg-slate-50 border-b border-border">
+                      <tr>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-slate-600 uppercase tracking-wider">
+                          <input
+                            type="checkbox"
+                            checked={
+                              selectedJobs.length === jobs.length &&
+                              jobs.length > 0
+                            }
+                            onChange={(e) => handleSelectAll(e.target.checked)}
+                            className="rounded border-gray-300"
+                          />
+                        </th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-slate-600 uppercase tracking-wider">
+                          Job #
+                        </th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-slate-600 uppercase tracking-wider">
+                          Title
+                        </th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-slate-600 uppercase tracking-wider">
+                          Client
+                        </th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-slate-600 uppercase tracking-wider">
+                          Status
+                        </th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-slate-600 uppercase tracking-wider">
+                          Date
+                        </th>
+                        <th className="px-4 py-3 text-right text-xs font-medium text-slate-600 uppercase tracking-wider">
+                          Total
+                        </th>
+                        <th className="px-4 py-3 text-right text-xs font-medium text-slate-600 uppercase tracking-wider">
+                          Actions
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-border">
+                      {jobs.map((job) => {
+                        const clientName = job.client
+                          ? job.client.name ||
+                            `${job.client.first_name} ${job.client.last_name}`
+                          : 'No Client';
+
+                        return (
+                          <tr
+                            key={job.id}
+                            className={`hover:bg-slate-50 cursor-pointer ${
+                              selectedJob?.id === job.id ? 'bg-blue-50' : ''
+                            }`}
+                            onClick={() => setSelectedJob(job)}
+                          >
+                            <td className="px-4 py-3">
+                              <input
+                                type="checkbox"
+                                checked={selectedJobs.includes(job.id)}
+                                onChange={(e) => {
+                                  e.stopPropagation();
+                                  handleSelectJob(job.id, e.target.checked);
+                                }}
+                                onClick={(e) => e.stopPropagation()}
+                                className="rounded border-gray-300"
+                              />
+                            </td>
+                            <td className="px-4 py-3 text-sm font-medium text-slate-900">
+                              {job.job_number}
+                            </td>
+                            <td className="px-4 py-3 text-sm text-slate-900">
+                              {job.title}
+                            </td>
+                            <td className="px-4 py-3 text-sm text-slate-600">
+                              {clientName}
+                            </td>
+                            <td className="px-4 py-3 text-sm">
+                              <Badge
+                                className={`text-xs ${getStatusColor(job.status)}`}
+                              >
+                                {job.status
+                                  .replace('_', ' ')
+                                  .replace(/\b\w/g, (l) => l.toUpperCase())}
+                              </Badge>
+                            </td>
+                            <td className="px-4 py-3 text-sm text-slate-600">
+                              {job.service_date
+                                ? formatDate(job.service_date)
+                                : 'Not scheduled'}
+                            </td>
+                            <td className="px-4 py-3 text-sm text-right font-semibold text-emerald-600">
+                              ${job.total.toLocaleString()}
+                            </td>
+                            <td className="px-4 py-3 text-sm text-right">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  router.push(`/admin/jobs/${job.id}`);
+                                }}
+                              >
+                                View
+                              </Button>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              )}
             </div>
           )}
         </div>
       </div>
+
+      {/* Assign Tech Dialog */}
+      <Dialog
+        open={assignTechDialogOpen}
+        onOpenChange={setAssignTechDialogOpen}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Assign Technician</DialogTitle>
+            <DialogDescription>
+              Assign a technician to job #{selectedJob?.job_number}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="tech-select">Select Technician</Label>
+              <Select value={selectedTechId} onValueChange={setSelectedTechId}>
+                <SelectTrigger id="tech-select">
+                  <SelectValue placeholder="Choose a technician" />
+                </SelectTrigger>
+                <SelectContent>
+                  {techs.map((tech) => (
+                    <SelectItem key={tech.id} value={tech.id}>
+                      {tech.full_name || tech.email}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setAssignTechDialogOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button onClick={handleAssignTech} disabled={!selectedTechId}>
+              Assign
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Add Notes Dialog */}
+      <Dialog open={addNotesDialogOpen} onOpenChange={setAddNotesDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Add Note</DialogTitle>
+            <DialogDescription>
+              Add a note to job #{selectedJob?.job_number}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="note-text">Note</Label>
+              <Textarea
+                id="note-text"
+                value={noteText}
+                onChange={(e) => setNoteText(e.target.value)}
+                placeholder="Enter note..."
+                rows={4}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setAddNotesDialogOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button onClick={handleAddNote} disabled={!noteText.trim()}>
+              Add Note
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

@@ -3,20 +3,6 @@
 import { useState, useEffect, Suspense } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
-import {
-  getJob,
-  updateJobStatusWithValidation,
-  deleteLineItem,
-  addLineItem,
-} from '@/lib/db/jobs';
-import { getJobAutomationSuggestions } from '@/lib/job-automation';
-import {
-  getPaymentsByJob,
-  createPayment,
-  deletePayment,
-  getJobPaymentSummary,
-} from '@/lib/db/payments';
-import { getJobPhotos } from '@/lib/db/job-photos';
 import { RecordPaymentDialog } from '../components/RecordPaymentDialog';
 import { PhotoUpload } from '../components/PhotoUpload';
 const PhotoGallery = dynamic(
@@ -52,7 +38,6 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import Link from 'next/link';
-import { supabase } from '@/lib/supabase';
 
 export default function JobDetailPage() {
   const params = useParams();
@@ -81,41 +66,51 @@ export default function JobDetailPage() {
   const loadJob = async () => {
     try {
       setLoading(true);
-      const [jobData, paymentsData, summaryData, photosData] =
-        await Promise.all([
-          getJob(params.id as string),
-          getPaymentsByJob(params.id as string),
-          getJobPaymentSummary(params.id as string),
-          getJobPhotos(params.id as string),
-        ]);
-      setJob(jobData);
-      setPayments(paymentsData);
-      setPaymentSummary(summaryData);
-      setPhotos(photosData);
 
-      // Load automation suggestions
-      if (jobData) {
-        const suggestions = await getJobAutomationSuggestions(jobData.id);
-        setAutomationSuggestions(suggestions);
+      // Fetch job details
+      const jobRes = await fetch(`/api/jobs/${params.id}`);
+      if (!jobRes.ok) throw new Error('Failed to fetch job');
+      const jobData = await jobRes.json();
+      setJob(jobData);
+
+      // Fetch payments
+      const paymentsRes = await fetch(`/api/jobs/${params.id}/payments`);
+      if (paymentsRes.ok) {
+        const paymentsData = await paymentsRes.json();
+        setPayments(paymentsData.payments || []);
+        setPaymentSummary(
+          paymentsData.summary || {
+            total: 0,
+            paid: 0,
+            remaining: 0,
+            status: 'unpaid',
+          }
+        );
       }
 
-      // Load techs and notes
-      const [techsData, notesData] = await Promise.all([
-        supabase
-          .from('account_memberships')
-          .select('user_id, user:users(full_name, email)')
-          .eq('role', 'TECH')
-          .eq('is_active', true),
-        supabase
-          .from('job_notes')
-          .select(
-            'id, note, created_at, technician_id, user:users(full_name, email)'
-          )
-          .eq('job_id', params.id)
-          .order('created_at', { ascending: false }),
-      ]);
-      setTechs(techsData.data || []);
-      setNotes(notesData.data || []);
+      // Fetch photos
+      const photosRes = await fetch(`/api/jobs/${params.id}/photos`);
+      if (photosRes.ok) {
+        const photosData = await photosRes.json();
+        setPhotos(photosData || []);
+      }
+
+      // Load techs
+      const techsRes = await fetch('/api/admin/users?role=TECH');
+      if (techsRes.ok) {
+        const techsData = await techsRes.json();
+        setTechs(techsData || []);
+      }
+
+      // Load notes
+      const notesRes = await fetch(`/api/jobs/${params.id}/notes`);
+      if (notesRes.ok) {
+        const notesData = await notesRes.json();
+        setNotes(notesData || []);
+      }
+
+      // For now, skip automation suggestions as it requires backend implementation
+      setAutomationSuggestions([]);
     } catch (error) {
       console.error('Failed to load job:', error);
       alert('Failed to load job');
@@ -128,7 +123,13 @@ export default function JobDetailPage() {
     if (!job) return;
 
     try {
-      await updateJobStatusWithValidation(job.id, newStatus);
+      const response = await fetch(`/api/jobs/${job.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: newStatus }),
+      });
+
+      if (!response.ok) throw new Error('Failed to update status');
       await loadJob();
     } catch (error) {
       console.error('Failed to update status:', error);
@@ -172,7 +173,11 @@ export default function JobDetailPage() {
     if (!job || !confirm('Delete this line item?')) return;
 
     try {
-      await deleteLineItem(itemId, job.id);
+      const response = await fetch(`/api/jobs/${job.id}/line-items/${itemId}`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) throw new Error('Failed to delete line item');
       await loadJob();
     } catch (error) {
       console.error('Failed to delete line item:', error);
@@ -184,14 +189,18 @@ export default function JobDetailPage() {
     if (!job) return;
 
     try {
-      await createPayment({
-        job_id: job.id,
-        amount: data.amount,
-        payment_method: data.payment_method || null,
-        payment_date: data.payment_date,
-        notes: data.notes || null,
-        square_payment_id: null,
+      const response = await fetch(`/api/jobs/${job.id}/payments`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          amount: data.amount,
+          payment_method: data.payment_method || null,
+          payment_date: data.payment_date,
+          notes: data.notes || null,
+        }),
       });
+
+      if (!response.ok) throw new Error('Failed to record payment');
       setPaymentDialogOpen(false);
       await loadJob();
     } catch (error) {
@@ -204,7 +213,11 @@ export default function JobDetailPage() {
     if (!confirm('Are you sure you want to delete this payment?')) return;
 
     try {
-      await deletePayment(paymentId);
+      const response = await fetch(`/api/payments/${paymentId}`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) throw new Error('Failed to delete payment');
       await loadJob();
     } catch (error) {
       console.error('Failed to delete payment:', error);
@@ -348,21 +361,27 @@ export default function JobDetailPage() {
             value={job?.assigned_tech_id || ''}
             onValueChange={async (value) => {
               if (!job) return;
-              await supabase
-                .from('jobs')
-                .update({ assigned_tech_id: value || null })
-                .eq('id', job.id);
-              await loadJob();
+              try {
+                const response = await fetch(`/api/jobs/${job.id}`, {
+                  method: 'PATCH',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ assigned_tech_id: value || null }),
+                });
+                if (!response.ok) throw new Error('Failed to assign tech');
+                await loadJob();
+              } catch (error) {
+                console.error('Failed to assign tech:', error);
+                alert('Failed to assign technician');
+              }
             }}
           >
             <SelectTrigger>
               <SelectValue placeholder="Select technician" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">Unassigned</SelectItem>
               {techs.map((tech: any) => (
-                <SelectItem key={tech.user_id} value={tech.user_id}>
-                  {tech.user?.full_name || tech.user?.email}
+                <SelectItem key={tech.id} value={tech.id}>
+                  {tech.full_name || tech.email}
                 </SelectItem>
               ))}
             </SelectContent>

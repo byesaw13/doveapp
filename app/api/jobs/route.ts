@@ -26,7 +26,9 @@ export async function GET(request: NextRequest) {
     // Build query with account filtering
     let query = supabase
       .from('jobs')
-      .select('*')
+      .select(
+        '*, client:clients!jobs_client_id_fkey(id, first_name, last_name, company_name, email, phone)'
+      )
       .order('created_at', { ascending: false });
 
     // CRITICAL: Filter by account_id for multi-tenancy
@@ -93,18 +95,7 @@ export async function POST(request: NextRequest) {
     );
     if (validationError) return validationError;
 
-    // Debug logging (development only)
-    if (process.env.NODE_ENV !== 'production') {
-      const body = await request
-        .clone()
-        .json()
-        .catch(() => ({}));
-      console.log('Job create request keys:', Object.keys(body));
-      console.log('Validated data keys:', Object.keys(data || {}));
-      console.log('Validated client_id:', data?.client_id);
-    }
-
-    if (!data!.client_id) {
+    if (data?.client_id == null) {
       return NextResponse.json(
         { error: 'client_id is required' },
         { status: 400 }
@@ -131,13 +122,6 @@ export async function POST(request: NextRequest) {
       tax: 0,
       total: 0,
     };
-
-    // Debug logging (development only)
-    if (process.env.NODE_ENV !== 'production') {
-      console.log('Final job insert payload keys:', Object.keys(jobData));
-      console.log('Final client_id:', jobData.client_id);
-      console.log('Final customer_id:', jobData.customer_id);
-    }
 
     const { data: job, error } = await supabase
       .from('jobs')

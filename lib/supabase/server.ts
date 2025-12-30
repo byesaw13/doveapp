@@ -2,6 +2,8 @@ import { createServerClient as createSupabaseServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers';
 import type { SupabaseClient } from '@supabase/supabase-js';
 
+import 'server-only';
+
 // For Server Components and server-only helpers. Use createRouteHandlerClient in route handlers.
 export async function createServerClient(): Promise<SupabaseClient> {
   const cookieStore = await cookies();

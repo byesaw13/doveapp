@@ -24,6 +24,7 @@
     "setup:tenant": "node scripts/setup-tenant.js",
     "backup": "node scripts/automated-backup.js",
     "backup:restore": "node scripts/restore-backup.js",
+    "check:boundaries": "node scripts/check-boundaries.mjs",
     "prepare": "husky"
   },
   "lint-staged": {

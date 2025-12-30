@@ -1,3 +1,7 @@
+'use client';
+// Canonical client-side Supabase entry point. Preferred for most UI usage.
+// Client-only; never import from Server Components or server utilities.
+
 import { createBrowserClient } from '@supabase/ssr';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';

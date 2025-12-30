@@ -1,5 +1,7 @@
+import 'server-only';
+
 import type { Role } from '@/lib/auth/roles';
-import { getAuthContext } from '@/lib/auth/context';
+import { getServerSessionOrNull } from '@/lib/auth/session';
 
 export type RoleGateResult = {
   ok: boolean;
@@ -9,9 +11,9 @@ export type RoleGateResult = {
 export async function requireRole(
   allowedRoles: Role[]
 ): Promise<RoleGateResult> {
-  const { role } = await getAuthContext();
+  const session = await getServerSessionOrNull();
 
-  if (role && allowedRoles.includes(role as Role)) {
+  if (session?.role && allowedRoles.includes(session.role)) {
     return { ok: true };
   }
 

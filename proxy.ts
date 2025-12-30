@@ -224,6 +224,15 @@ export async function proxy(request: NextRequest) {
     }
   }
 
+  // Test proxy execution for /api/health
+  if (request.nextUrl.pathname === '/api/health') {
+    const allowProxyDebug =
+      process.env.NODE_ENV !== 'production' ||
+      process.env.PROXY_DEBUG === 'true';
+    const headers = allowProxyDebug ? { 'x-proxy-hit': '1' } : undefined;
+    return applyCookies(NextResponse.json({ status: 'ok' }, { headers }));
+  }
+
   return applyCookies(
     NextResponse.next({
       request: {

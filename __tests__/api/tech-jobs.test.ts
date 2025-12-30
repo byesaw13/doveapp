@@ -164,6 +164,43 @@ describe('/api/tech/jobs', () => {
         })
       );
     });
+
+    it('should ignore assignedTechId query overrides and force tech scoping', async () => {
+      const mockContext = {
+        accountId: 'test-account',
+        userId: 'tech-user',
+        role: 'TECH' as const,
+        permissions: ['manage_business'] as Permission[],
+        user: { id: 'tech-user', email: 'tech@test.com' },
+        account: { id: 'test-account', name: 'Test Account' },
+      };
+
+      mockRequireTechContext.mockResolvedValue(mockContext);
+      mockListJobs.mockResolvedValue({
+        data: [],
+        page: 1,
+        pageSize: 20,
+        total: 0,
+        error: null,
+      });
+
+      const requestWithOverride = new NextRequest(
+        'http://localhost:3000/api/tech/jobs?assignedTechId=someone-else'
+      );
+
+      await getJobs(requestWithOverride);
+
+      expect(mockListJobs).toHaveBeenCalledWith(
+        expect.objectContaining({
+          accountId: 'test-account',
+          userId: 'tech-user',
+          role: 'TECH',
+        }),
+        expect.objectContaining({
+          assignedTechId: 'tech-user',
+        })
+      );
+    });
   });
 
   describe('GET /api/tech/jobs/[id]', () => {

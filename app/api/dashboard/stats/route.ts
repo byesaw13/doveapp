@@ -94,7 +94,7 @@ export async function GET(request: NextRequest) {
       .select(
         `
         *,
-        client:clients (
+        client:clients!jobs_client_id_fkey (
           id,
           first_name,
           last_name,

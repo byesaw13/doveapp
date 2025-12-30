@@ -1,5 +1,6 @@
 export interface Client {
   id: string;
+  account_id?: string;
   square_customer_id?: string | null;
   first_name: string;
   last_name: string;

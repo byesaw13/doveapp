@@ -27,25 +27,12 @@ export async function GET(request: NextRequest) {
     let query = supabase
       .from('jobs')
       .select(
-        `
-        *,
-        clients!jobs_client_id_fkey (
-          id,
-          first_name,
-          last_name,
-          company_name,
-          email,
-          phone
-        )
-      `
+        '*, client:clients!jobs_client_id_fkey(id, first_name, last_name, company_name, email, phone)'
       )
       .order('created_at', { ascending: false });
 
     // CRITICAL: Filter by account_id for multi-tenancy
-    const accountIdColumn = 'account_id';
-    // Temporarily allowing jobs without account_id filtering (data consistency issue)
-    // TODO: Fix account_id backfill to match user memberships
-    // query = query.eq(accountIdColumn, context.accountId);
+    query = query.eq('account_id', context.accountId);
 
     if (clientId) {
       query = query.eq('client_id', clientId);
@@ -108,20 +95,32 @@ export async function POST(request: NextRequest) {
     );
     if (validationError) return validationError;
 
-    // Add account_id to job data
+    if (data?.client_id == null) {
+      return NextResponse.json(
+        { error: 'client_id is required' },
+        { status: 400 }
+      );
+    }
+
+    // Generate job_number
+    const jobNumber = `JOB-${Date.now()}`;
+
     const jobData = {
+      account_id: context.accountId,
+      // ✅ REQUIRED by DB
       client_id: data!.client_id,
+      // Optional: only keep if you actually use portal customers here
+      customer_id: null,
       property_id: data!.property_id || null,
+      job_number: jobNumber,
       title: data!.title,
       description: data!.description || null,
       status: data!.status || 'scheduled',
-      service_date: data!.scheduled_date, // Map scheduled_date to service_date
-      scheduled_time: null, // Keep for backward compatibility
-      notes: null,
+      service_date: data!.scheduled_date,
+      assigned_tech_id: null,
       subtotal: 0,
       tax: 0,
       total: 0,
-      // account_id: context.accountId, // Uncomment when column exists
     };
 
     const { data: job, error } = await supabase

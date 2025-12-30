@@ -3,6 +3,7 @@ import { requireAccountContext, canManageAdmin } from '@/lib/auth-guards';
 import { createServerClient } from '@supabase/ssr';
 import { PerformanceLogger } from '@/lib/api/performance';
 import { validateRequest, createClientSchema } from '@/lib/api/validation';
+import { errorResponse } from '@/lib/api-helpers';
 
 // GET /api/clients - Get all clients or search
 export async function GET(request: NextRequest) {
@@ -36,14 +37,11 @@ export async function GET(request: NextRequest) {
       .order('created_at', { ascending: false });
 
     // Filter by account - CRITICAL for multi-tenancy
-    // Note: clients table will be migrated to customers, this is temporary
-    // Temporarily disabled due to account_id backfill mismatch
-    // TODO: Fix account_id backfill to match user memberships
-    // queryBuilder = queryBuilder.eq('account_id', context.accountId);
+    queryBuilder = queryBuilder.eq('account_id', context.accountId);
 
     if (query) {
       queryBuilder = queryBuilder.or(
-        `name.ilike.%${query}%,email.ilike.%${query}%,company.ilike.%${query}%`
+        `first_name.ilike.%${query}%,last_name.ilike.%${query}%,email.ilike.%${query}%,company_name.ilike.%${query}%`
       );
     }
 
@@ -53,10 +51,7 @@ export async function GET(request: NextRequest) {
     if (error) {
       console.error('Error fetching clients:', error);
       perfLogger.complete(500);
-      return NextResponse.json(
-        { error: 'Failed to fetch clients' },
-        { status: 500 }
-      );
+      return errorResponse(error, 'Failed to fetch clients');
     }
 
     const metrics = perfLogger.complete(200);
@@ -107,10 +102,36 @@ export async function POST(request: NextRequest) {
       await validateRequest(request, createClientSchema);
     if (validationError) return validationError;
 
-    // Add account_id to the client data
+    if (!validatedData) {
+      return NextResponse.json(
+        { error: 'Invalid request data' },
+        { status: 400 }
+      );
+    }
+
+    // Normalize name to first_name/last_name if needed
+    let firstName = validatedData.first_name;
+    let lastName = validatedData.last_name;
+    if ((validatedData as any).name && (!firstName || !lastName)) {
+      const parts = (validatedData as any).name.trim().split(/\s+/);
+      firstName = parts[0] || '';
+      lastName = parts.slice(1).join(' ') || 'Unknown';
+    }
+
+    // Ensure required fields
+    if (!firstName || !lastName) {
+      return NextResponse.json(
+        { error: 'first_name and last_name are required' },
+        { status: 400 }
+      );
+    }
+
+    // Prepare client data
     const clientData = {
       ...validatedData,
-      // account_id: context.accountId, // Uncomment when column exists
+      first_name: firstName,
+      last_name: lastName,
+      account_id: context.accountId,
     };
 
     const { data: client, error } = await supabaseClient
@@ -121,10 +142,7 @@ export async function POST(request: NextRequest) {
 
     if (error) {
       console.error('Error creating client:', error);
-      return NextResponse.json(
-        { error: 'Failed to create client' },
-        { status: 500 }
-      );
+      return errorResponse(error, 'Failed to create client');
     }
 
     return NextResponse.json(client, { status: 201 });

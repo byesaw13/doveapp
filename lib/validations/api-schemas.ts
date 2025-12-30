@@ -3,6 +3,9 @@ import { z } from 'zod';
 /**
  * Common validation schemas for API requests
  * Using Zod for runtime type checking and validation
+ *
+ * NOTE: API routes should import schemas from lib/api/validation.ts
+ * instead of this file to prevent schema divergence.
  */
 
 // UUID validation

@@ -38,17 +38,17 @@ BEGIN
   END IF;
 
   -- Validate new status value
-  IF p_new_status NOT IN ('scheduled', 'in_progress', 'complete') THEN
+  IF p_new_status NOT IN ('scheduled', 'in_progress', 'completed') THEN
     RAISE EXCEPTION 'Invalid status';
   END IF;
 
   -- Enforce forward-only transitions
-  IF v_current_status = 'scheduled' AND p_new_status NOT IN ('in_progress', 'complete') THEN
+  IF v_current_status = 'scheduled' AND p_new_status NOT IN ('in_progress', 'completed') THEN
     RAISE EXCEPTION 'Invalid transition';
-  ELSIF v_current_status = 'in_progress' AND p_new_status <> 'complete' THEN
+  ELSIF v_current_status = 'in_progress' AND p_new_status <> 'completed' THEN
     RAISE EXCEPTION 'Invalid transition';
-  ELSIF v_current_status = 'complete' THEN
-    RAISE EXCEPTION 'Cannot change status once complete';
+  ELSIF v_current_status = 'completed' THEN
+    RAISE EXCEPTION 'Cannot change status once completed';
   END IF;
 
   -- Update only the status

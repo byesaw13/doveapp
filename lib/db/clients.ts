@@ -76,17 +76,67 @@ export async function getClient(id: string): Promise<Client | null> {
  * Create a new client
  */
 export async function createClient(
-  client: ClientInsert
+  client: ClientInsert & { account_id?: string; name?: string }
 ): Promise<Client | null> {
+  // If account_id not provided, try to get from session (client-side)
+  let accountId = client.account_id;
+  if (!accountId) {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (user) {
+      // Fetch all active memberships and prioritize by role
+      const { data: memberships } = await supabase
+        .from('account_memberships')
+        .select('account_id, role')
+        .eq('user_id', user.id)
+        .eq('is_active', true);
+
+      if (memberships && memberships.length > 0) {
+        // Filter to only known roles and sort by priority: OWNER > ADMIN > TECH
+        const rolePriority: Record<string, number> = {
+          OWNER: 1,
+          ADMIN: 2,
+          TECH: 3,
+        };
+        const eligible = memberships.filter(
+          (m) => m.account_id && rolePriority[m.role] !== undefined
+        );
+        eligible.sort((a, b) => rolePriority[a.role] - rolePriority[b.role]);
+        accountId = eligible[0]?.account_id;
+      }
+    }
+  }
+
+  if (!accountId) {
+    throw new Error('No active account membership found for user');
+  }
+
+  // Map name to first_name and last_name
+  let firstName = client.first_name;
+  let lastName = client.last_name;
+  if (client.name && (!firstName || !lastName)) {
+    const parts = client.name.trim().split(/\s+/);
+    firstName = parts[0] || '';
+    lastName = parts.slice(1).join(' ') || 'Unknown';
+  }
+
+  const clientData = {
+    ...client,
+    account_id: accountId,
+    first_name: firstName,
+    last_name: lastName,
+  };
+
   const { data, error } = await supabase
     .from('clients')
-    .insert(client)
+    .insert(clientData)
     .select()
     .single();
 
   if (error) {
     console.error('Error creating client:', error);
-    throw new Error('Failed to create client');
+    throw new Error(error?.message ?? JSON.stringify(error));
   }
 
   return data;

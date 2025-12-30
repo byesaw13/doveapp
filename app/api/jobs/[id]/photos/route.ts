@@ -1,93 +1,95 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { writeFile, mkdir } from 'fs/promises';
-import { join } from 'path';
-import { createJobPhoto } from '@/lib/db/job-photos';
-import { randomUUID } from 'crypto';
+import { requireAccountContext } from '@/lib/auth-guards';
+import {
+  createAuthenticatedClient,
+  errorResponse,
+  unauthorizedResponse,
+} from '@/lib/api-helpers';
 
+// GET /api/jobs/[id]/photos - Get all photos for a job
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id: jobId } = await params;
+    const context = await requireAccountContext(request);
+    const supabase = createAuthenticatedClient(request);
+
+    // Verify job exists and belongs to account
+    const { data: job, error: jobError } = await supabase
+      .from('jobs')
+      .select('id')
+      .eq('id', jobId)
+      .eq('account_id', context.accountId)
+      .single();
+
+    if (jobError || !job) {
+      return NextResponse.json({ error: 'Job not found' }, { status: 404 });
+    }
+
+    // Fetch photos for this job
+    const { data: photos, error } = await supabase
+      .from('job_photos')
+      .select('*')
+      .eq('job_id', jobId)
+      .order('created_at', { ascending: true });
+
+    if (error) {
+      console.error('Error fetching photos:', error);
+      return errorResponse(error, 'Failed to fetch photos');
+    }
+
+    return NextResponse.json(photos || []);
+  } catch (error) {
+    console.error('Error fetching photos:', error);
+    return unauthorizedResponse();
+  }
+}
+
+// POST /api/jobs/[id]/photos - Create a new photo
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const { id: jobId } = await params;
-    const formData = await request.formData();
+    const context = await requireAccountContext(request);
+    const supabase = createAuthenticatedClient(request);
+    const body = await request.json();
 
-    const file = formData.get('file') as File;
-    const photoType = formData.get('photoType') as string;
-    const caption = formData.get('caption') as string;
+    // Verify job exists and belongs to account
+    const { data: job, error: jobError } = await supabase
+      .from('jobs')
+      .select('id')
+      .eq('id', jobId)
+      .eq('account_id', context.accountId)
+      .single();
 
-    if (!file) {
-      return NextResponse.json({ error: 'No file provided' }, { status: 400 });
+    if (jobError || !job) {
+      return NextResponse.json({ error: 'Job not found' }, { status: 404 });
     }
 
-    if (
-      !photoType ||
-      !['before', 'during', 'after', 'other'].includes(photoType)
-    ) {
-      return NextResponse.json(
-        { error: 'Invalid photo type' },
-        { status: 400 }
-      );
+    // Create photo
+    const { data: photo, error } = await supabase
+      .from('job_photos')
+      .insert({
+        job_id: jobId,
+        image_url: body.image_url,
+        caption: body.caption || null,
+        taken_at: body.taken_at || new Date().toISOString(),
+      })
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Error creating photo:', error);
+      return errorResponse(error, 'Failed to create photo');
     }
 
-    // Validate file type
-    if (!file.type.startsWith('image/')) {
-      return NextResponse.json(
-        { error: 'File must be an image' },
-        { status: 400 }
-      );
-    }
-
-    // Validate file size (max 10MB)
-    if (file.size > 10 * 1024 * 1024) {
-      return NextResponse.json(
-        { error: 'File size must be less than 10MB' },
-        { status: 400 }
-      );
-    }
-
-    // Generate unique filename
-    const fileExtension = file.name.split('.').pop();
-    const filename = `${randomUUID()}.${fileExtension}`;
-
-    // Create uploads directory if it doesn't exist
-    const uploadsDir = join(process.cwd(), 'public', 'uploads', 'job-photos');
-    try {
-      await mkdir(uploadsDir, { recursive: true });
-    } catch (error) {
-      // Directory might already exist, ignore error
-    }
-
-    // Save file to disk
-    const filePath = join(uploadsDir, filename);
-    const bytes = await file.arrayBuffer();
-    const buffer = Buffer.from(bytes);
-    await writeFile(filePath, buffer);
-
-    // Create database record
-    const photoData = {
-      job_id: jobId,
-      filename,
-      original_filename: file.name,
-      file_path: `/uploads/job-photos/${filename}`,
-      file_size: file.size,
-      mime_type: file.type,
-      photo_type: photoType as 'before' | 'during' | 'after' | 'other',
-      caption: caption || null,
-      taken_at: new Date().toISOString(),
-    };
-
-    const photo = await createJobPhoto(photoData);
-
-    return NextResponse.json({
-      success: true,
-      photo,
-    });
+    return NextResponse.json(photo, { status: 201 });
   } catch (error) {
-    console.error('Error uploading photo:', error);
-    return NextResponse.json(
-      { error: 'Failed to upload photo' },
-      { status: 500 }
-    );
+    console.error('Error creating photo:', error);
+    return unauthorizedResponse();
   }
 }

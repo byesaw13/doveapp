@@ -68,13 +68,12 @@ export function QuickAddJob({ open = false, onOpenChange }: QuickAddJobProps) {
           client_id: formData.client_id,
           title: formData.title,
           description: formData.description || null,
-          service_date: formData.service_date,
+          scheduled_date: formData.service_date,
           scheduled_time: formData.scheduled_time,
           status: formData.status,
           subtotal: 0,
           tax: 0,
           total: 0,
-          property_id: null,
         }),
       });
 

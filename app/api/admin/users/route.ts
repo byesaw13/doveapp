@@ -159,9 +159,11 @@ export async function GET(request: NextRequest) {
     }
 
     const supabase = createAdminClient();
+    const url = new URL(request.url);
+    const roleFilter = url.searchParams.get('role');
 
-    // Get all users for this account with their membership info
-    const { data: memberships, error } = await supabase
+    // Build query for users with membership info
+    let query = supabase
       .from('account_memberships')
       .select(
         `
@@ -178,15 +180,23 @@ export async function GET(request: NextRequest) {
       `
       )
       .eq('account_id', context.accountId)
-      .eq('is_active', true)
-      .order('created_at', { ascending: false });
+      .eq('is_active', true);
+
+    // Add role filter if provided
+    if (roleFilter) {
+      query = query.eq('role', roleFilter);
+    }
+
+    const { data: memberships, error } = await query.order('created_at', {
+      ascending: false,
+    });
 
     if (error) {
       console.error('Error fetching team members:', error);
       return errorResponse(error, 'Failed to fetch team members');
     }
 
-    let teamMembers =
+    const teamMembers =
       memberships?.map((membership: any) => ({
         id: membership.users.id,
         email: membership.users.email,

@@ -67,6 +67,7 @@ export const updateJobSchema = z.object({
     .optional(),
   scheduled_date: dateSchema.optional(),
   priority: z.enum(['low', 'medium', 'high', 'urgent']).optional(),
+  assigned_tech_id: z.string().uuid().nullable().optional(),
 });
 
 /**

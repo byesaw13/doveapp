@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   DndContext,
   DragOverlay,
@@ -40,9 +40,9 @@ export default function KanbanBoard<T extends { id: string; status: string }>({
   const [activeId, setActiveId] = useState<string | null>(null);
 
   // Update columns when initialColumns change
-  useState(() => {
+  useEffect(() => {
     setColumns(initialColumns);
-  });
+  }, [initialColumns]);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {

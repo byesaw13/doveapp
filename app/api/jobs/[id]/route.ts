@@ -7,6 +7,48 @@ import {
 } from '@/lib/api-helpers';
 import { validateRequest, updateJobSchema } from '@/lib/api/validation';
 
+// GET /api/jobs/[id] - Get job details with line items and client
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id } = await params;
+    const context = await requireAccountContext(request);
+    const supabase = createAuthenticatedClient(request);
+
+    // Fetch job with client and line items
+    // Note: We explicitly specify the relationship name to avoid ambiguity
+    // since both client_id and technician_id reference clients table
+    const { data: job, error } = await supabase
+      .from('jobs')
+      .select(
+        `
+        *,
+        client:clients!jobs_client_id_fkey(*),
+        line_items:job_line_items(*)
+      `
+      )
+      .eq('id', id)
+      .eq('account_id', context.accountId)
+      .single();
+
+    if (error) {
+      console.error('Error fetching job:', error);
+      return errorResponse(error, 'Failed to fetch job');
+    }
+
+    if (!job) {
+      return NextResponse.json({ error: 'Job not found' }, { status: 404 });
+    }
+
+    return NextResponse.json(job);
+  } catch (error) {
+    console.error('Error fetching job:', error);
+    return unauthorizedResponse();
+  }
+}
+
 export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -36,6 +78,8 @@ export async function PATCH(
     if (data!.title) updateData.title = data!.title;
     if (data!.description !== undefined)
       updateData.description = data!.description;
+    if (data!.assigned_tech_id !== undefined)
+      updateData.assigned_tech_id = data!.assigned_tech_id;
 
     const { data: job, error } = await supabase
       .from('jobs')

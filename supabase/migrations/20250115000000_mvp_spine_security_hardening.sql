@@ -73,11 +73,36 @@ $$;
 -- -------------------------------------------------------------------
 -- Ensure account_id exists where required by MVP spine
 -- -------------------------------------------------------------------
-ALTER TABLE public.alerts ADD COLUMN IF NOT EXISTS account_id uuid;
-ALTER TABLE public.billing_events ADD COLUMN IF NOT EXISTS account_id uuid;
-ALTER TABLE public.emails_raw ADD COLUMN IF NOT EXISTS account_id uuid;
-ALTER TABLE public.email_insights ADD COLUMN IF NOT EXISTS account_id uuid;
-ALTER TABLE public.email_lead_details ADD COLUMN IF NOT EXISTS account_id uuid;
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'alerts') THEN
+    ALTER TABLE public.alerts ADD COLUMN IF NOT EXISTS account_id uuid;
+  END IF;
+END $$;
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'billing_events') THEN
+    ALTER TABLE public.billing_events ADD COLUMN IF NOT EXISTS account_id uuid;
+  END IF;
+END $$;
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'emails_raw') THEN
+    ALTER TABLE public.emails_raw ADD COLUMN IF NOT EXISTS account_id uuid;
+  END IF;
+END $$;
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'email_insights') THEN
+    ALTER TABLE public.email_insights ADD COLUMN IF NOT EXISTS account_id uuid;
+  END IF;
+END $$;
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'email_lead_details') THEN
+    ALTER TABLE public.email_lead_details ADD COLUMN IF NOT EXISTS account_id uuid;
+  END IF;
+END $$;
 ALTER TABLE public.gmail_connections ADD COLUMN IF NOT EXISTS account_id uuid;
 ALTER TABLE public.square_connections ADD COLUMN IF NOT EXISTS account_id uuid;
 ALTER TABLE public.invoice_line_items ADD COLUMN IF NOT EXISTS account_id uuid;
@@ -215,49 +240,67 @@ BEGIN
   WHERE account_id IS NULL;
 
   -- Email and integrations
-  UPDATE public.emails_raw
-  SET account_id = default_account_id
-  WHERE account_id IS NULL;
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'emails_raw') THEN
+    UPDATE public.emails_raw
+    SET account_id = default_account_id
+    WHERE account_id IS NULL;
 
-  UPDATE public.email_insights ei
-  SET account_id = er.account_id
-  FROM public.emails_raw er
-  WHERE ei.account_id IS NULL
-    AND ei.email_id = er.id;
+    IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'email_insights') THEN
+      UPDATE public.email_insights ei
+      SET account_id = er.account_id
+      FROM public.emails_raw er
+      WHERE ei.account_id IS NULL
+        AND ei.email_id = er.id;
+    END IF;
 
-  UPDATE public.email_lead_details eld
-  SET account_id = er.account_id
-  FROM public.emails_raw er
-  WHERE eld.account_id IS NULL
-    AND eld.email_id = er.id;
+    IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'email_lead_details') THEN
+      UPDATE public.email_lead_details eld
+      SET account_id = er.account_id
+      FROM public.emails_raw er
+      WHERE eld.account_id IS NULL
+        AND eld.email_id = er.id;
+    END IF;
 
-  UPDATE public.alerts a
-  SET account_id = er.account_id
-  FROM public.emails_raw er
-  WHERE a.account_id IS NULL
-    AND a.email_id = er.id;
+    IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'alerts') THEN
+      UPDATE public.alerts a
+      SET account_id = er.account_id
+      FROM public.emails_raw er
+      WHERE a.account_id IS NULL
+        AND a.email_id = er.id;
+    END IF;
 
-  UPDATE public.billing_events be
-  SET account_id = er.account_id
-  FROM public.emails_raw er
-  WHERE be.account_id IS NULL
-    AND be.email_id = er.id;
+    IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'billing_events') THEN
+      UPDATE public.billing_events be
+      SET account_id = er.account_id
+      FROM public.emails_raw er
+      WHERE be.account_id IS NULL
+        AND be.email_id = er.id;
+    END IF;
+  END IF;
 
-  UPDATE public.email_insights
-  SET account_id = default_account_id
-  WHERE account_id IS NULL;
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'email_insights') THEN
+    UPDATE public.email_insights
+    SET account_id = default_account_id
+    WHERE account_id IS NULL;
+  END IF;
 
-  UPDATE public.email_lead_details
-  SET account_id = default_account_id
-  WHERE account_id IS NULL;
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'email_lead_details') THEN
+    UPDATE public.email_lead_details
+    SET account_id = default_account_id
+    WHERE account_id IS NULL;
+  END IF;
 
-  UPDATE public.alerts
-  SET account_id = default_account_id
-  WHERE account_id IS NULL;
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'alerts') THEN
+    UPDATE public.alerts
+    SET account_id = default_account_id
+    WHERE account_id IS NULL;
+  END IF;
 
-  UPDATE public.billing_events
-  SET account_id = default_account_id
-  WHERE account_id IS NULL;
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'billing_events') THEN
+    UPDATE public.billing_events
+    SET account_id = default_account_id
+    WHERE account_id IS NULL;
+  END IF;
 
   UPDATE public.gmail_connections
   SET account_id = default_account_id
@@ -282,11 +325,36 @@ ALTER TABLE public.job_photos ALTER COLUMN account_id SET NOT NULL;
 ALTER TABLE public.payments ALTER COLUMN account_id SET NOT NULL;
 ALTER TABLE public.invoice_line_items ALTER COLUMN account_id SET NOT NULL;
 ALTER TABLE public.invoice_payments ALTER COLUMN account_id SET NOT NULL;
-ALTER TABLE public.emails_raw ALTER COLUMN account_id SET NOT NULL;
-ALTER TABLE public.email_insights ALTER COLUMN account_id SET NOT NULL;
-ALTER TABLE public.email_lead_details ALTER COLUMN account_id SET NOT NULL;
-ALTER TABLE public.alerts ALTER COLUMN account_id SET NOT NULL;
-ALTER TABLE public.billing_events ALTER COLUMN account_id SET NOT NULL;
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'emails_raw') THEN
+    ALTER TABLE public.emails_raw ALTER COLUMN account_id SET NOT NULL;
+  END IF;
+END $$;
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'email_insights') THEN
+    ALTER TABLE public.email_insights ALTER COLUMN account_id SET NOT NULL;
+  END IF;
+END $$;
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'email_lead_details') THEN
+    ALTER TABLE public.email_lead_details ALTER COLUMN account_id SET NOT NULL;
+  END IF;
+END $$;
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'alerts') THEN
+    ALTER TABLE public.alerts ALTER COLUMN account_id SET NOT NULL;
+  END IF;
+END $$;
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'billing_events') THEN
+    ALTER TABLE public.billing_events ALTER COLUMN account_id SET NOT NULL;
+  END IF;
+END $$;
 ALTER TABLE public.gmail_connections ALTER COLUMN account_id SET NOT NULL;
 ALTER TABLE public.square_connections ALTER COLUMN account_id SET NOT NULL;
 
@@ -350,27 +418,27 @@ BEGIN
       ADD CONSTRAINT invoice_payments_account_id_fkey
       FOREIGN KEY (account_id) REFERENCES public.accounts(id) ON DELETE CASCADE;
   END IF;
-  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'emails_raw_account_id_fkey') THEN
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'emails_raw_account_id_fkey') AND EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'emails_raw') THEN
     ALTER TABLE public.emails_raw
       ADD CONSTRAINT emails_raw_account_id_fkey
       FOREIGN KEY (account_id) REFERENCES public.accounts(id) ON DELETE CASCADE;
   END IF;
-  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'email_insights_account_id_fkey') THEN
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'email_insights_account_id_fkey') AND EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'email_insights') THEN
     ALTER TABLE public.email_insights
       ADD CONSTRAINT email_insights_account_id_fkey
       FOREIGN KEY (account_id) REFERENCES public.accounts(id) ON DELETE CASCADE;
   END IF;
-  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'email_lead_details_account_id_fkey') THEN
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'email_lead_details_account_id_fkey') AND EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'email_lead_details') THEN
     ALTER TABLE public.email_lead_details
       ADD CONSTRAINT email_lead_details_account_id_fkey
       FOREIGN KEY (account_id) REFERENCES public.accounts(id) ON DELETE CASCADE;
   END IF;
-  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'alerts_account_id_fkey') THEN
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'alerts_account_id_fkey') AND EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'alerts') THEN
     ALTER TABLE public.alerts
       ADD CONSTRAINT alerts_account_id_fkey
       FOREIGN KEY (account_id) REFERENCES public.accounts(id) ON DELETE CASCADE;
   END IF;
-  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'billing_events_account_id_fkey') THEN
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'billing_events_account_id_fkey') AND EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'billing_events') THEN
     ALTER TABLE public.billing_events
       ADD CONSTRAINT billing_events_account_id_fkey
       FOREIGN KEY (account_id) REFERENCES public.accounts(id) ON DELETE CASCADE;
@@ -390,11 +458,36 @@ END $$;
 -- -------------------------------------------------------------------
 -- Revoke anon access to tenant tables
 -- -------------------------------------------------------------------
-REVOKE ALL ON TABLE public.alerts FROM anon;
-REVOKE ALL ON TABLE public.billing_events FROM anon;
-REVOKE ALL ON TABLE public.emails_raw FROM anon;
-REVOKE ALL ON TABLE public.email_insights FROM anon;
-REVOKE ALL ON TABLE public.email_lead_details FROM anon;
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'alerts') THEN
+    REVOKE ALL ON TABLE public.alerts FROM anon;
+  END IF;
+END $$;
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'billing_events') THEN
+    REVOKE ALL ON TABLE public.billing_events FROM anon;
+  END IF;
+END $$;
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'emails_raw') THEN
+    REVOKE ALL ON TABLE public.emails_raw FROM anon;
+  END IF;
+END $$;
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'email_insights') THEN
+    REVOKE ALL ON TABLE public.email_insights FROM anon;
+  END IF;
+END $$;
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'email_lead_details') THEN
+    REVOKE ALL ON TABLE public.email_lead_details FROM anon;
+  END IF;
+END $$;
 REVOKE ALL ON TABLE public.gmail_connections FROM anon;
 REVOKE ALL ON TABLE public.square_connections FROM anon;
 REVOKE ALL ON TABLE public.clients FROM anon;
@@ -415,11 +508,36 @@ REVOKE ALL ON TABLE public.visits FROM anon;
 -- -------------------------------------------------------------------
 -- Ensure RLS enabled on tenant tables
 -- -------------------------------------------------------------------
-ALTER TABLE public.alerts ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.billing_events ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.emails_raw ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.email_insights ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.email_lead_details ENABLE ROW LEVEL SECURITY;
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'alerts') THEN
+    ALTER TABLE public.alerts ENABLE ROW LEVEL SECURITY;
+  END IF;
+END $$;
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'billing_events') THEN
+    ALTER TABLE public.billing_events ENABLE ROW LEVEL SECURITY;
+  END IF;
+END $$;
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'emails_raw') THEN
+    ALTER TABLE public.emails_raw ENABLE ROW LEVEL SECURITY;
+  END IF;
+END $$;
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'email_insights') THEN
+    ALTER TABLE public.email_insights ENABLE ROW LEVEL SECURITY;
+  END IF;
+END $$;
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'email_lead_details') THEN
+    ALTER TABLE public.email_lead_details ENABLE ROW LEVEL SECURITY;
+  END IF;
+END $$;
 ALTER TABLE public.gmail_connections ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.square_connections ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.clients ENABLE ROW LEVEL SECURITY;
@@ -720,30 +838,55 @@ CREATE POLICY mvp_tech_read_assigned_visits
   USING (technician_id = auth.uid() AND public.user_is_account_tech(account_id));
 
 -- Email + integrations
-CREATE POLICY mvp_admin_manage_emails_raw
-  ON public.emails_raw FOR ALL
-  USING (public.user_is_account_admin(account_id))
-  WITH CHECK (public.user_is_account_admin(account_id));
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'emails_raw') THEN
+    EXECUTE 'CREATE POLICY mvp_admin_manage_emails_raw
+      ON public.emails_raw FOR ALL
+      USING (public.user_is_account_admin(account_id))
+      WITH CHECK (public.user_is_account_admin(account_id))';
+  END IF;
+END $$;
 
-CREATE POLICY mvp_admin_manage_email_insights
-  ON public.email_insights FOR ALL
-  USING (public.user_is_account_admin(account_id))
-  WITH CHECK (public.user_is_account_admin(account_id));
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'email_insights') THEN
+    EXECUTE 'CREATE POLICY mvp_admin_manage_email_insights
+      ON public.email_insights FOR ALL
+      USING (public.user_is_account_admin(account_id))
+      WITH CHECK (public.user_is_account_admin(account_id))';
+  END IF;
+END $$;
 
-CREATE POLICY mvp_admin_manage_email_lead_details
-  ON public.email_lead_details FOR ALL
-  USING (public.user_is_account_admin(account_id))
-  WITH CHECK (public.user_is_account_admin(account_id));
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'email_lead_details') THEN
+    EXECUTE 'CREATE POLICY mvp_admin_manage_email_lead_details
+      ON public.email_lead_details FOR ALL
+      USING (public.user_is_account_admin(account_id))
+      WITH CHECK (public.user_is_account_admin(account_id))';
+  END IF;
+END $$;
 
-CREATE POLICY mvp_admin_manage_alerts
-  ON public.alerts FOR ALL
-  USING (public.user_is_account_admin(account_id))
-  WITH CHECK (public.user_is_account_admin(account_id));
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'alerts') THEN
+    EXECUTE 'CREATE POLICY mvp_admin_manage_alerts
+      ON public.alerts FOR ALL
+      USING (public.user_is_account_admin(account_id))
+      WITH CHECK (public.user_is_account_admin(account_id))';
+  END IF;
+END $$;
 
-CREATE POLICY mvp_admin_manage_billing_events
-  ON public.billing_events FOR ALL
-  USING (public.user_is_account_admin(account_id))
-  WITH CHECK (public.user_is_account_admin(account_id));
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'billing_events') THEN
+    EXECUTE 'CREATE POLICY mvp_admin_manage_billing_events
+      ON public.billing_events FOR ALL
+      USING (public.user_is_account_admin(account_id))
+      WITH CHECK (public.user_is_account_admin(account_id))';
+  END IF;
+END $$;
 
 CREATE POLICY mvp_admin_manage_gmail_connections
   ON public.gmail_connections FOR ALL

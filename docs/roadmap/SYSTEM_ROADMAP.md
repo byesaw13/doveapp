@@ -36,6 +36,7 @@ This roadmap coordinates the transition to a multi-app architecture where Doveap
 - Account memberships, RLS policies, and multi-tenant isolation implemented
 - Payment events, time tracking, and technician data tables present
 - Supabase migrations include hardening and boundary enforcement
+- Schema includes many future-domain tables; roadmap phases represent workflow readiness, not table existence.
 
 ### Workflows Incomplete
 
@@ -142,6 +143,8 @@ All satellite apps must follow this pattern:
 Satellites may write only to Draft-only, Events-only, or Append-only tables as defined in docs/architecture/TABLE_OWNERSHIP.md. Doveapp is the sole authority for lifecycle state transitions (job status changes, invoice generation, client activation).
 
 - Canonical Owner is Doveapp for all core primitives (jobs/clients/properties/estimates/invoices). Satellites may be primary producers of drafts/events/notes, but never the canonical authority.
+- TABLE_OWNERSHIP.md is authoritative for allowed satellite writes and write modes.
+- Any table not explicitly marked as satellite-writable is Doveapp-only by default.
 - See: docs/architecture/TABLE_OWNERSHIP.md
 
 Any satellite influencing canonical state must do so via:

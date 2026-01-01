@@ -46,7 +46,7 @@ const automationSettingsSchema = z.object({
  */
 export async function GET(request: NextRequest) {
   try {
-    const context = await requireAccountContext(request);
+    await requireAccountContext(request);
     const supabase = createAdminClient();
 
     // Get business settings (there's only one row)
@@ -117,7 +117,7 @@ export async function GET(request: NextRequest) {
  */
 export async function PUT(request: NextRequest) {
   try {
-    const context = await requireAccountContext(request);
+    await requireAccountContext(request);
     const body = await request.json();
 
     // Validate the settings

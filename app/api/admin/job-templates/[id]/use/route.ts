@@ -15,13 +15,13 @@ export async function POST(
 
   try {
     // Validate authentication
-    const context = await requireAccountContext(request);
+    await requireAccountContext(request);
     const supabase = await createRouteHandlerClient();
     const { id } = await params;
 
     // Increment usage count
     perfLogger.incrementQueryCount();
-    const { data, error } = await supabase.rpc('increment_template_usage', {
+    const { error } = await supabase.rpc('increment_template_usage', {
       template_id: id,
     });
 

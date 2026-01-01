@@ -44,7 +44,7 @@ export async function GET(
 
   try {
     // Validate authentication
-    const context = await requireAccountContext(request);
+    await requireAccountContext(request);
     const supabase = await createRouteHandlerClient();
     const { id } = await params;
 
@@ -93,7 +93,7 @@ export async function PUT(
 
   try {
     // Validate authentication
-    const context = await requireAccountContext(request);
+    await requireAccountContext(request);
     const supabase = await createRouteHandlerClient();
     const { id } = await params;
 
@@ -161,7 +161,7 @@ export async function DELETE(
 
   try {
     // Validate authentication
-    const context = await requireAccountContext(request);
+    await requireAccountContext(request);
     const supabase = await createRouteHandlerClient();
     const { id } = await params;
 

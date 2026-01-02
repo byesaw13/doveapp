@@ -1,0 +1,1407 @@
+
+> doveapp@0.1.0 lint
+> eslint .
+
+
+/home/nick/dev/doveapp/__tests__/api/admin-jobs.test.ts
+  54:10  warning  'createRouteHandlerClient' is defined but never used  @typescript-eslint/no-unused-vars
+  63:20  warning  Unexpected any. Specify a different type              @typescript-eslint/no-explicit-any
+
+/home/nick/dev/doveapp/__tests__/api/clients-tenant-isolation.test.ts
+   60:68  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   99:68  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  103:10  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/nick/dev/doveapp/__tests__/api/jobs-tenant-isolation.test.ts
+   60:68  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   99:68  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  103:10  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/nick/dev/doveapp/__tests__/api/portal-tenant-isolation.test.ts
+  61:58  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/nick/dev/doveapp/__tests__/api/tech-jobs.test.ts
+  33:10  warning  'createRouteHandlerClient' is defined but never used  @typescript-eslint/no-unused-vars
+
+/home/nick/dev/doveapp/__tests__/api/tech-today-visits.test.ts
+  150:13  warning  'response' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  166:13  warning  'response' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+/home/nick/dev/doveapp/__tests__/api/tech-visits.test.ts
+  22:21  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/nick/dev/doveapp/app/(auth)/auth/change-password/page.tsx
+   28:10  warning  'userEmail' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  138:19  warning  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+
+/home/nick/dev/doveapp/app/(auth)/auth/login/page.tsx
+   26:9   warning  'router' is assigned a value but never used                      @typescript-eslint/no-unused-vars
+   98:23  warning  Unexpected any. Specify a different type                         @typescript-eslint/no-explicit-any
+  103:19  warning  Unexpected any. Specify a different type                         @typescript-eslint/no-explicit-any
+  157:19  warning  Unexpected any. Specify a different type                         @typescript-eslint/no-explicit-any
+  295:42  warning  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`  react/no-unescaped-entities
+  295:50  warning  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`  react/no-unescaped-entities
+
+/home/nick/dev/doveapp/app/(portal)/portal/estimates/EstimatesClient.tsx
+  10:3  warning  'DollarSign' is defined but never used  @typescript-eslint/no-unused-vars
+
+/home/nick/dev/doveapp/app/(portal)/portal/history/JobHistoryClient.tsx
+   32:6   warning  React Hook useEffect has a missing dependency: 'loadJobHistory'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+   72:15  warning  Unexpected any. Specify a different type                                                                           @typescript-eslint/no-explicit-any
+   72:23  warning  Unexpected any. Specify a different type                                                                           @typescript-eslint/no-explicit-any
+   77:23  warning  Unexpected any. Specify a different type                                                                           @typescript-eslint/no-explicit-any
+   77:31  warning  Unexpected any. Specify a different type                                                                           @typescript-eslint/no-explicit-any
+  173:26  warning  `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`                                                    react/no-unescaped-entities
+  244:56  warning  Unexpected any. Specify a different type                                                                           @typescript-eslint/no-explicit-any
+
+/home/nick/dev/doveapp/app/(portal)/portal/home/PortalHomeClient.tsx
+    9:3   warning  'Clock' is defined but never used                                @typescript-eslint/no-unused-vars
+   15:3   warning  'MessageSquare' is defined but never used                        @typescript-eslint/no-unused-vars
+   24:17  warning  Unexpected any. Specify a different type                         @typescript-eslint/no-explicit-any
+   25:20  warning  Unexpected any. Specify a different type                         @typescript-eslint/no-explicit-any
+   26:19  warning  Unexpected any. Specify a different type                         @typescript-eslint/no-explicit-any
+   71:27  warning  Unexpected any. Specify a different type                         @typescript-eslint/no-explicit-any
+   73:36  warning  Unexpected any. Specify a different type                         @typescript-eslint/no-explicit-any
+  139:19  warning  `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+  139:26  warning  `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+  397:49  warning  Unexpected any. Specify a different type                         @typescript-eslint/no-explicit-any
+  459:47  warning  Unexpected any. Specify a different type                         @typescript-eslint/no-explicit-any
+
+/home/nick/dev/doveapp/app/(portal)/portal/invite/page.tsx
+   17:44  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  141:19  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/nick/dev/doveapp/app/(portal)/portal/invoices/InvoicesClient.tsx
+  10:3  warning  'DollarSign' is defined but never used  @typescript-eslint/no-unused-vars
+
+/home/nick/dev/doveapp/app/(portal)/portal/upcoming/UpcomingJobsClient.tsx
+    7:27  warning  'MapPin' is defined but never used                               @typescript-eslint/no-unused-vars
+  131:24  warning  `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+  234:56  warning  Unexpected any. Specify a different type                         @typescript-eslint/no-explicit-any
+
+/home/nick/dev/doveapp/app/admin/advanced-analytics/page.tsx
+   55:10  warning  'settings' is assigned a value but never used                                                                    @typescript-eslint/no-unused-vars
+  100:6   warning  React Hook useEffect has a missing dependency: 'loadSettings'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  128:12  warning  Unexpected any. Specify a different type                                                                         @typescript-eslint/no-explicit-any
+  176:21  warning  Unexpected any. Specify a different type                                                                         @typescript-eslint/no-explicit-any
+
+/home/nick/dev/doveapp/app/admin/advanced-automation/page.tsx
+   53:10  warning  'settings' is assigned a value but never used                                                                    @typescript-eslint/no-unused-vars
+  101:6   warning  React Hook useEffect has a missing dependency: 'loadSettings'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  129:12  warning  Unexpected any. Specify a different type                                                                         @typescript-eslint/no-explicit-any
+  177:21  warning  Unexpected any. Specify a different type                                                                         @typescript-eslint/no-explicit-any
+
+/home/nick/dev/doveapp/app/admin/clients/components/ActivityTimeline.tsx
+  106:6  warning  React Hook useEffect has a missing dependency: 'loadActivities'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+/home/nick/dev/doveapp/app/admin/clients/components/ClientDetailModal.tsx
+   49:3   warning  'CheckCircle' is defined but never used                                                                            @typescript-eslint/no-unused-vars
+   50:3   warning  'Clock' is defined but never used                                                                                  @typescript-eslint/no-unused-vars
+   78:10  warning  'loading' is assigned a value but never used                                                                       @typescript-eslint/no-unused-vars
+  163:6   warning  React Hook useEffect has a missing dependency: 'loadClientData'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  677:48  warning  Unexpected any. Specify a different type                                                                           @typescript-eslint/no-explicit-any
+
+/home/nick/dev/doveapp/app/admin/clients/page.tsx
+  28:42  warning  'Download' is defined but never used                  @typescript-eslint/no-unused-vars
+  51:20  warning  'setPayments' is assigned a value but never used      @typescript-eslint/no-unused-vars
+  55:10  warning  'filterType' is assigned a value but never used       @typescript-eslint/no-unused-vars
+  55:22  warning  'setFilterType' is assigned a value but never used    @typescript-eslint/no-unused-vars
+  69:10  warning  'showBulkActions' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+/home/nick/dev/doveapp/app/admin/customers/AdminCustomersClient.tsx
+  20:6  warning  React Hook useEffect has a missing dependency: 'loadClients'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+/home/nick/dev/doveapp/app/admin/dashboard/page.tsx
+    7:10  warning  'getSpacing' is defined but never used       @typescript-eslint/no-unused-vars
+    7:22  warning  'getBorderRadius' is defined but never used  @typescript-eslint/no-unused-vars
+   12:3   warning  'TrendingUp' is defined but never used       @typescript-eslint/no-unused-vars
+   15:3   warning  'MapPin' is defined but never used           @typescript-eslint/no-unused-vars
+   16:3   warning  'CheckCircle' is defined but never used      @typescript-eslint/no-unused-vars
+   30:16  warning  Unexpected any. Specify a different type     @typescript-eslint/no-explicit-any
+   48:21  warning  Unexpected any. Specify a different type     @typescript-eslint/no-explicit-any
+  324:54  warning  Unexpected any. Specify a different type     @typescript-eslint/no-explicit-any
+
+/home/nick/dev/doveapp/app/admin/employee/[id]/page.tsx
+   11:10  warning  'Alert' is defined but never used                                                                               @typescript-eslint/no-unused-vars
+   11:17  warning  'AlertDescription' is defined but never used                                                                    @typescript-eslint/no-unused-vars
+   13:3   warning  'Dialog' is defined but never used                                                                              @typescript-eslint/no-unused-vars
+   14:3   warning  'DialogContent' is defined but never used                                                                       @typescript-eslint/no-unused-vars
+   15:3   warning  'DialogDescription' is defined but never used                                                                   @typescript-eslint/no-unused-vars
+   16:3   warning  'DialogFooter' is defined but never used                                                                        @typescript-eslint/no-unused-vars
+   17:3   warning  'DialogHeader' is defined but never used                                                                        @typescript-eslint/no-unused-vars
+   18:3   warning  'DialogTitle' is defined but never used                                                                         @typescript-eslint/no-unused-vars
+   32:3   warning  'Mail' is defined but never used                                                                                @typescript-eslint/no-unused-vars
+   35:3   warning  'Calendar' is defined but never used                                                                            @typescript-eslint/no-unused-vars
+   40:3   warning  'Clock' is defined but never used                                                                               @typescript-eslint/no-unused-vars
+   80:34  warning  Unexpected any. Specify a different type                                                                        @typescript-eslint/no-explicit-any
+  103:6   warning  React Hook useEffect has a missing dependency: 'loadProfile'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  128:55  warning  Unexpected any. Specify a different type                                                                        @typescript-eslint/no-explicit-any
+  137:52  warning  Unexpected any. Specify a different type                                                                        @typescript-eslint/no-explicit-any
+  230:33  warning  `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`                                                 react/no-unescaped-entities
+
+/home/nick/dev/doveapp/app/admin/estimates/[id]/client-view/page.tsx
+   47:6   warning  React Hook useEffect has a missing dependency: 'loadEstimate'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  214:29  warning  `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`                                                  react/no-unescaped-entities
+  214:50  warning  `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`                                                  react/no-unescaped-entities
+  281:48  warning  Unexpected any. Specify a different type                                                                         @typescript-eslint/no-explicit-any
+  467:17  warning  `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`                                                  react/no-unescaped-entities
+  467:46  warning  `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`                                                  react/no-unescaped-entities
+  508:43  warning  `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`                                                  react/no-unescaped-entities
+
+/home/nick/dev/doveapp/app/admin/estimates/[id]/summary/page.tsx
+   55:6   warning  React Hook useEffect has missing dependencies: 'loadEstimate', 'router', and 'toast'. Either include them or remove the dependency array  react-hooks/exhaustive-deps
+   81:18  warning  'e' is defined but never used                                                                                                             @typescript-eslint/no-unused-vars
+  315:48  warning  Unexpected any. Specify a different type                                                                                                  @typescript-eslint/no-explicit-any
+
+/home/nick/dev/doveapp/app/admin/estimates/approved/page.tsx
+  29:54  warning  `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+
+/home/nick/dev/doveapp/app/admin/estimates/changes-requested/page.tsx
+  28:44  warning  `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+
+/home/nick/dev/doveapp/app/admin/estimates/page.tsx
+    6:10  warning  'Card' is defined but never used                                                                                  @typescript-eslint/no-unused-vars
+    6:16  warning  'CardContent' is defined but never used                                                                           @typescript-eslint/no-unused-vars
+   12:3   warning  'Search' is defined but never used                                                                                @typescript-eslint/no-unused-vars
+   17:3   warning  'XCircle' is defined but never used                                                                               @typescript-eslint/no-unused-vars
+   20:3   warning  'Calendar' is defined but never used                                                                              @typescript-eslint/no-unused-vars
+   21:3   warning  'DollarSign' is defined but never used                                                                            @typescript-eslint/no-unused-vars
+   34:7   warning  Unexpected any. Specify a different type                                                                          @typescript-eslint/no-explicit-any
+   52:10  warning  'stats' is assigned a value but never used                                                                        @typescript-eslint/no-unused-vars
+   54:23  warning  'setSearchQuery' is assigned a value but never used                                                               @typescript-eslint/no-unused-vars
+   61:21  warning  'setDateRange' is assigned a value but never used                                                                 @typescript-eslint/no-unused-vars
+   68:23  warning  'setAmountRange' is assigned a value but never used                                                               @typescript-eslint/no-unused-vars
+   75:28  warning  'setSelectedStatuses' is assigned a value but never used                                                          @typescript-eslint/no-unused-vars
+   76:27  warning  'setSelectedClients' is assigned a value but never used                                                           @typescript-eslint/no-unused-vars
+   77:10  warning  'clients' is assigned a value but never used                                                                      @typescript-eslint/no-unused-vars
+   77:42  warning  Unexpected any. Specify a different type                                                                          @typescript-eslint/no-explicit-any
+   78:10  warning  'leads' is assigned a value but never used                                                                        @typescript-eslint/no-unused-vars
+   78:38  warning  Unexpected any. Specify a different type                                                                          @typescript-eslint/no-explicit-any
+   84:6   warning  React Hook useEffect has a missing dependency: 'loadEstimates'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  117:46  warning  Unexpected any. Specify a different type                                                                          @typescript-eslint/no-explicit-any
+  323:37  warning  'estimateId' is defined but never used                                                                            @typescript-eslint/no-unused-vars
+
+/home/nick/dev/doveapp/app/admin/help/page.tsx
+  183:56  warning  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`  react/no-unescaped-entities
+  183:66  warning  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`  react/no-unescaped-entities
+
+/home/nick/dev/doveapp/app/admin/inventory/components/AIToolRecognition.tsx
+  213:17  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+/home/nick/dev/doveapp/app/admin/inventory/components/InventoryAnalyticsDashboard.tsx
+   5:3   warning  'TrendingUp' is defined but never used     @typescript-eslint/no-unused-vars
+   6:3   warning  'TrendingDown' is defined but never used   @typescript-eslint/no-unused-vars
+   7:3   warning  'DollarSign' is defined but never used     @typescript-eslint/no-unused-vars
+   8:3   warning  'Package' is defined but never used        @typescript-eslint/no-unused-vars
+   9:3   warning  'AlertTriangle' is defined but never used  @typescript-eslint/no-unused-vars
+  10:3   warning  'Wrench' is defined but never used         @typescript-eslint/no-unused-vars
+  12:3   warning  'PieChart' is defined but never used       @typescript-eslint/no-unused-vars
+  13:3   warning  'Calendar' is defined but never used       @typescript-eslint/no-unused-vars
+  15:3   warning  'Filter' is defined but never used         @typescript-eslint/no-unused-vars
+  25:10  warning  'Badge' is defined but never used          @typescript-eslint/no-unused-vars
+
+/home/nick/dev/doveapp/app/admin/inventory/components/analytics/InventoryValueChart.tsx
+  56:31  warning  'index' is defined but never used  @typescript-eslint/no-unused-vars
+
+/home/nick/dev/doveapp/app/admin/inventory/components/analytics/MaintenanceAnalytics.tsx
+  11:10  warning  'Wrench' is defined but never used  @typescript-eslint/no-unused-vars
+
+/home/nick/dev/doveapp/app/admin/inventory/components/analytics/StockLevelChart.tsx
+  52:31  warning  'index' is defined but never used  @typescript-eslint/no-unused-vars
+
+/home/nick/dev/doveapp/app/admin/inventory/components/analytics/ToolUtilizationChart.tsx
+  34:28  warning  'index' is defined but never used  @typescript-eslint/no-unused-vars
+
+/home/nick/dev/doveapp/app/admin/inventory/page.tsx
+   48:6   warning  React Hook useEffect has a missing dependency: 'fetchMaterials'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  277:35  warning  'tools' is defined but never used                                                                                  @typescript-eslint/no-unused-vars
+
+/home/nick/dev/doveapp/app/admin/invoices/[id]/page.tsx
+  33:3  warning  'Send' is defined but never used                                                                                @typescript-eslint/no-unused-vars
+  60:6  warning  React Hook useEffect has a missing dependency: 'loadInvoice'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+/home/nick/dev/doveapp/app/admin/invoices/page.tsx
+   6:29  warning  'CardHeader' is defined but never used                     @typescript-eslint/no-unused-vars
+   6:41  warning  'CardTitle' is defined but never used                      @typescript-eslint/no-unused-vars
+   7:10  warning  'Button' is defined but never used                         @typescript-eslint/no-unused-vars
+  10:16  warning  'TabsContent' is defined but never used                    @typescript-eslint/no-unused-vars
+  15:3   warning  'Plus' is defined but never used                           @typescript-eslint/no-unused-vars
+  24:9   warning  'router' is assigned a value but never used                @typescript-eslint/no-unused-vars
+  26:38  warning  Unexpected any. Specify a different type                   @typescript-eslint/no-explicit-any
+  30:21  warning  'setDateRange' is assigned a value but never used          @typescript-eslint/no-unused-vars
+  37:23  warning  'setAmountRange' is assigned a value but never used        @typescript-eslint/no-unused-vars
+  44:28  warning  'setSelectedStatuses' is assigned a value but never used   @typescript-eslint/no-unused-vars
+  45:27  warning  'setSelectedClients' is assigned a value but never used    @typescript-eslint/no-unused-vars
+  48:10  warning  'selectedInvoices' is assigned a value but never used      @typescript-eslint/no-unused-vars
+  48:28  warning  'setSelectedInvoices' is assigned a value but never used   @typescript-eslint/no-unused-vars
+  49:10  warning  'showBulkActions' is assigned a value but never used       @typescript-eslint/no-unused-vars
+  49:27  warning  'setShowBulkActions' is assigned a value but never used    @typescript-eslint/no-unused-vars
+  50:10  warning  'bulkActionLoading' is assigned a value but never used     @typescript-eslint/no-unused-vars
+  50:29  warning  'setBulkActionLoading' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+/home/nick/dev/doveapp/app/admin/jobs/AdminJobsClient.tsx
+  23:3  warning  'XCircle' is defined but never used                                                                          @typescript-eslint/no-unused-vars
+  24:3  warning  'Clock' is defined but never used                                                                            @typescript-eslint/no-unused-vars
+  57:6  warning  React Hook useEffect has a missing dependency: 'loadJobs'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+/home/nick/dev/doveapp/app/admin/jobs/[id]/edit/page.tsx
+  47:27  warning  Unexpected any. Specify a different type                                                                     @typescript-eslint/no-explicit-any
+  58:6   warning  React Hook useEffect has a missing dependency: 'loadData'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  76:37  warning  Unexpected any. Specify a different type                                                                     @typescript-eslint/no-explicit-any
+  90:37  warning  Unexpected any. Specify a different type                                                                     @typescript-eslint/no-explicit-any
+
+/home/nick/dev/doveapp/app/admin/jobs/[id]/field/page.tsx
+   16:3   warning  'Wrench' is defined but never used                                                                          @typescript-eslint/no-unused-vars
+   19:3   warning  'Clock' is defined but never used                                                                           @typescript-eslint/no-unused-vars
+   21:3   warning  'Square' is defined but never used                                                                          @typescript-eslint/no-unused-vars
+   38:6   warning  React Hook useEffect has a missing dependency: 'loadJob'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  245:43  warning  Unexpected any. Specify a different type                                                                    @typescript-eslint/no-explicit-any
+
+/home/nick/dev/doveapp/app/admin/jobs/[id]/page.tsx
+   19:42  warning  'LineItemInsert' is defined but never used                                                                  @typescript-eslint/no-unused-vars
+   59:38  warning  Unexpected any. Specify a different type                                                                    @typescript-eslint/no-explicit-any
+   60:38  warning  Unexpected any. Specify a different type                                                                    @typescript-eslint/no-explicit-any
+   64:6   warning  React Hook useEffect has a missing dependency: 'loadJob'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  382:33  warning  Unexpected any. Specify a different type                                                                    @typescript-eslint/no-explicit-any
+  422:29  warning  Unexpected any. Specify a different type                                                                    @typescript-eslint/no-explicit-any
+
+/home/nick/dev/doveapp/app/admin/jobs/components/JobTemplates.tsx
+  78:31  warning  Unexpected any. Specify a different type                                                                          @typescript-eslint/no-explicit-any
+  85:6   warning  React Hook useEffect has a missing dependency: 'loadTemplates'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+/home/nick/dev/doveapp/app/admin/jobs/components/PhotoUpload.tsx
+   10:10  warning  'Badge' is defined but never used                                                                                                                                                                                                                                                        @typescript-eslint/no-unused-vars
+   48:5   warning  React Hook useCallback has a missing dependency: 'uploadPhoto'. Either include it or remove the dependency array                                                                                                                                                                         react-hooks/exhaustive-deps
+  156:17  warning  'file' is assigned a value but never used                                                                                                                                                                                                                                                @typescript-eslint/no-unused-vars
+  276:15  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+/home/nick/dev/doveapp/app/admin/jobs/components/RecordPaymentDialog.tsx
+   5:10  warning  'zodResolver' is defined but never used    @typescript-eslint/no-unused-vars
+   6:10  warning  'paymentSchema' is defined but never used  @typescript-eslint/no-unused-vars
+  60:37  warning  Unexpected any. Specify a different type   @typescript-eslint/no-explicit-any
+
+/home/nick/dev/doveapp/app/admin/jobs/new/page.tsx
+   6:10  warning  'zodResolver' is defined but never used       @typescript-eslint/no-unused-vars
+   8:3   warning  'jobSchema' is defined but never used         @typescript-eslint/no-unused-vars
+   9:3   warning  'lineItemSchema' is defined but never used    @typescript-eslint/no-unused-vars
+  10:8   warning  'JobFormData' is defined but never used       @typescript-eslint/no-unused-vars
+  11:8   warning  'LineItemFormData' is defined but never used  @typescript-eslint/no-unused-vars
+  92:37  warning  Unexpected any. Specify a different type      @typescript-eslint/no-explicit-any
+  96:69  warning  Unexpected any. Specify a different type      @typescript-eslint/no-explicit-any
+
+/home/nick/dev/doveapp/app/admin/jobs/page.tsx
+    6:29  warning  'CardHeader' is defined but never used                                                                       @typescript-eslint/no-unused-vars
+    6:41  warning  'CardTitle' is defined but never used                                                                        @typescript-eslint/no-unused-vars
+    8:10  warning  'Input' is defined but never used                                                                            @typescript-eslint/no-unused-vars
+   10:10  warning  'Tabs' is defined but never used                                                                             @typescript-eslint/no-unused-vars
+   10:16  warning  'TabsContent' is defined but never used                                                                      @typescript-eslint/no-unused-vars
+   10:29  warning  'TabsList' is defined but never used                                                                         @typescript-eslint/no-unused-vars
+   10:39  warning  'TabsTrigger' is defined but never used                                                                      @typescript-eslint/no-unused-vars
+   30:3   warning  'Search' is defined but never used                                                                           @typescript-eslint/no-unused-vars
+   35:3   warning  'Wrench' is defined but never used                                                                           @typescript-eslint/no-unused-vars
+   36:3   warning  'CheckCircle' is defined but never used                                                                      @typescript-eslint/no-unused-vars
+   37:3   warning  'XCircle' is defined but never used                                                                          @typescript-eslint/no-unused-vars
+   38:3   warning  'Clock' is defined but never used                                                                            @typescript-eslint/no-unused-vars
+   53:7   warning  Unexpected any. Specify a different type                                                                     @typescript-eslint/no-explicit-any
+   61:24  warning  'setStatusFilter' is assigned a value but never used                                                         @typescript-eslint/no-unused-vars
+   77:42  warning  Unexpected any. Specify a different type                                                                     @typescript-eslint/no-explicit-any
+   78:38  warning  Unexpected any. Specify a different type                                                                     @typescript-eslint/no-explicit-any
+   86:10  warning  'addPhotosDialogOpen' is assigned a value but never used                                                     @typescript-eslint/no-unused-vars
+   86:31  warning  'setAddPhotosDialogOpen' is assigned a value but never used                                                  @typescript-eslint/no-unused-vars
+  104:6   warning  React Hook useEffect has a missing dependency: 'loadJobs'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  546:28  warning  Unexpected any. Specify a different type                                                                     @typescript-eslint/no-explicit-any
+  747:55  warning  Unexpected any. Specify a different type                                                                     @typescript-eslint/no-explicit-any
+
+/home/nick/dev/doveapp/app/admin/kpi/page.tsx
+   4:10  warning  'Button' is defined but never used                                                                           @typescript-eslint/no-unused-vars
+   6:10  warning  'Badge' is defined but never used                                                                            @typescript-eslint/no-unused-vars
+  24:7   warning  'LineChart' is assigned a value but never used                                                               @typescript-eslint/no-unused-vars
+  38:7   warning  'BarChart' is assigned a value but never used                                                                @typescript-eslint/no-unused-vars
+  52:7   warning  'DoughnutChart' is assigned a value but never used                                                           @typescript-eslint/no-unused-vars
+  73:6   warning  React Hook useEffect has a missing dependency: 'loadKPIs'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+/home/nick/dev/doveapp/app/admin/leads/components/LeadList.tsx
+    9:3   warning  'Dialog' is defined but never used                                                                            @typescript-eslint/no-unused-vars
+   10:3   warning  'DialogContent' is defined but never used                                                                     @typescript-eslint/no-unused-vars
+   11:3   warning  'DialogDescription' is defined but never used                                                                 @typescript-eslint/no-unused-vars
+   12:3   warning  'DialogHeader' is defined but never used                                                                      @typescript-eslint/no-unused-vars
+   13:3   warning  'DialogTitle' is defined but never used                                                                       @typescript-eslint/no-unused-vars
+   16:3   warning  'Form' is defined but never used                                                                              @typescript-eslint/no-unused-vars
+   17:3   warning  'FormControl' is defined but never used                                                                       @typescript-eslint/no-unused-vars
+   18:3   warning  'FormField' is defined but never used                                                                         @typescript-eslint/no-unused-vars
+   19:3   warning  'FormItem' is defined but never used                                                                          @typescript-eslint/no-unused-vars
+   20:3   warning  'FormLabel' is defined but never used                                                                         @typescript-eslint/no-unused-vars
+   21:3   warning  'FormMessage' is defined but never used                                                                       @typescript-eslint/no-unused-vars
+   28:3   warning  'SelectValue' is defined but never used                                                                       @typescript-eslint/no-unused-vars
+   30:10  warning  'Textarea' is defined but never used                                                                          @typescript-eslint/no-unused-vars
+   51:3   warning  'RefreshCw' is defined but never used                                                                         @typescript-eslint/no-unused-vars
+   84:10  warning  'selectedLead' is assigned a value but never used                                                             @typescript-eslint/no-unused-vars
+   85:10  warning  'showNewLeadDialog' is assigned a value but never used                                                        @typescript-eslint/no-unused-vars
+   86:10  warning  'isSubmitting' is assigned a value but never used                                                             @typescript-eslint/no-unused-vars
+  113:6   warning  React Hook useEffect has a missing dependency: 'loadLeads'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  121:6   warning  React Hook useEffect has a missing dependency: 'loadLeads'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  175:9   warning  'handleCreateLead' is assigned a value but never used                                                         @typescript-eslint/no-unused-vars
+
+/home/nick/dev/doveapp/app/admin/leads/page.tsx
+  10:3   warning  'Plus' is defined but never used                      @typescript-eslint/no-unused-vars
+  15:3   warning  'Users' is defined but never used                     @typescript-eslint/no-unused-vars
+  16:3   warning  'Target' is defined but never used                    @typescript-eslint/no-unused-vars
+  17:3   warning  'AlertCircle' is defined but never used               @typescript-eslint/no-unused-vars
+  20:3   warning  'RefreshCw' is defined but never used                 @typescript-eslint/no-unused-vars
+  36:24  warning  'setStatusFilter' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+/home/nick/dev/doveapp/app/admin/portal-customers/page.tsx
+    8:29  warning  'CardHeader' is defined but never used                                                                            @typescript-eslint/no-unused-vars
+    8:41  warning  'CardTitle' is defined but never used                                                                             @typescript-eslint/no-unused-vars
+   50:6   warning  React Hook useEffect has a missing dependency: 'loadCustomers'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  118:21  warning  Unexpected any. Specify a different type                                                                          @typescript-eslint/no-explicit-any
+  159:21  warning  Unexpected any. Specify a different type                                                                          @typescript-eslint/no-explicit-any
+
+/home/nick/dev/doveapp/app/admin/pricebook/inspector/page.tsx
+  42:11  warning  'LineItemInput' is defined but never used  @typescript-eslint/no-unused-vars
+
+/home/nick/dev/doveapp/app/admin/profile-change-requests/page.tsx
+    5:29  warning  'CardHeader' is defined but never used    @typescript-eslint/no-unused-vars
+    5:41  warning  'CardTitle' is defined but never used     @typescript-eslint/no-unused-vars
+   20:3   warning  'Clock' is defined but never used         @typescript-eslint/no-unused-vars
+   22:3   warning  'FileText' is defined but never used      @typescript-eslint/no-unused-vars
+   32:37  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   33:35  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  131:56  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/nick/dev/doveapp/app/admin/schedule/page.tsx
+  150:9   warning  'router' is assigned a value but never used                                                                  @typescript-eslint/no-unused-vars
+  155:54  warning  Unexpected any. Specify a different type                                                                     @typescript-eslint/no-explicit-any
+  175:6   warning  React Hook useEffect has a missing dependency: 'loadJobs'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  242:52  warning  Unexpected any. Specify a different type                                                                     @typescript-eslint/no-explicit-any
+  280:52  warning  'end' is defined but never used                                                                              @typescript-eslint/no-unused-vars
+  280:59  warning  Unexpected any. Specify a different type                                                                     @typescript-eslint/no-explicit-any
+  506:38  warning  Unexpected any. Specify a different type                                                                     @typescript-eslint/no-explicit-any
+  507:36  warning  Unexpected any. Specify a different type                                                                     @typescript-eslint/no-explicit-any
+  525:40  warning  Unexpected any. Specify a different type                                                                     @typescript-eslint/no-explicit-any
+
+/home/nick/dev/doveapp/app/admin/search/page.tsx
+   3:10  warning  'useState' is defined but never used      @typescript-eslint/no-unused-vars
+  12:10  warning  'Badge' is defined but never used         @typescript-eslint/no-unused-vars
+  19:3   warning  'ExternalLink' is defined but never used  @typescript-eslint/no-unused-vars
+  26:39  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/nick/dev/doveapp/app/admin/security-compliance/page.tsx
+   61:10  warning  'settings' is assigned a value but never used                                                                    @typescript-eslint/no-unused-vars
+   64:46  warning  Unexpected any. Specify a different type                                                                         @typescript-eslint/no-explicit-any
+  114:6   warning  React Hook useEffect has a missing dependency: 'loadSettings'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  157:12  warning  Unexpected any. Specify a different type                                                                         @typescript-eslint/no-explicit-any
+  214:21  warning  Unexpected any. Specify a different type                                                                         @typescript-eslint/no-explicit-any
+  468:63  warning  Unexpected any. Specify a different type                                                                         @typescript-eslint/no-explicit-any
+
+/home/nick/dev/doveapp/app/admin/settings/ai-estimator/page.tsx
+   79:10  warning  'settings' is assigned a value but never used                                                                    @typescript-eslint/no-unused-vars
+   94:6   warning  React Hook useEffect has a missing dependency: 'loadSettings'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  144:52  warning  Unexpected any. Specify a different type                                                                         @typescript-eslint/no-explicit-any
+  156:12  warning  Unexpected any. Specify a different type                                                                         @typescript-eslint/no-explicit-any
+  171:57  warning  Unexpected any. Specify a different type                                                                         @typescript-eslint/no-explicit-any
+  437:49  warning  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`                                                  react/no-unescaped-entities
+  437:62  warning  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`                                                  react/no-unescaped-entities
+
+/home/nick/dev/doveapp/app/admin/settings/automation/page.tsx
+  36:6  warning  React Hook useEffect has a missing dependency: 'loadSettings'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+/home/nick/dev/doveapp/app/admin/settings/page.tsx
+   24:10  warning  'settings' is assigned a value but never used                                                                    @typescript-eslint/no-unused-vars
+   59:6   warning  React Hook useEffect has a missing dependency: 'loadSettings'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  254:13  warning  'result' is assigned a value but never used                                                                      @typescript-eslint/no-unused-vars
+  262:21  warning  Unexpected any. Specify a different type                                                                         @typescript-eslint/no-explicit-any
+
+/home/nick/dev/doveapp/app/admin/time-tracking/components/ClockifyStyleTracker.tsx
+   66:5   warning  'title' is defined but never used                                                                            @typescript-eslint/no-unused-vars
+   67:5   warning  'description' is defined but never used                                                                      @typescript-eslint/no-unused-vars
+   74:11  warning  'level' is assigned a value but never used                                                                   @typescript-eslint/no-unused-vars
+  103:6   warning  React Hook useEffect has a missing dependency: 'loadJobs'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  312:21  warning  Unexpected any. Specify a different type                                                                     @typescript-eslint/no-explicit-any
+  412:21  warning  Unexpected any. Specify a different type                                                                     @typescript-eslint/no-explicit-any
+  569:18  warning  `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`                                              react/no-unescaped-entities
+
+/home/nick/dev/doveapp/app/admin/time-tracking/components/StableTimeTracker.tsx
+    5:10  warning  'Button' is defined but never used                                                                                  @typescript-eslint/no-unused-vars
+   14:10  warning  'Play' is defined but never used                                                                                    @typescript-eslint/no-unused-vars
+   14:16  warning  'Pause' is defined but never used                                                                                   @typescript-eslint/no-unused-vars
+   14:23  warning  'Clock' is defined but never used                                                                                   @typescript-eslint/no-unused-vars
+   47:10  warning  'dataLoaded' is assigned a value but never used                                                                     @typescript-eslint/no-unused-vars
+   50:10  warning  'currentBreakId' is assigned a value but never used                                                                 @typescript-eslint/no-unused-vars
+  129:45  warning  Unexpected any. Specify a different type                                                                            @typescript-eslint/no-explicit-any
+  153:16  warning  'err' is defined but never used                                                                                     @typescript-eslint/no-unused-vars
+  347:9   warning  'elapsedTime' is assigned a value but never used                                                                    @typescript-eslint/no-unused-vars
+  349:5   warning  React Hook useMemo has a missing dependency: 'formatElapsedTime'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+/home/nick/dev/doveapp/app/admin/time-tracking/components/TimeAnalyticsDashboard.tsx
+    8:3   warning  'DollarSign' is defined but never used                                                                            @typescript-eslint/no-unused-vars
+   11:3   warning  'Calendar' is defined but never used                                                                              @typescript-eslint/no-unused-vars
+   12:3   warning  'Activity' is defined but never used                                                                              @typescript-eslint/no-unused-vars
+   65:6   warning  React Hook useEffect has a missing dependency: 'loadAnalytics'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  161:34  warning  Unexpected any. Specify a different type                                                                          @typescript-eslint/no-explicit-any
+  260:54  warning  'index' is defined but never used                                                                                 @typescript-eslint/no-unused-vars
+  308:58  warning  'index' is defined but never used                                                                                 @typescript-eslint/no-unused-vars
+
+/home/nick/dev/doveapp/app/admin/time-tracking/components/TimeApprovals.tsx
+  78:6  warning  React Hook useEffect has a missing dependency: 'loadPendingApprovals'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+/home/nick/dev/doveapp/app/admin/time-tracking/components/TimeTracker.tsx
+   43:10  warning  'activeEntryId' is assigned a value but never used               @typescript-eslint/no-unused-vars
+  287:18  warning  `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+
+/home/nick/dev/doveapp/app/admin/time-tracking/components/TimeTrackingDashboard.tsx
+  577:27  warning  `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+
+/home/nick/dev/doveapp/app/admin/today/page.tsx
+   96:63  warning  `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+  323:31  warning  `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+
+/home/nick/dev/doveapp/app/api/admin/accounts/[accountId]/permissions/route.ts
+  51:37  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  52:40  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/nick/dev/doveapp/app/api/admin/ai-estimator/settings/route.ts
+  82:19  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/nick/dev/doveapp/app/api/admin/analytics/customers/[id]/route.ts
+  155:43  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  184:44  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  184:61  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  207:48  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/nick/dev/doveapp/app/api/admin/analytics/customers/route.ts
+  35:17  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/nick/dev/doveapp/app/api/admin/clients/[id]/route.ts
+   33:19  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   71:19  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  107:19  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/nick/dev/doveapp/app/api/admin/clients/bulk/route.ts
+  123:19  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/nick/dev/doveapp/app/api/admin/clients/route.ts
+  63:19  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  96:19  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/nick/dev/doveapp/app/api/admin/estimates/route.ts
+  64:19  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/nick/dev/doveapp/app/api/admin/invoices/route.ts
+  36:19  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/nick/dev/doveapp/app/api/admin/job-workflows/[id]/route.ts
+    3:10  warning  'canManageAdmin' is defined but never used    @typescript-eslint/no-unused-vars
+   42:11  warning  'context' is assigned a value but never used  @typescript-eslint/no-unused-vars
+   90:11  warning  'context' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  157:11  warning  'context' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+/home/nick/dev/doveapp/app/api/admin/job-workflows/route.ts
+   3:10  warning  'canManageAdmin' is defined but never used    @typescript-eslint/no-unused-vars
+  40:11  warning  'context' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+/home/nick/dev/doveapp/app/api/admin/jobs/[id]/route.ts
+   33:19  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   71:19  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  107:19  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/nick/dev/doveapp/app/api/admin/jobs/route.ts
+   18:14  warning  'error' is defined but never used         @typescript-eslint/no-unused-vars
+   45:46  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   69:19  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  128:19  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/nick/dev/doveapp/app/api/admin/kpi/route.ts
+  96:19  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/nick/dev/doveapp/app/api/admin/security-settings/route.ts
+   51:27  warning  'request' is defined but never used       @typescript-eslint/no-unused-vars
+  133:14  warning  'error' is defined but never used         @typescript-eslint/no-unused-vars
+  216:19  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/nick/dev/doveapp/app/api/admin/team/schedules/route.ts
+  7:7  warning  'availabilitySchema' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+/home/nick/dev/doveapp/app/api/admin/today/stats/route.ts
+  25:11  warning  'context' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+/home/nick/dev/doveapp/app/api/admin/users/route.ts
+   28:37  warning  'permissions' is assigned a value but never used  @typescript-eslint/no-unused-vars
+   82:27  warning  Unexpected any. Specify a different type          @typescript-eslint/no-explicit-any
+  201:37  warning  Unexpected any. Specify a different type          @typescript-eslint/no-explicit-any
+
+/home/nick/dev/doveapp/app/api/ai/tool-recognition/route.ts
+  90:58  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/nick/dev/doveapp/app/api/auth/google/route.ts
+  9:7  warning  'GOOGLE_CLIENT_SECRET' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+/home/nick/dev/doveapp/app/api/auth/logout/route.ts
+  4:28  warning  'request' is defined but never used  @typescript-eslint/no-unused-vars
+
+/home/nick/dev/doveapp/app/api/auth/me/route.ts
+  14:14  warning  'error' is defined but never used         @typescript-eslint/no-unused-vars
+  47:19  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/nick/dev/doveapp/app/api/auth/password-changed/route.ts
+  7:28  warning  'request' is defined but never used  @typescript-eslint/no-unused-vars
+
+/home/nick/dev/doveapp/app/api/automation/run/route.ts
+  356:23  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/nick/dev/doveapp/app/api/automations/route.ts
+  11:25  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/nick/dev/doveapp/app/api/clients/route.ts
+  92:27  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  93:39  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/nick/dev/doveapp/app/api/dashboard/stats/route.ts
+  18:14  warning  'error' is defined but never used  @typescript-eslint/no-unused-vars
+
+/home/nick/dev/doveapp/app/api/email/intake/route.ts
+  37:49  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/nick/dev/doveapp/app/api/email/sync/route.ts
+  31:28  warning  '_req' is defined but never used  @typescript-eslint/no-unused-vars
+  35:27  warning  '_req' is defined but never used  @typescript-eslint/no-unused-vars
+
+/home/nick/dev/doveapp/app/api/estimates/[id]/pdf/route.ts
+  22:42  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/nick/dev/doveapp/app/api/estimates/[id]/request-changes/route.ts
+  41:11  warning  'changeRequest' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+/home/nick/dev/doveapp/app/api/estimates/[id]/send/route.ts
+  104:26  warning  'options' is defined but never used       @typescript-eslint/no-unused-vars
+  118:24  warning  'options' is defined but never used       @typescript-eslint/no-unused-vars
+  123:38  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  152:39  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  164:14  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  172:38  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  184:37  warning  'estimateId' is defined but never used    @typescript-eslint/no-unused-vars
+  184:57  warning  'status' is defined but never used        @typescript-eslint/no-unused-vars
+
+/home/nick/dev/doveapp/app/api/estimates/route.ts
+  16:7   warning  'context' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  18:14  warning  'error' is defined but never used             @typescript-eslint/no-unused-vars
+  82:31  warning  Unexpected any. Specify a different type      @typescript-eslint/no-explicit-any
+  84:31  warning  Unexpected any. Specify a different type      @typescript-eslint/no-explicit-any
+  86:31  warning  Unexpected any. Specify a different type      @typescript-eslint/no-explicit-any
+
+/home/nick/dev/doveapp/app/api/gmail/connections/route.ts
+  4:27  warning  'request' is defined but never used  @typescript-eslint/no-unused-vars
+
+/home/nick/dev/doveapp/app/api/invoices/route.ts
+   8:11  warning  'context' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  59:32  warning  Unexpected any. Specify a different type      @typescript-eslint/no-explicit-any
+  61:32  warning  Unexpected any. Specify a different type      @typescript-eslint/no-explicit-any
+  64:32  warning  Unexpected any. Specify a different type      @typescript-eslint/no-explicit-any
+
+/home/nick/dev/doveapp/app/api/job-templates/[id]/route.ts
+  51:58  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/nick/dev/doveapp/app/api/job-templates/route.ts
+  33:58  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/nick/dev/doveapp/app/api/jobs/[id]/invoice/route.ts
+  4:3  warning  'getInvoiceByIdWithRelations' is defined but never used  @typescript-eslint/no-unused-vars
+
+/home/nick/dev/doveapp/app/api/jobs/[id]/route.ts
+  109:23  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/nick/dev/doveapp/app/api/jobs/[id]/timeline/route.ts
+   10:12  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   86:14  warning  'error' is defined but never used         @typescript-eslint/no-unused-vars
+  111:14  warning  'error' is defined but never used         @typescript-eslint/no-unused-vars
+  138:14  warning  'error' is defined but never used         @typescript-eslint/no-unused-vars
+  162:14  warning  'error' is defined but never used         @typescript-eslint/no-unused-vars
+
+/home/nick/dev/doveapp/app/api/jobs/route.ts
+  7:15  warning  'JobStatus' is defined but never used  @typescript-eslint/no-unused-vars
+
+/home/nick/dev/doveapp/app/api/kpi/route.ts
+  27:14  warning  'error' is defined but never used  @typescript-eslint/no-unused-vars
+
+/home/nick/dev/doveapp/app/api/leads/analytics/route.ts
+  32:40  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/nick/dev/doveapp/app/api/leads/route.ts
+    2:15  warning  'LeadStatus' is defined but never used    @typescript-eslint/no-unused-vars
+    2:27  warning  'LeadStats' is defined but never used     @typescript-eslint/no-unused-vars
+   18:14  warning  'error' is defined but never used         @typescript-eslint/no-unused-vars
+   85:27  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   87:27  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   89:27  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   91:27  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  103:31  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  122:29  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  143:29  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  155:29  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  199:14  warning  'error' is defined but never used         @typescript-eslint/no-unused-vars
+
+/home/nick/dev/doveapp/app/api/materials/[id]/route.ts
+  66:58  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/nick/dev/doveapp/app/api/materials/categories/route.ts
+  4:3  warning  'getInventorySummary' is defined but never used  @typescript-eslint/no-unused-vars
+  5:3  warning  'getStockAlerts' is defined but never used       @typescript-eslint/no-unused-vars
+
+/home/nick/dev/doveapp/app/api/materials/route.ts
+  82:58  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/nick/dev/doveapp/app/api/payments/[id]/route.ts
+  13:11  warning  'context' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+/home/nick/dev/doveapp/app/api/portal/estimates/[id]/approve/route.ts
+  64:19  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/nick/dev/doveapp/app/api/portal/estimates/[id]/decline/route.ts
+  64:19  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/nick/dev/doveapp/app/api/portal/estimates/route.ts
+   6:3   warning  'getEstimateById' is defined but never used        @typescript-eslint/no-unused-vars
+   7:3   warning  'updateEstimate' is defined but never used         @typescript-eslint/no-unused-vars
+  23:14  warning  'error' is defined but never used                  @typescript-eslint/no-unused-vars
+  43:13  warning  'searchParams' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  79:54  warning  Unexpected any. Specify a different type           @typescript-eslint/no-explicit-any
+  93:19  warning  Unexpected any. Specify a different type           @typescript-eslint/no-explicit-any
+
+/home/nick/dev/doveapp/app/api/portal/invoices/[id]/pay/route.ts
+  85:19  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/nick/dev/doveapp/app/api/portal/invoices/route.ts
+  18:14  warning  'error' is defined but never used                  @typescript-eslint/no-unused-vars
+  37:13  warning  'searchParams' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  58:53  warning  Unexpected any. Specify a different type           @typescript-eslint/no-explicit-any
+  76:19  warning  Unexpected any. Specify a different type           @typescript-eslint/no-explicit-any
+
+/home/nick/dev/doveapp/app/api/portal/jobs/[id]/route.ts
+  37:20  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  38:28  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  39:23  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  40:29  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  41:24  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  42:30  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  43:32  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  44:23  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  45:28  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  45:57  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  51:28  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  52:28  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  57:19  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/nick/dev/doveapp/app/api/portal/jobs/route.ts
+  18:14  warning  'error' is defined but never used         @typescript-eslint/no-unused-vars
+  58:46  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  77:49  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  92:19  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/nick/dev/doveapp/app/api/portal/upcoming-jobs/route.ts
+  17:11  warning  'context' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+/home/nick/dev/doveapp/app/api/push-subscription/route.ts
+  48:3   warning  'payload' is defined but never used       @typescript-eslint/no-unused-vars
+  48:12  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/nick/dev/doveapp/app/api/search/advanced/route.ts
+   15:28  warning  Unexpected any. Specify a different type      @typescript-eslint/no-explicit-any
+   27:11  warning  'context' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  193:16  warning  'error' is defined but never used             @typescript-eslint/no-unused-vars
+
+/home/nick/dev/doveapp/app/api/settings/route.ts
+  26:14  warning  'error' is defined but never used  @typescript-eslint/no-unused-vars
+
+/home/nick/dev/doveapp/app/api/square/oauth/callback/route.ts
+  8:9  warning  'state' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+/home/nick/dev/doveapp/app/api/tech/jobs/[id]/route.ts
+  36:19  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  59:27  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  84:19  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/nick/dev/doveapp/app/api/tech/jobs/route.ts
+  18:14  warning  'error' is defined but never used         @typescript-eslint/no-unused-vars
+  45:46  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  69:19  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/nick/dev/doveapp/app/api/tech/schedule/route.ts
+  14:14  warning  'error' is defined but never used         @typescript-eslint/no-unused-vars
+  66:19  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/nick/dev/doveapp/app/api/tech/today-jobs/route.ts
+  14:14  warning  'error' is defined but never used  @typescript-eslint/no-unused-vars
+
+/home/nick/dev/doveapp/app/api/tech/today-visits/route.ts
+  32:19  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/nick/dev/doveapp/app/api/tech/visits/[id]/route.ts
+  70:23  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  88:19  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/nick/dev/doveapp/app/api/tools/route.ts
+  109:58  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/nick/dev/doveapp/app/api/webhooks/stripe/route.ts
+  43:17  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/nick/dev/doveapp/app/customers/page.tsx
+  47:13  warning  'customer' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+/home/nick/dev/doveapp/app/employee/profile-request/page.tsx
+   15:3   warning  'Mail' is defined but never used                                 @typescript-eslint/no-unused-vars
+   18:3   warning  'Calendar' is defined but never used                             @typescript-eslint/no-unused-vars
+   88:52  warning  Unexpected any. Specify a different type                         @typescript-eslint/no-explicit-any
+  172:32  warning  `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+
+/home/nick/dev/doveapp/app/inbox/page.tsx
+  121:45  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  122:23  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  130:34  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  170:36  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  171:24  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  258:47  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  259:25  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  264:34  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/nick/dev/doveapp/app/layout.tsx
+  132:7  warning  'structuredData' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+/home/nick/dev/doveapp/app/not-found.tsx
+  31:27  warning  `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+  31:48  warning  `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+
+/home/nick/dev/doveapp/app/properties/page.tsx
+  39:6  warning  React Hook useEffect has a missing dependency: 'loadProperties'. Either include it or remove the dependency array                       react-hooks/exhaustive-deps
+  48:6  warning  React Hook useEffect has missing dependencies: 'handleSearch' and 'loadProperties'. Either include them or remove the dependency array  react-hooks/exhaustive-deps
+
+/home/nick/dev/doveapp/app/register-sw.tsx
+  16:15  warning  Use "@ts-expect-error" instead of "@ts-ignore", as "@ts-ignore" will do nothing if the following line is error-free  @typescript-eslint/ban-ts-comment
+
+/home/nick/dev/doveapp/app/tech/jobs/TechJobsClient.tsx
+   6:29  warning  'CardHeader' is defined but never used    @typescript-eslint/no-unused-vars
+   6:41  warning  'CardTitle' is defined but never used     @typescript-eslint/no-unused-vars
+  55:19  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/nick/dev/doveapp/app/tech/jobs/[id]/page.tsx
+    4:10  warning  'supabase' is defined but never used                                                                                                                    @typescript-eslint/no-unused-vars
+   12:24  warning  'CheckCircle2' is defined but never used                                                                                                                @typescript-eslint/no-unused-vars
+   47:16  warning  Unexpected any. Specify a different type                                                                                                                @typescript-eslint/no-explicit-any
+   48:12  warning  Unexpected any. Specify a different type                                                                                                                @typescript-eslint/no-explicit-any
+   69:6   warning  React Hook useEffect has missing dependencies: 'fetchChecklistItems', 'fetchJob', and 'fetchNotes'. Either include them or remove the dependency array  react-hooks/exhaustive-deps
+   81:19  warning  Unexpected any. Specify a different type                                                                                                                @typescript-eslint/no-explicit-any
+  277:48  warning  `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`                                                                                         react/no-unescaped-entities
+
+/home/nick/dev/doveapp/app/tech/jobs/my-jobs/TodayVisitsClient.tsx
+   40:19  warning  Unexpected any. Specify a different type                         @typescript-eslint/no-explicit-any
+   67:21  warning  Unexpected any. Specify a different type                         @typescript-eslint/no-explicit-any
+  130:34  warning  `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+  152:20  warning  `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+  271:16  warning  `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+
+/home/nick/dev/doveapp/app/tech/profile/page.tsx
+  168:19  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+/home/nick/dev/doveapp/app/tech/schedule/ScheduleClient.tsx
+   4:44  warning  'MapPin' is defined but never used                                                                                @typescript-eslint/no-unused-vars
+  35:6   warning  React Hook useEffect has a missing dependency: 'fetchSchedule'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  48:19  warning  Unexpected any. Specify a different type                                                                          @typescript-eslint/no-explicit-any
+
+/home/nick/dev/doveapp/app/tech/today/TodayVisitsClient.tsx
+   40:19  warning  Unexpected any. Specify a different type                         @typescript-eslint/no-explicit-any
+   67:21  warning  Unexpected any. Specify a different type                         @typescript-eslint/no-explicit-any
+  130:34  warning  `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+  152:20  warning  `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+  271:16  warning  `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+
+/home/nick/dev/doveapp/components/ErrorBoundary.tsx
+  29:46  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/nick/dev/doveapp/components/PWARegistration.tsx
+   39:30  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   49:56  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  143:24  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  144:24  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  145:24  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  237:32  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  238:32  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  239:32  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/nick/dev/doveapp/components/SmartDashboard.tsx
+  19:3   warning  'DollarSign' is defined but never used    @typescript-eslint/no-unused-vars
+  20:3   warning  'Users' is defined but never used         @typescript-eslint/no-unused-vars
+  21:3   warning  'Briefcase' is defined but never used     @typescript-eslint/no-unused-vars
+  22:3   warning  'Target' is defined but never used        @typescript-eslint/no-unused-vars
+  47:54  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  48:52  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/nick/dev/doveapp/components/admin/AdminClockBanner.tsx
+  28:20  warning  React Hook useMemo has a complex expression in the dependency array. Extract it to a separate variable so it can be statically checked  react-hooks/exhaustive-deps
+  50:6   warning  React Hook useEffect has a missing dependency: 'fetchActiveEntry'. Either include it or remove the dependency array                     react-hooks/exhaustive-deps
+
+/home/nick/dev/doveapp/components/admin/CreateUserForm.tsx
+   68:13  warning  'userData' is assigned a value but never used                    @typescript-eslint/no-unused-vars
+  296:29  warning  `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+
+/home/nick/dev/doveapp/components/admin/CustomerCommunications.tsx
+  137:6   warning  React Hook useEffect has a missing dependency: 'loadCommunications'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  417:40  warning  Unexpected any. Specify a different type                                                                               @typescript-eslint/no-explicit-any
+  443:40  warning  Unexpected any. Specify a different type                                                                               @typescript-eslint/no-explicit-any
+  554:40  warning  Unexpected any. Specify a different type                                                                               @typescript-eslint/no-explicit-any
+  574:40  warning  Unexpected any. Specify a different type                                                                               @typescript-eslint/no-explicit-any
+
+/home/nick/dev/doveapp/components/admin/PermissionsManager.tsx
+    9:27  warning  'Save' is defined but never used                                                                              @typescript-eslint/no-unused-vars
+   40:6   warning  React Hook useEffect has a missing dependency: 'loadUsers'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  118:49  warning  'role' is defined but never used                                                                              @typescript-eslint/no-unused-vars
+  227:27  warning  'role' is defined but never used                                                                              @typescript-eslint/no-unused-vars
+
+/home/nick/dev/doveapp/components/admin/TeamMembersList.tsx
+  327:40  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/nick/dev/doveapp/components/admin/TeamScheduling.tsx
+    4:29  warning  'CardHeader' is defined but never used                                                                       @typescript-eslint/no-unused-vars
+    4:41  warning  'CardTitle' is defined but never used                                                                        @typescript-eslint/no-unused-vars
+    6:10  warning  'Badge' is defined but never used                                                                            @typescript-eslint/no-unused-vars
+   22:3   warning  'DialogTrigger' is defined but never used                                                                    @typescript-eslint/no-unused-vars
+   24:10  warning  'Tabs' is defined but never used                                                                             @typescript-eslint/no-unused-vars
+   24:16  warning  'TabsContent' is defined but never used                                                                      @typescript-eslint/no-unused-vars
+   24:29  warning  'TabsList' is defined but never used                                                                         @typescript-eslint/no-unused-vars
+   24:39  warning  'TabsTrigger' is defined but never used                                                                      @typescript-eslint/no-unused-vars
+   25:10  warning  'Calendar' is defined but never used                                                                         @typescript-eslint/no-unused-vars
+   27:3   warning  'Popover' is defined but never used                                                                          @typescript-eslint/no-unused-vars
+   28:3   warning  'PopoverContent' is defined but never used                                                                   @typescript-eslint/no-unused-vars
+   29:3   warning  'PopoverTrigger' is defined but never used                                                                   @typescript-eslint/no-unused-vars
+   33:15  warning  'CalendarIcon' is defined but never used                                                                     @typescript-eslint/no-unused-vars
+   35:3   warning  'User' is defined but never used                                                                             @typescript-eslint/no-unused-vars
+   36:3   warning  'Users' is defined but never used                                                                            @typescript-eslint/no-unused-vars
+   37:3   warning  'MapPin' is defined but never used                                                                           @typescript-eslint/no-unused-vars
+   38:3   warning  'Edit' is defined but never used                                                                             @typescript-eslint/no-unused-vars
+   39:3   warning  'Trash2' is defined but never used                                                                           @typescript-eslint/no-unused-vars
+   40:3   warning  'Filter' is defined but never used                                                                           @typescript-eslint/no-unused-vars
+   41:3   warning  'Search' is defined but never used                                                                           @typescript-eslint/no-unused-vars
+   51:3   warning  'isWithinInterval' is defined but never used                                                                 @typescript-eslint/no-unused-vars
+  117:10  warning  'currentView' is assigned a value but never used                                                             @typescript-eslint/no-unused-vars
+  117:23  warning  'setCurrentView' is assigned a value but never used                                                          @typescript-eslint/no-unused-vars
+  119:10  warning  'selectedDate' is assigned a value but never used                                                            @typescript-eslint/no-unused-vars
+  119:24  warning  'setSelectedDate' is assigned a value but never used                                                         @typescript-eslint/no-unused-vars
+  125:10  warning  'availability' is assigned a value but never used                                                            @typescript-eslint/no-unused-vars
+  126:10  warning  'assignments' is assigned a value but never used                                                             @typescript-eslint/no-unused-vars
+  158:6   warning  React Hook useEffect has a missing dependency: 'loadData'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  223:13  warning  'startDate' is assigned a value but never used                                                               @typescript-eslint/no-unused-vars
+  224:13  warning  'endDate' is assigned a value but never used                                                                 @typescript-eslint/no-unused-vars
+  278:9   warning  'handleDeleteSchedule' is assigned a value but never used                                                    @typescript-eslint/no-unused-vars
+  365:9   warning  'getAssignmentStatusColor' is assigned a value but never used                                                @typescript-eslint/no-unused-vars
+  434:40  warning  Unexpected any. Specify a different type                                                                     @typescript-eslint/no-explicit-any
+
+/home/nick/dev/doveapp/components/admin/bulk-operations.tsx
+  20:3  warning  'XCircle' is defined but never used  @typescript-eslint/no-unused-vars
+
+/home/nick/dev/doveapp/components/admin/business-intelligence-dashboard.tsx
+   17:3   warning  'TrendingDown' is defined but never used                                                                        @typescript-eslint/no-unused-vars
+   20:3   warning  'PieChart' is defined but never used                                                                            @typescript-eslint/no-unused-vars
+   24:3   warning  'Calendar' is defined but never used                                                                            @typescript-eslint/no-unused-vars
+   76:6   warning  React Hook useEffect has a missing dependency: 'loadMetrics'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  286:56  warning  'index' is defined but never used                                                                               @typescript-eslint/no-unused-vars
+
+/home/nick/dev/doveapp/components/admin/customer-analytics-dashboard.tsx
+  19:3  warning  'Calendar' is defined but never used                                                                              @typescript-eslint/no-unused-vars
+  21:3  warning  'PieChart' is defined but never used                                                                              @typescript-eslint/no-unused-vars
+  80:6  warning  React Hook useEffect has a missing dependency: 'loadAnalytics'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+/home/nick/dev/doveapp/components/admin/email-templates-manager.tsx
+   10:3   warning  'CardDescription' is defined but never used                                                                       @typescript-eslint/no-unused-vars
+   33:10  warning  'Separator' is defined but never used                                                                             @typescript-eslint/no-unused-vars
+   40:3   warning  'Save' is defined but never used                                                                                  @typescript-eslint/no-unused-vars
+   45:3   warning  'StarOff' is defined but never used                                                                               @typescript-eslint/no-unused-vars
+   94:6   warning  React Hook useEffect has a missing dependency: 'loadTemplates'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  601:36  warning  Unexpected any. Specify a different type                                                                          @typescript-eslint/no-explicit-any
+
+/home/nick/dev/doveapp/components/admin/invoice-reminders-manager.tsx
+   13:10  warning  'Tabs' is defined but never used                                                                                  @typescript-eslint/no-unused-vars
+   13:16  warning  'TabsContent' is defined but never used                                                                           @typescript-eslint/no-unused-vars
+   13:29  warning  'TabsList' is defined but never used                                                                              @typescript-eslint/no-unused-vars
+   13:39  warning  'TabsTrigger' is defined but never used                                                                           @typescript-eslint/no-unused-vars
+   45:3   warning  'AlertTriangle' is defined but never used                                                                         @typescript-eslint/no-unused-vars
+   48:3   warning  'Send' is defined but never used                                                                                  @typescript-eslint/no-unused-vars
+   49:3   warning  'Calendar' is defined but never used                                                                              @typescript-eslint/no-unused-vars
+   99:6   warning  React Hook useEffect has a missing dependency: 'loadReminders'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  318:46  warning  Unexpected any. Specify a different type                                                                          @typescript-eslint/no-explicit-any
+
+/home/nick/dev/doveapp/components/admin/job-templates-manager.tsx
+   37:3   warning  'Copy' is defined but never used                                                                                  @typescript-eslint/no-unused-vars
+  102:10  warning  'isPreviewDialogOpen' is assigned a value but never used                                                          @typescript-eslint/no-unused-vars
+  102:31  warning  'setIsPreviewDialogOpen' is assigned a value but never used                                                       @typescript-eslint/no-unused-vars
+  131:6   warning  React Hook useEffect has a missing dependency: 'loadTemplates'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  320:14  warning  'error' is defined but never used                                                                                 @typescript-eslint/no-unused-vars
+  373:64  warning  Unexpected any. Specify a different type                                                                          @typescript-eslint/no-explicit-any
+  675:23  warning  Unexpected any. Specify a different type                                                                          @typescript-eslint/no-explicit-any
+  680:59  warning  Unexpected any. Specify a different type                                                                          @typescript-eslint/no-explicit-any
+  891:44  warning  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`                                                   react/no-unescaped-entities
+  891:53  warning  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`                                                   react/no-unescaped-entities
+
+/home/nick/dev/doveapp/components/admin/job-workflows-manager.tsx
+   31:10  warning  'Checkbox' is defined but never used                                                                              @typescript-eslint/no-unused-vars
+  107:6   warning  React Hook useEffect has a missing dependency: 'loadWorkflows'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  324:62  warning  Unexpected any. Specify a different type                                                                          @typescript-eslint/no-explicit-any
+  616:53  warning  Unexpected any. Specify a different type                                                                          @typescript-eslint/no-explicit-any
+  674:23  warning  Unexpected any. Specify a different type                                                                          @typescript-eslint/no-explicit-any
+  679:57  warning  Unexpected any. Specify a different type                                                                          @typescript-eslint/no-explicit-any
+  715:36  warning  Unexpected any. Specify a different type                                                                          @typescript-eslint/no-explicit-any
+  784:41  warning  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`                                                   react/no-unescaped-entities
+  784:52  warning  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`                                                   react/no-unescaped-entities
+
+/home/nick/dev/doveapp/components/ai-estimate-generator.tsx
+   37:12  warning  'ImageIcon' is defined but never used     @typescript-eslint/no-unused-vars
+   38:3   warning  'Image' is defined but never used         @typescript-eslint/no-unused-vars
+   39:3   warning  'DollarSign' is defined but never used    @typescript-eslint/no-unused-vars
+   40:3   warning  'Clock' is defined but never used         @typescript-eslint/no-unused-vars
+   51:34  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  303:42  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  346:44  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  481:46  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/nick/dev/doveapp/components/charts/BarChart.tsx
+  111:37  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  146:38  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  168:38  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/nick/dev/doveapp/components/charts/DoughnutChart.tsx
+  92:37  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/nick/dev/doveapp/components/charts/LineChart.tsx
+  100:37  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  134:38  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/nick/dev/doveapp/components/command-palette.tsx
+   9:3  warning  'Command' is defined but never used       @typescript-eslint/no-unused-vars
+  29:3  warning  'Search' is defined but never used        @typescript-eslint/no-unused-vars
+  34:9  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/nick/dev/doveapp/components/design-tokens/DesignTokensShowcase.tsx
+  4:3  warning  'getSpacing' is defined but never used       @typescript-eslint/no-unused-vars
+  5:3  warning  'getColor' is defined but never used         @typescript-eslint/no-unused-vars
+  6:3  warning  'getBorderRadius' is defined but never used  @typescript-eslint/no-unused-vars
+  7:3  warning  'getShadow' is defined but never used        @typescript-eslint/no-unused-vars
+  8:3  warning  'getFontSize' is defined but never used      @typescript-eslint/no-unused-vars
+
+/home/nick/dev/doveapp/components/inbox/AttachmentViewer.tsx
+   37:10  warning  'selectedImage' is assigned a value but never used                                                                                                                                                                                                                                       @typescript-eslint/no-unused-vars
+   37:25  warning  'setSelectedImage' is assigned a value but never used                                                                                                                                                                                                                                    @typescript-eslint/no-unused-vars
+  116:23  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+/home/nick/dev/doveapp/components/kanban/KanbanBoard.tsx
+  16:10  warning  'arrayMove' is defined but never used  @typescript-eslint/no-unused-vars
+
+/home/nick/dev/doveapp/components/portal/EmergencyRequestDialog.tsx
+  138:51  warning  `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+
+/home/nick/dev/doveapp/components/quick-add-estimate.tsx
+  42:42  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/nick/dev/doveapp/components/quick-add-invoice.tsx
+  33:36  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  45:35  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/nick/dev/doveapp/components/quick-add-job.tsx
+   32:42  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  217:40  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/nick/dev/doveapp/components/quick-add-lead.tsx
+   85:18  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   86:18  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  105:36  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  115:35  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/nick/dev/doveapp/components/sidebar.tsx
+   41:9   warning  Unexpected any. Specify a different type                                                                                                                                                                                                                                                 @typescript-eslint/no-explicit-any
+  471:17  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+/home/nick/dev/doveapp/components/tech-logout-button.tsx
+  8:9  warning  'router' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+/home/nick/dev/doveapp/components/ui/advanced-filters.tsx
+  17:3   warning  'Select' is defined but never used         @typescript-eslint/no-unused-vars
+  18:3   warning  'SelectContent' is defined but never used  @typescript-eslint/no-unused-vars
+  19:3   warning  'SelectItem' is defined but never used     @typescript-eslint/no-unused-vars
+  20:3   warning  'SelectTrigger' is defined but never used  @typescript-eslint/no-unused-vars
+  21:3   warning  'SelectValue' is defined but never used    @typescript-eslint/no-unused-vars
+  26:10  warning  'HelpCircle' is defined but never used     @typescript-eslint/no-unused-vars
+  28:3   warning  'Filter' is defined but never used         @typescript-eslint/no-unused-vars
+  40:10  warning  Unexpected any. Specify a different type   @typescript-eslint/no-explicit-any
+  91:3   warning  'onClearAll' is defined but never used     @typescript-eslint/no-unused-vars
+
+/home/nick/dev/doveapp/components/ui/advanced-search.tsx
+   14:16  warning  'TabsContent' is defined but never used                                                                     @typescript-eslint/no-unused-vars
+   17:10  warning  'Separator' is defined but never used                                                                       @typescript-eslint/no-unused-vars
+   28:3   warning  'MapPin' is defined but never used                                                                          @typescript-eslint/no-unused-vars
+   29:3   warning  'Phone' is defined but never used                                                                           @typescript-eslint/no-unused-vars
+   30:3   warning  'Mail' is defined but never used                                                                            @typescript-eslint/no-unused-vars
+   31:3   warning  'Clock' is defined but never used                                                                           @typescript-eslint/no-unused-vars
+   32:3   warning  'TrendingUp' is defined but never used                                                                      @typescript-eslint/no-unused-vars
+   45:28  warning  Unexpected any. Specify a different type                                                                    @typescript-eslint/no-explicit-any
+   75:27  warning  React Hook useCallback received a function whose dependencies are unknown. Pass an inline function instead  react-hooks/exhaustive-deps
+   76:56  warning  'filters' is defined but never used                                                                         @typescript-eslint/no-unused-vars
+   76:65  warning  Unexpected any. Specify a different type                                                                    @typescript-eslint/no-explicit-any
+  114:58  warning  Unexpected any. Specify a different type                                                                    @typescript-eslint/no-explicit-any
+  352:38  warning  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`                                             react/no-unescaped-entities
+  352:46  warning  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`                                             react/no-unescaped-entities
+  410:39  warning  Unexpected any. Specify a different type                                                                    @typescript-eslint/no-explicit-any
+  410:49  warning  Unexpected any. Specify a different type                                                                    @typescript-eslint/no-explicit-any
+
+/home/nick/dev/doveapp/components/ui/animations.tsx
+  2:18  warning  'ButtonProps' is defined but never used  @typescript-eslint/no-unused-vars
+
+/home/nick/dev/doveapp/components/ui/button.tsx
+  5:10  warning  'cssVars' is defined but never used  @typescript-eslint/no-unused-vars
+
+/home/nick/dev/doveapp/components/ui/input.tsx
+  4:10  warning  'cssVars' is defined but never used  @typescript-eslint/no-unused-vars
+
+/home/nick/dev/doveapp/e2e/link_audit.spec.ts
+    1:16  warning  'APIRequestContext' is defined but never used  @typescript-eslint/no-unused-vars
+    9:3   warning  'calculateSeverity' is defined but never used  @typescript-eslint/no-unused-vars
+  445:16  warning  'error' is defined but never used              @typescript-eslint/no-unused-vars
+
+/home/nick/dev/doveapp/e2e/utils.ts
+  134:9  warning  'testApiEndpoint' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+/home/nick/dev/doveapp/lib/ai/estimate-generation.ts
+   68:17  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  111:16  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  129:24  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  130:17  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  299:13  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  312:53  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  351:16  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  371:54  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  389:17  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  520:13  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/nick/dev/doveapp/lib/ai/historical-pricing-analysis.ts
+   77:30  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  100:30  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  105:30  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  165:12  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  194:32  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/nick/dev/doveapp/lib/analytics/business-intelligence.ts
+   47:13  warning  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+   72:37  warning  'jobsError' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  102:44  warning  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+  106:26  warning  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+  117:30  warning  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+  209:36  warning  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+  249:39  warning  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+  262:30  warning  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+  283:44  warning  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+  309:40  warning  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+  317:13  warning  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+  318:3   warning  'startDate' is defined but never used           @typescript-eslint/no-unused-vars
+  319:3   warning  'endDate' is defined but never used             @typescript-eslint/no-unused-vars
+  334:32  warning  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+  346:13  warning  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+  369:22  warning  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+  379:13  warning  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+  380:3   warning  'period' is defined but never used              @typescript-eslint/no-unused-vars
+  398:39  warning  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+  413:13  warning  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+  432:32  warning  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+  444:51  warning  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+  454:60  warning  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+  464:49  warning  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+  473:30  warning  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+
+/home/nick/dev/doveapp/lib/analytics/customer-analytics.ts
+   36:13  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   69:24  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  123:13  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  146:13  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  188:13  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  229:13  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  263:13  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  269:13  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  283:36  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  288:36  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  320:13  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/nick/dev/doveapp/lib/api-helpers.ts
+   13:3   warning  '_request' is defined but never used      @typescript-eslint/no-unused-vars
+  100:19  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  108:52  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  109:58  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/nick/dev/doveapp/lib/api/estimates.ts
+    2:38  warning  'EstimateStatus' is defined but never used  @typescript-eslint/no-unused-vars
+  153:17  warning  Unexpected any. Specify a different type    @typescript-eslint/no-explicit-any
+  154:20  warning  Unexpected any. Specify a different type    @typescript-eslint/no-explicit-any
+  194:12  warning  Unexpected any. Specify a different type    @typescript-eslint/no-explicit-any
+  195:20  warning  Unexpected any. Specify a different type    @typescript-eslint/no-explicit-any
+
+/home/nick/dev/doveapp/lib/api/invoices.ts
+    2:37  warning  'InvoiceStatus' is defined but never used  @typescript-eslint/no-unused-vars
+  151:16  warning  Unexpected any. Specify a different type   @typescript-eslint/no-explicit-any
+  152:20  warning  Unexpected any. Specify a different type   @typescript-eslint/no-explicit-any
+  192:12  warning  Unexpected any. Specify a different type   @typescript-eslint/no-explicit-any
+  193:20  warning  Unexpected any. Specify a different type   @typescript-eslint/no-explicit-any
+
+/home/nick/dev/doveapp/lib/api/jobs.ts
+   18:13  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   97:52  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  196:12  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  197:20  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  223:55  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  269:12  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  270:20  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/nick/dev/doveapp/lib/api/response.ts
+   1:41  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   3:18  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  13:37  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  15:25  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/nick/dev/doveapp/lib/api/visits.ts
+  22:9  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/nick/dev/doveapp/lib/audit-log.ts
+   31:29  warning  Unexpected any. Specify a different type       @typescript-eslint/no-explicit-any
+   42:11  warning  'supabase' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  111:29  warning  Unexpected any. Specify a different type       @typescript-eslint/no-explicit-any
+
+/home/nick/dev/doveapp/lib/auth/context.ts
+  30:12  warning  '_error' is defined but never used  @typescript-eslint/no-unused-vars
+
+/home/nick/dev/doveapp/lib/auth/session.ts
+  13:12  warning  '_error' is defined but never used  @typescript-eslint/no-unused-vars
+
+/home/nick/dev/doveapp/lib/authz/index.ts
+   9:10  warning  'Permission' is defined but never used    @typescript-eslint/no-unused-vars
+  27:51  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  40:48  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/nick/dev/doveapp/lib/cache.ts
+   22:46  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  101:43  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  104:46  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  107:48  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  109:47  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/nick/dev/doveapp/lib/csv-export.ts
+    4:54  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   69:41  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   90:45  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  106:39  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  120:49  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  143:12  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  258:12  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/nick/dev/doveapp/lib/db/ai-tool-recognition.ts
+  219:20  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  260:14  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  340:12  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  402:14  warning  'parseError' is defined but never used    @typescript-eslint/no-unused-vars
+  409:40  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  418:22  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  419:19  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  470:62  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/nick/dev/doveapp/lib/db/automations.ts
+   24:28  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  133:27  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/nick/dev/doveapp/lib/db/errors.ts
+  8:47  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/nick/dev/doveapp/lib/db/estimates.ts
+  419:29  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/nick/dev/doveapp/lib/db/invoices.ts
+  58:27  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  93:53  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/nick/dev/doveapp/lib/db/invoices/creation.ts
+   3:3   warning  'InvoiceWithRelations' is defined but never used  @typescript-eslint/no-unused-vars
+   5:3   warning  'InvoicePayment' is defined but never used        @typescript-eslint/no-unused-vars
+   6:3   warning  'InvoiceStatus' is defined but never used         @typescript-eslint/no-unused-vars
+   7:3   warning  'PaymentMethod' is defined but never used         @typescript-eslint/no-unused-vars
+  70:70  warning  Unexpected any. Specify a different type          @typescript-eslint/no-explicit-any
+
+/home/nick/dev/doveapp/lib/db/invoices/payments.ts
+   24:47  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  111:47  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/nick/dev/doveapp/lib/db/invoices/stats.ts
+  35:31  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  41:49  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/nick/dev/doveapp/lib/db/jobs.ts
+  413:23  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  428:24  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  620:53  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  666:60  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  676:53  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  934:18  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/nick/dev/doveapp/lib/db/leads.ts
+  252:29  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  253:29  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  254:33  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/nick/dev/doveapp/lib/db/materials.ts
+  20:3  warning  'ToolAssignmentData' is defined but never used  @typescript-eslint/no-unused-vars
+
+/home/nick/dev/doveapp/lib/hooks/use-api.ts
+  14:18  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/nick/dev/doveapp/lib/job-automation.ts
+  178:23  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/nick/dev/doveapp/lib/kpi.ts
+  83:9  warning  'prevEndDate' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+/home/nick/dev/doveapp/lib/logger.ts
+  33:13  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  39:25  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/nick/dev/doveapp/lib/offline-storage.ts
+   20:9   warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   57:9   warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  265:17  warning  'key' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+/home/nick/dev/doveapp/lib/pdf-estimate.ts
+   34:65  warning  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+   70:16  warning  'imgError' is defined but never used            @typescript-eslint/no-unused-vars
+  101:12  warning  'error' is defined but never used               @typescript-eslint/no-unused-vars
+  223:9   warning  'colWidths' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+/home/nick/dev/doveapp/lib/pdf-invoice.ts
+    3:3   warning  'InvoiceWithRelations' is defined but never used  @typescript-eslint/no-unused-vars
+   34:65  warning  Unexpected any. Specify a different type          @typescript-eslint/no-explicit-any
+   67:12  warning  'error' is defined but never used                 @typescript-eslint/no-unused-vars
+  136:9   warning  'colWidths' is assigned a value but never used    @typescript-eslint/no-unused-vars
+
+/home/nick/dev/doveapp/lib/sentry.server.config.js
+  13:21  warning  'hint' is defined but never used  @typescript-eslint/no-unused-vars
+
+/home/nick/dev/doveapp/lib/square/client.ts
+  1:1  warning  Do not use "@ts-nocheck" because it alters compilation errors  @typescript-eslint/ban-ts-comment
+
+/home/nick/dev/doveapp/lib/square/customers.ts
+   1:1   warning  Do not use "@ts-nocheck" because it alters compilation errors  @typescript-eslint/ban-ts-comment
+  34:11  warning  Unexpected any. Specify a different type                       @typescript-eslint/no-explicit-any
+  88:28  warning  Unexpected any. Specify a different type                       @typescript-eslint/no-explicit-any
+  89:27  warning  Unexpected any. Specify a different type                       @typescript-eslint/no-explicit-any
+  90:31  warning  Unexpected any. Specify a different type                       @typescript-eslint/no-explicit-any
+  91:25  warning  Unexpected any. Specify a different type                       @typescript-eslint/no-explicit-any
+
+/home/nick/dev/doveapp/lib/square/oauth.ts
+    1:1   warning  Do not use "@ts-nocheck" because it alters compilation errors  @typescript-eslint/ban-ts-comment
+   20:9   warning  'redirectUri' is assigned a value but never used               @typescript-eslint/no-unused-vars
+  119:67  warning  Unexpected any. Specify a different type                       @typescript-eslint/no-explicit-any
+
+/home/nick/dev/doveapp/lib/supabase-auth.ts
+  42:12  warning  '_error' is defined but never used  @typescript-eslint/no-unused-vars
+
+/home/nick/dev/doveapp/lib/supabase/route-handler.ts
+  16:51  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  19:39  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/nick/dev/doveapp/lib/supabase/server.ts
+  22:20  warning  'error' is defined but never used  @typescript-eslint/no-unused-vars
+  29:20  warning  'error' is defined but never used  @typescript-eslint/no-unused-vars
+
+/home/nick/dev/doveapp/lib/utils.ts
+  10:43  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  12:26  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  20:21  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/nick/dev/doveapp/lib/validation.ts
+   10:19  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  372:40  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  372:59  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/nick/dev/doveapp/proxy.ts
+  19:15  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  38:51  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  41:39  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/nick/dev/doveapp/public/sw.js
+    2:7   warning  'CACHE_NAME' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  329:31  warning  'storeName' is defined but never used            @typescript-eslint/no-unused-vars
+
+/home/nick/dev/doveapp/scripts/audit-database.js
+   47:16  warning  'runQuery' is defined but never used         @typescript-eslint/no-unused-vars
+   47:32  warning  'params' is assigned a value but never used  @typescript-eslint/no-unused-vars
+   52:12  warning  'error' is defined but never used            @typescript-eslint/no-unused-vars
+  440:17  warning  '_' is defined but never used                @typescript-eslint/no-unused-vars
+  467:17  warning  '_' is defined but never used                @typescript-eslint/no-unused-vars
+  494:17  warning  '_' is defined but never used                @typescript-eslint/no-unused-vars
+
+/home/nick/dev/doveapp/scripts/check-db.js
+  12:17  warning  'leadsCheck' is assigned a value but never used      @typescript-eslint/no-unused-vars
+  21:17  warning  'estimatesCheck' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+/home/nick/dev/doveapp/scripts/check-issues.js
+  14:17  warning  'custData' is assigned a value but never used    @typescript-eslint/no-unused-vars
+  30:17  warning  'clientData' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+/home/nick/dev/doveapp/scripts/check-rls-status.js
+  22:19  warning  'functions' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+/home/nick/dev/doveapp/scripts/check-schema.js
+  29:17  warning  'estData' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+/home/nick/dev/doveapp/scripts/find-unused-code.js
+   17:9   warning  'execSync' is assigned a value but never used   @typescript-eslint/no-unused-vars
+   29:7   warning  'SCAN_DIRS' is assigned a value but never used  @typescript-eslint/no-unused-vars
+   72:14  warning  'err' is defined but never used                 @typescript-eslint/no-unused-vars
+  178:14  warning  'err' is defined but never used                 @typescript-eslint/no-unused-vars
+  228:14  warning  'err' is defined but never used                 @typescript-eslint/no-unused-vars
+  274:14  warning  'err' is defined but never used                 @typescript-eslint/no-unused-vars
+
+/home/nick/dev/doveapp/scripts/test-connection.js
+  20:13  warning  'data' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+/home/nick/dev/doveapp/scripts/test-migrations.js
+  28:17  warning  'invoices' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  46:17  warning  'jobs' is assigned a value but never used      @typescript-eslint/no-unused-vars
+
+/home/nick/dev/doveapp/scripts/verify-migrations.js
+  21:13  warning  'data' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  30:12  warning  'err' is defined but never used            @typescript-eslint/no-unused-vars
+  51:12  warning  'err' is defined but never used            @typescript-eslint/no-unused-vars
+
+/home/nick/dev/doveapp/types/activity.ts
+  34:29  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  49:29  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  56:18  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/nick/dev/doveapp/types/ai-tool-recognition.ts
+    9:20  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   22:18  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   23:22  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   24:22  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   37:18  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   57:19  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   58:22  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   85:20  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  101:19  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/nick/dev/doveapp/types/automation.ts
+  22:28  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  23:27  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/nick/dev/doveapp/types/estimate.ts
+  65:19  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  66:18  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  67:18  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/nick/dev/doveapp/types/kpi.ts
+  148:11  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/nick/dev/doveapp/types/materials.ts
+  121:9  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  155:9  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+✖ 910 problems (0 errors, 910 warnings)
+

@@ -1,6 +1,13 @@
 'use client';
 
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, {
+  createContext,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+  useSyncExternalStore,
+} from 'react';
 
 type Theme = 'light' | 'dark' | 'system';
 
@@ -26,68 +33,76 @@ interface ThemeProviderProps {
   storageKey?: string;
 }
 
+const isTheme = (value: string | null): value is Theme =>
+  value === 'light' || value === 'dark' || value === 'system';
+
+const isResolvedTheme = (value: Theme): value is 'light' | 'dark' =>
+  value === 'light' || value === 'dark';
+
+const getSystemTheme = (): 'light' | 'dark' => {
+  if (typeof window === 'undefined') {
+    return 'light';
+  }
+  return window.matchMedia('(prefers-color-scheme: dark)').matches
+    ? 'dark'
+    : 'light';
+};
+
+const subscribeToSystemTheme = (callback: () => void): (() => void) => {
+  if (typeof window === 'undefined') {
+    return () => {};
+  }
+  const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+  mediaQuery.addEventListener('change', callback);
+  return () => mediaQuery.removeEventListener('change', callback);
+};
+
 export function ThemeProvider({
   children,
   defaultTheme = 'system',
   storageKey = 'doveapp-theme',
 }: ThemeProviderProps) {
-  const [theme, setTheme] = useState<Theme>(defaultTheme);
-  const [resolvedTheme, setResolvedTheme] = useState<'light' | 'dark'>('light');
-
-  useEffect(() => {
-    // Load theme from localStorage
-    const storedTheme = localStorage.getItem(storageKey) as Theme;
-    if (storedTheme) {
-      setTheme(storedTheme);
+  const [theme, setTheme] = useState<Theme>(() => {
+    if (typeof window === 'undefined') {
+      return defaultTheme;
     }
-  }, [storageKey]);
+    const storedTheme = localStorage.getItem(storageKey);
+    return isTheme(storedTheme) ? storedTheme : defaultTheme;
+  });
+
+  const systemTheme = useSyncExternalStore(
+    (callback) =>
+      theme === 'system' ? subscribeToSystemTheme(callback) : () => {},
+    getSystemTheme,
+    () => 'light' as const
+  );
+
+  const resolvedTheme = useMemo<'light' | 'dark'>(() => {
+    if (isResolvedTheme(theme)) {
+      return theme;
+    }
+    return systemTheme;
+  }, [systemTheme, theme]);
 
   useEffect(() => {
+    if (typeof window === 'undefined') {
+      return;
+    }
+    localStorage.setItem(storageKey, theme);
+  }, [storageKey, theme]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      return;
+    }
     const root = window.document.documentElement;
-
-    // Remove existing theme classes
     root.classList.remove('light', 'dark');
-
-    let resolved: 'light' | 'dark';
-
-    if (theme === 'system') {
-      resolved = window.matchMedia('(prefers-color-scheme: dark)').matches
-        ? 'dark'
-        : 'light';
-    } else {
-      resolved = theme;
-    }
-
-    // Apply theme class
-    root.classList.add(resolved);
-    setResolvedTheme(resolved);
-  }, [theme]);
-
-  useEffect(() => {
-    // Listen for system theme changes when theme is 'system'
-    if (theme === 'system') {
-      const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-
-      const handleChange = () => {
-        const root = window.document.documentElement;
-        const newResolved = mediaQuery.matches ? 'dark' : 'light';
-
-        root.classList.remove('light', 'dark');
-        root.classList.add(newResolved);
-        setResolvedTheme(newResolved);
-      };
-
-      mediaQuery.addEventListener('change', handleChange);
-      return () => mediaQuery.removeEventListener('change', handleChange);
-    }
-  }, [theme]);
+    root.classList.add(resolvedTheme);
+  }, [resolvedTheme]);
 
   const value = {
     theme,
-    setTheme: (newTheme: Theme) => {
-      localStorage.setItem(storageKey, newTheme);
-      setTheme(newTheme);
-    },
+    setTheme,
     resolvedTheme,
   };
 

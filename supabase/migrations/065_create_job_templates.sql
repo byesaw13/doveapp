@@ -1,4 +1,5 @@
 -- Update job templates table with enhanced schema
+-- NOTE: supersedes/extends 013; kept for historical order
 -- Drop and recreate with improved structure
 DROP TABLE IF EXISTS job_templates CASCADE;
 

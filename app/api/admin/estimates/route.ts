@@ -12,7 +12,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     try {
       context = await requireAdminContext(request);
       supabase = await createRouteHandlerClient();
-    } catch (error) {
+    } catch {
       if (!isDemoMode()) {
         return NextResponse.json(
           { error: 'Authentication required' },

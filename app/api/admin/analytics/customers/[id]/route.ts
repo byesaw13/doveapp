@@ -59,7 +59,7 @@ export async function GET(
     const nextPredictedJob = await predictNextCustomerJob(customerId, supabase);
 
     // Get detailed job history
-    const { data: jobs, error: jobsError } = await supabase
+    const { data: jobs } = await supabase
       .from('jobs')
       .select(
         `
@@ -80,7 +80,7 @@ export async function GET(
       .order('created_at', { ascending: false });
 
     // Get payment history
-    const { data: payments, error: paymentsError } = await supabase
+    const { data: payments } = await supabase
       .from('payments')
       .select(
         `

@@ -3,13 +3,9 @@ import { requireAccountContext } from '@/lib/auth-guards-api';
 import { canViewReports } from '@/lib/auth-guards';
 import { PerformanceLogger } from '@/lib/api/performance';
 import {
-  calculateCustomerLifetimeValue,
   getCustomerSegmentSummary,
   getTopCustomersByLifetimeValue,
   calculateRetentionMetrics,
-  predictNextCustomerJob,
-  type CustomerAnalytics,
-  type RetentionMetrics,
 } from '@/lib/analytics/customer-analytics';
 import { createRouteHandlerClient } from '@/lib/supabase/route-handler';
 

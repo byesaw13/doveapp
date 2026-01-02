@@ -17,7 +17,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     let context;
     try {
       context = await requireAdminContext(request);
-    } catch (error) {
+    } catch {
       if (!isDemoMode()) {
         return NextResponse.json(
           { error: 'Authentication required' },

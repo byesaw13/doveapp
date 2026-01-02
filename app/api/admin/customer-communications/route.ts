@@ -45,7 +45,7 @@ export async function GET(request: NextRequest) {
   const perfLogger = new PerformanceLogger(url.pathname, 'GET');
 
   try {
-    const context = await requireAccountContext(request);
+    await requireAccountContext(request);
     const supabase = await createRouteHandlerClient();
 
     const searchParams = url.searchParams;

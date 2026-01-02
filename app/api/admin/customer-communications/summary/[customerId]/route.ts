@@ -10,7 +10,7 @@ export async function GET(
   { params }: { params: Promise<{ customerId: string }> }
 ) {
   try {
-    const context = await requireAccountContext(request);
+    await requireAccountContext(request);
     const supabase = await createRouteHandlerClient();
     const { customerId } = await params;
 

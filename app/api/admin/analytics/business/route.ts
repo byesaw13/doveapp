@@ -2,10 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { requireAccountContext } from '@/lib/auth-guards-api';
 import { canViewReports } from '@/lib/auth-guards';
 import { PerformanceLogger } from '@/lib/api/performance';
-import {
-  calculateBusinessMetrics,
-  type BusinessMetrics,
-} from '@/lib/analytics/business-intelligence';
+import { calculateBusinessMetrics } from '@/lib/analytics/business-intelligence';
 import { createRouteHandlerClient } from '@/lib/supabase/route-handler';
 
 /**

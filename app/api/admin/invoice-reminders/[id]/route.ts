@@ -12,7 +12,7 @@ export async function GET(
   const perfLogger = new PerformanceLogger(url.pathname, 'GET');
 
   try {
-    const context = await requireAccountContext(request);
+    await requireAccountContext(request);
     const supabase = await createRouteHandlerClient();
     const { id } = await params;
 
@@ -74,7 +74,7 @@ export async function PUT(
   const perfLogger = new PerformanceLogger(url.pathname, 'PUT');
 
   try {
-    const context = await requireAccountContext(request);
+    await requireAccountContext(request);
     const supabase = await createRouteHandlerClient();
     const { id } = await params;
 
@@ -144,7 +144,7 @@ export async function DELETE(
   const perfLogger = new PerformanceLogger(url.pathname, 'DELETE');
 
   try {
-    const context = await requireAccountContext(request);
+    await requireAccountContext(request);
     const supabase = await createRouteHandlerClient();
     const { id } = await params;
 

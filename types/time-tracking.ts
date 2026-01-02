@@ -1,16 +1,17 @@
 // Time Tracking Types
 
-type JsonPrimitive = string | number | boolean | null;
-export type Json = JsonPrimitive | { [key: string]: Json } | Json[];
+import type { JsonObject, JsonValue } from '@/types/json';
 
-export interface GeoPoint {
+export interface TechnicianGeoPoint {
   latitude: number;
   longitude: number;
   accuracy?: number;
   timestamp?: string;
 }
 
-export type DeviceInfo = Record<string, Json>;
+export type GeoPoint = TechnicianGeoPoint;
+
+export type DeviceInfo = JsonObject;
 
 export interface JobSummary {
   id: string;
@@ -18,7 +19,8 @@ export interface JobSummary {
   job_number?: string;
   status?: string;
   client_id?: string;
-  [key: string]: Json | undefined;
+  client_name?: string;
+  [key: string]: JsonValue | undefined;
 }
 
 export interface TimeEntry {
@@ -34,9 +36,9 @@ export interface TimeEntry {
   total_amount?: number;
   status: 'active' | 'completed' | 'approved' | 'rejected' | 'paid';
   notes?: string;
-  location_start?: GeoPoint | null;
-  location_end?: GeoPoint | null;
-  device_info?: DeviceInfo | null;
+  location_start?: TechnicianGeoPoint | null;
+  location_end?: TechnicianGeoPoint | null;
+  device_info?: JsonObject | null;
   ip_address?: string;
   created_at: string;
   updated_at: string;

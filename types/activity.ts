@@ -1,3 +1,5 @@
+import type { JsonObject, JsonValue } from '@/types/json';
+
 export type ActivityType =
   | 'note'
   | 'email_sent'
@@ -31,7 +33,7 @@ export interface ClientActivity {
   description?: string;
   due_date?: string | null;
   completed_at?: string | null;
-  metadata?: Record<string, any>;
+  metadata?: JsonObject;
   related_id?: string;
   related_type?: string;
   created_by?: string;
@@ -46,12 +48,12 @@ export interface ClientActivityInsert {
   description?: string;
   due_date?: string | null;
   completed_at?: string | null;
-  metadata?: Record<string, any>;
+  metadata?: JsonObject;
   related_id?: string;
   related_type?: string;
   created_by?: string;
 }
 
 export interface ClientActivityWithRelated extends ClientActivity {
-  related_data?: any;
+  related_data?: JsonValue;
 }

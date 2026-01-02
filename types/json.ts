@@ -1,9 +1,7 @@
 export type JsonPrimitive = string | number | boolean | null;
 
-export type Json = JsonPrimitive | JsonObject | JsonArray;
+export type JsonValue = JsonPrimitive | JsonObject | JsonArray;
 
-export interface JsonObject {
-  [key: string]: Json;
-}
+export type JsonObject = { [key: string]: JsonValue };
 
-export type JsonArray = Json[];
+export type JsonArray = JsonValue[];

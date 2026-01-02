@@ -1,12 +1,14 @@
 // AI Tool Recognition Types
 
+import type { JsonObject, JsonValue } from '@/types/json';
+
 export interface ToolImage {
   id: string;
   material_id: string;
   image_url: string;
   image_filename: string;
   image_hash: string;
-  image_metadata?: any;
+  image_metadata?: JsonObject;
   is_primary: boolean;
   uploaded_by?: string;
   uploaded_by_name?: string;
@@ -19,9 +21,9 @@ export interface ToolRecognitionResult {
   image_hash?: string;
   analysis_provider: string;
   analysis_version?: string;
-  raw_response?: any;
-  detected_objects?: any[];
-  recognized_tools?: any[];
+  raw_response?: JsonObject;
+  detected_objects?: JsonValue[];
+  recognized_tools?: JsonValue[];
   processing_status: 'pending' | 'processing' | 'completed' | 'failed';
   processing_error?: string;
   processed_at?: string;
@@ -34,7 +36,7 @@ export interface ToolRecognitionMatch {
   recognition_result_id: string;
   material_id: string;
   confidence_score: number;
-  bounding_box?: any;
+  bounding_box?: JsonObject;
   match_reason?: string;
   verified_by_user: boolean;
   verified_at?: string;
@@ -54,8 +56,8 @@ export interface ToolInventoryCount {
   counted_by_name?: string;
   photo_url?: string;
   recognition_result_id?: string;
-  counted_tools?: any[];
-  manual_overrides?: any[];
+  counted_tools?: JsonValue[];
+  manual_overrides?: JsonValue[];
   status: 'draft' | 'verified' | 'applied';
   notes?: string;
   created_at: string;
@@ -82,7 +84,7 @@ export interface ToolImageUpload {
   image_url: string;
   image_filename: string;
   image_hash: string;
-  image_metadata?: any;
+  image_metadata?: JsonObject;
   is_primary?: boolean;
   uploaded_by_name?: string;
 }
@@ -98,6 +100,6 @@ export interface ToolInventoryCountData {
   counted_by_name: string;
   photo_url?: string;
   recognition_result_id?: string;
-  counted_tools?: any[];
+  counted_tools?: JsonValue[];
   notes?: string;
 }

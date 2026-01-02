@@ -1,4 +1,5 @@
 // Estimate/Quote types
+import type { JsonObject, JsonValue } from '@/types/json';
 export type EstimateStatus =
   | 'draft'
   | 'pending'
@@ -62,9 +63,9 @@ export interface Estimate {
   decline_reason?: string;
 
   // Approval/Decline Info
-  approval_info?: any;
-  decline_info?: any;
-  sent_history?: any[];
+  approval_info?: JsonObject | null;
+  decline_info?: JsonObject | null;
+  sent_history?: JsonValue[];
 
   // Conversion
   converted_to_job_id?: string;

@@ -1,6 +1,6 @@
 -- Update job templates table with enhanced schema
 -- NOTE: supersedes/extends 013; kept for historical order
--- Non-destructive migration for job_templates
+-- Non-destructive migration for job_templates (safe ALTERs)
 
 -- Add new columns (non-destructive)
 ALTER TABLE job_templates
@@ -135,4 +135,3 @@ BEGIN
   WHERE id = template_id;
 END;
 $$ LANGUAGE plpgsql;
-

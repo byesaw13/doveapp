@@ -9,11 +9,10 @@ export function RegisterServiceWorker() {
       navigator.serviceWorker
         .register('/sw.js')
         .then((registration) => {
-
           // Register for periodic sync if supported
           if ('periodicSync' in registration) {
             try {
-              // @ts-ignore - periodicSync is not in all TypeScript definitions yet
+              // @ts-expect-error periodicSync is not in all TypeScript definitions yet
               registration.periodicSync.register('update-data', {
                 minInterval: 24 * 60 * 60 * 1000, // 24 hours
               });

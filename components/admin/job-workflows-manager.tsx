@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -28,7 +28,6 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
-import { Checkbox } from '@/components/ui/checkbox';
 
 import {
   Workflow,
@@ -102,11 +101,7 @@ export function JobWorkflowsManager() {
     actions: [],
   });
 
-  useEffect(() => {
-    loadWorkflows();
-  }, []);
-
-  const loadWorkflows = async () => {
+  const loadWorkflows = useCallback(async () => {
     try {
       setIsLoading(true);
       const response = await fetch('/api/admin/job-workflows');
@@ -131,7 +126,11 @@ export function JobWorkflowsManager() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [toast]);
+
+  useEffect(() => {
+    void loadWorkflows();
+  }, [loadWorkflows]);
 
   const resetForm = () => {
     setFormData({
@@ -781,7 +780,7 @@ function WorkflowForm({
 
         {formData.actions.length === 0 ? (
           <p className="text-muted-foreground text-center py-4">
-            No actions added yet. Click "Add Action" to get started.
+            No actions added yet. Click &quot;Add Action&quot; to get started.
           </p>
         ) : (
           <div className="space-y-4">

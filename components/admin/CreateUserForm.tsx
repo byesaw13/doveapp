@@ -65,7 +65,7 @@ export function CreateUserForm() {
         throw new Error(errorData.error || 'Failed to create user');
       }
 
-      const userData = await response.json();
+      await response.json();
 
       setSuccess(
         `User created successfully! Temporary password sent to ${formData.email}`
@@ -293,7 +293,7 @@ export function CreateUserForm() {
         <div className="mt-4 p-3 bg-muted rounded-lg">
           <p className="text-sm text-muted-foreground">
             <strong>Note:</strong> A temporary password will be generated and
-            sent to the user's email. They should change it on first login.
+            sent to the user&apos;s email. They should change it on first login.
           </p>
         </div>
       </CardContent>

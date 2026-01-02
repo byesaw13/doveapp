@@ -145,8 +145,11 @@ export function TimeTrackingDashboard({
   // Handle hydration and update current time every second
   useEffect(() => {
     // Set hydration flag after mount
-    setIsHydrated(true);
-     
+    const hydrateTimeoutId = window.setTimeout(() => {
+      setIsHydrated(true);
+    }, 0);
+
+    return () => window.clearTimeout(hydrateTimeoutId);
   }, []);
 
   useEffect(() => {
@@ -571,7 +574,7 @@ export function TimeTrackingDashboard({
       {/* Today's Activities */}
       <Card>
         <CardHeader>
-          <CardTitle>Today's Activities</CardTitle>
+          <CardTitle>Today&apos;s Activities</CardTitle>
           <CardDescription>
             Track multiple activities throughout your day
           </CardDescription>

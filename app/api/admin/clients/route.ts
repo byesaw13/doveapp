@@ -7,6 +7,8 @@ import {
 } from '@/lib/api/clients';
 import { createRouteHandlerClient } from '@/lib/supabase/route-handler';
 import { isDemoMode } from '@/lib/auth/demo';
+import { createClientSchema } from '@/lib/api/validation';
+import type { JsonObject } from '@/types/json';
 
 /**
  * GET /api/admin/clients - List all clients (admin full access)
@@ -76,7 +78,8 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   try {
     const context = await requireAdminContext(request);
     const supabase = await createRouteHandlerClient();
-    const body = await request.json();
+    const body = (await request.json()) as JsonObject;
+    const validatedBody = createClientSchema.parse(body);
 
     const { data, error } = await createClient(
       {
@@ -85,7 +88,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         role: context.role,
         supabase,
       },
-      body
+      validatedBody
     );
 
     if (error) {

@@ -1,5 +1,41 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createRouteHandlerClient } from '@/lib/supabase/route-handler';
+import type { JsonObject } from '@/types/json';
+
+type EmployeeProfileRequest = {
+  first_name?: string;
+  last_name?: string;
+  display_name?: string;
+  personal_email?: string;
+  work_email?: string;
+  primary_phone?: string;
+  secondary_phone?: string;
+  emergency_contact_name?: string;
+  emergency_contact_phone?: string;
+  emergency_contact_relationship?: string;
+  address_line1?: string;
+  address_line2?: string;
+  city?: string;
+  state?: string;
+  zip_code?: string;
+  country?: string;
+  employee_id?: string;
+  hire_date?: string;
+  employment_status?: string;
+  job_title?: string;
+  department?: string;
+  manager_id?: string;
+  hourly_rate?: number;
+  overtime_rate?: number;
+  salary?: number;
+  pay_frequency?: string;
+  work_schedule?: string;
+  skills?: string[];
+  certifications?: string[];
+  licenses?: string[];
+  notes?: string;
+  custom_fields?: JsonObject;
+};
 
 export async function GET(request: NextRequest) {
   try {
@@ -72,7 +108,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const body = await request.json();
+    const body = (await request.json()) as EmployeeProfileRequest;
     const {
       first_name,
       last_name,
@@ -266,7 +302,7 @@ export async function PUT(request: NextRequest) {
     const url = new URL(request.url);
     const userId = url.searchParams.get('userId');
 
-    const body = await request.json();
+    const body = (await request.json()) as EmployeeProfileRequest;
     const updates = body;
 
     // Check permissions

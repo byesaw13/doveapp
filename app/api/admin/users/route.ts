@@ -9,6 +9,13 @@ import {
 import { logAuditEvent } from '@/lib/audit-log';
 import { randomBytes } from 'crypto';
 
+type CreateUserBody = {
+  email?: string;
+  full_name?: string;
+  role?: 'OWNER' | 'ADMIN' | 'TECH' | string;
+  permissions?: string[];
+};
+
 export async function POST(request: NextRequest) {
   try {
     // Validate authentication and require admin access
@@ -23,7 +30,7 @@ export async function POST(request: NextRequest) {
 
     // Use admin client for user creation (requires service role key)
     const supabase = createAdminClient();
-    const body = await request.json();
+    const body = (await request.json()) as CreateUserBody;
 
     const { email, full_name, role, permissions } = body;
 

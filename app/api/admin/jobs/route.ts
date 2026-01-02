@@ -3,6 +3,23 @@ import { requireAdminContext } from '@/lib/auth-guards-api';
 import { listJobs, createJob, type JobFilters } from '@/lib/api/jobs';
 import { createRouteHandlerClient } from '@/lib/supabase/route-handler';
 import { isDemoMode } from '@/lib/auth/demo';
+import type { JsonValue } from '@/types/json';
+
+type CreateJobBody = {
+  client_id?: string;
+  property_id?: string | null;
+  title?: string;
+  description?: string | null;
+  status?: string;
+  service_date?: string;
+  scheduled_time?: string | null;
+  notes?: string | null;
+  subtotal?: number;
+  tax?: number;
+  total?: number;
+  assigned_tech_id?: string | null;
+  line_items?: JsonValue[];
+};
 
 /**
  * GET /api/admin/jobs - List all jobs (admin full access)
@@ -92,7 +109,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   try {
     const context = await requireAdminContext(request);
     const supabase = await createRouteHandlerClient();
-    const body = await request.json();
+    const body = (await request.json()) as CreateJobBody;
 
     const jobData = {
       client_id: body.client_id,

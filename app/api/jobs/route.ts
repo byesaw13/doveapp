@@ -100,6 +100,30 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Validate property_id if provided
+    if (data!.property_id) {
+      const { data: property, error: propertyError } = await supabase
+        .from('properties')
+        .select('id, client_id')
+        .eq('id', data!.property_id)
+        .eq('account_id', context.accountId)
+        .single();
+
+      if (propertyError || !property) {
+        return NextResponse.json(
+          { error: 'Invalid property_id: property not found or access denied' },
+          { status: 400 }
+        );
+      }
+
+      if (property.client_id !== data!.client_id) {
+        return NextResponse.json(
+          { error: 'Property does not belong to the specified client' },
+          { status: 400 }
+        );
+      }
+    }
+
     // Generate job_number
     const jobNumber = `JOB-${Date.now()}`;
 
@@ -130,6 +154,17 @@ export async function POST(request: NextRequest) {
     if (error) {
       console.error('Error creating job:', error);
       return errorResponse(error, 'Failed to create job');
+    }
+
+    const { error: noteError } = await supabase.from('job_notes').insert({
+      job_id: job.id,
+      technician_id: context.userId,
+      note: 'Job created',
+      account_id: context.accountId,
+    });
+
+    if (noteError) {
+      console.warn('Failed to log job creation note:', noteError);
     }
 
     // Add deprecation headers

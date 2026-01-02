@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { requireAdminContext } from '@/lib/auth-guards-api';
 import { getJobById, updateJob, deleteJob } from '@/lib/api/jobs';
 import { createRouteHandlerClient } from '@/lib/supabase/route-handler';
+import type { JsonObject } from '@/types/json';
 
 /**
  * GET /api/admin/jobs/[id] - Get a single job (admin full access)
@@ -49,7 +50,7 @@ export async function PATCH(
   try {
     const context = await requireAdminContext(request);
     const supabase = await createRouteHandlerClient();
-    const body = await request.json();
+    const body = (await request.json()) as JsonObject;
     const { id } = await params;
 
     const { data, error } = await updateJob(

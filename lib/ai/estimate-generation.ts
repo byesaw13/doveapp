@@ -23,7 +23,75 @@ export interface EstimateGenerationOptions {
 }
 
 /**
- * Generate an AI-powered estimate from description and optional images
+ * Generate an AI-powered service estimate using GPT-4 with vision analysis
+ *
+ * This is the main entry point for AI-driven estimate generation. It combines multiple
+ * data sources (historical pricing, pricebook services, business settings) with GPT-4's
+ * analysis capabilities to produce detailed, accurate estimates for field service work.
+ *
+ * @param options - Configuration object containing:
+ *   - settings: Business settings (rates, markups, profit margins, etc.)
+ *   - request: Customer request details (description, images, service type)
+ *   - useVision: Whether to use GPT-4o with vision for image analysis (default: true)
+ *
+ * @returns A comprehensive AIEstimateResult containing:
+ *   - analysis: AI's breakdown of scope, materials, labor, complexity
+ *   - line_items: Itemized estimate with quantities and prices
+ *   - total: Final price after all markups, overhead, profit, and taxes
+ *   - breakdown: Cost breakdown by category (materials, labor, equipment, etc.)
+ *   - reasoning: AI's explanation of methodology and assumptions
+ *   - suggestions: Helpful recommendations based on the analysis
+ *
+ * @throws Error if OpenAI API key is not configured
+ *
+ * @remarks
+ * **Processing Pipeline:**
+ * 1. Load historical pricing data from similar past jobs (gracefully degrades if unavailable)
+ * 2. Fetch pricebook services, categories, and pricing rules
+ * 3. Build comprehensive prompt with all context (historical + pricebook + business rules)
+ * 4. Call GPT-4o (with vision if images provided) or GPT-4o-mini (text-only)
+ * 5. Parse structured JSON response from AI
+ * 6. Apply business rules and calculate final pricing
+ * 7. Return complete estimate with all metadata
+ *
+ * **Model Selection:**
+ * - GPT-4o: Used when images are provided and useVision=true (higher cost, vision capable)
+ * - GPT-4o-mini: Used for text-only requests (lower cost, faster)
+ *
+ * **Temperature and Tokens:**
+ * - temperature: 0.1 (low randomness for consistent pricing)
+ * - max_tokens: 2000 (sufficient for detailed estimate breakdown)
+ * - response_format: JSON object (enforces structured output)
+ *
+ * **Historical Data Integration:**
+ * Historical pricing data is used to inform the AI but failures are non-fatal.
+ * If loading fails, the system falls back to pricebook and settings alone.
+ * Confidence scores are tracked and displayed to users for transparency.
+ *
+ * **Image Processing:**
+ * When images are provided:
+ * - Supports both base64-encoded strings and data URLs
+ * - Uses "high" detail level for accurate visual analysis
+ * - AI analyzes images for scope validation, material estimation, and complexity assessment
+ *
+ * @example
+ * ```ts
+ * const estimate = await generateAIEstimate({
+ *   settings: companySettings,
+ *   request: {
+ *     service_type: 'plumbing',
+ *     description: 'Replace kitchen sink and fix leaking pipes',
+ *     images: ['base64...', 'base64...'],
+ *     urgency: 'normal',
+ *     location: 'San Francisco, CA'
+ *   },
+ *   useVision: true
+ * });
+ *
+ * console.log(estimate.total); // e.g., 1250
+ * console.log(estimate.line_items.length); // e.g., 8 items
+ * console.log(estimate.analysis.complexity); // e.g., 'moderate'
+ * ```
  */
 export async function generateAIEstimate({
   settings,
@@ -39,6 +107,8 @@ export async function generateAIEstimate({
   }
 
   // Analyze historical pricing data to learn from past estimates/jobs
+  // This provides real-world pricing context based on the company's actual work
+  // Failures are non-fatal - system degrades gracefully to pricebook-only mode
   let historicalData: HistoricalPricingData | null = null;
   try {
     historicalData = await analyzeHistoricalPricing(request);

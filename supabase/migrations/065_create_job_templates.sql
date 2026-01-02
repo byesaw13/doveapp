@@ -1,37 +1,92 @@
 -- Update job templates table with enhanced schema
 -- NOTE: supersedes/extends 013; kept for historical order
--- Drop and recreate with improved structure
-DROP TABLE IF EXISTS job_templates CASCADE;
+-- Non-destructive migration for job_templates
 
-CREATE TABLE job_templates (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  name VARCHAR(255) NOT NULL,
-  description TEXT,
-  category VARCHAR(100), -- e.g., 'plumbing', 'electrical', 'hvac', 'painting', etc.
-  estimated_duration_hours DECIMAL(6,2), -- Estimated hours to complete
-  estimated_cost DECIMAL(10,2), -- Base estimated cost
-  default_priority VARCHAR(20) DEFAULT 'medium' CHECK (default_priority IN ('low', 'medium', 'high', 'urgent')),
+-- Add new columns (non-destructive)
+ALTER TABLE job_templates
+  ADD COLUMN IF NOT EXISTS template_data JSONB DEFAULT '{}'::jsonb,
+  ADD COLUMN IF NOT EXISTS is_public BOOLEAN DEFAULT false,
+  ADD COLUMN IF NOT EXISTS usage_count INTEGER DEFAULT 0;
 
-  -- Template configuration
-  template_data JSONB NOT NULL, -- Full job configuration including line items
+-- Ensure created_by exists; add if missing
+ALTER TABLE job_templates
+  ADD COLUMN IF NOT EXISTS created_by UUID;
 
-  -- Metadata
-  is_public BOOLEAN DEFAULT false, -- Can be used by all users
-  usage_count INTEGER DEFAULT 0, -- How many times this template has been used
+-- Backfill template_data from existing columns
+UPDATE job_templates
+SET template_data = jsonb_build_object(
+  'title_template',
+  COALESCE(title_template, ''),
+  'description_template',
+  COALESCE(description_template, ''),
+  'default_line_items',
+  COALESCE(default_line_items, '[]'::jsonb),
+  'service_date_offset_days',
+  COALESCE(service_date_offset_days, 0),
+  'default_priority',
+  COALESCE(default_priority, 'medium')
+)
+WHERE template_data IS NULL
+  OR template_data = '{}'::jsonb;
 
-  created_at TIMESTAMPTZ DEFAULT NOW(),
-  updated_at TIMESTAMPTZ DEFAULT NOW(),
-  created_by UUID REFERENCES auth.users(id)
-);
+-- Enforce NOT NULL only if safe
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1
+    FROM information_schema.columns
+    WHERE table_name = 'job_templates'
+      AND column_name = 'template_data'
+      AND is_nullable = 'NO'
+  ) AND NOT EXISTS (
+    SELECT 1 FROM job_templates WHERE template_data IS NULL
+  ) THEN
+    ALTER TABLE job_templates ALTER COLUMN template_data SET NOT NULL;
+  END IF;
+END $$;
+
+-- Add FK for created_by if safe
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1
+    FROM pg_constraint
+    WHERE conname = 'job_templates_created_by_fkey'
+  ) AND NOT EXISTS (
+    SELECT 1
+    FROM job_templates jt
+    WHERE jt.created_by IS NOT NULL
+      AND NOT EXISTS (
+        SELECT 1 FROM auth.users u WHERE u.id = jt.created_by
+      )
+  ) THEN
+    ALTER TABLE job_templates
+      ADD CONSTRAINT job_templates_created_by_fkey
+      FOREIGN KEY (created_by) REFERENCES auth.users(id);
+  END IF;
+END $$;
 
 -- Create indexes for better performance
-CREATE INDEX idx_job_templates_category ON job_templates(category);
-CREATE INDEX idx_job_templates_created_by ON job_templates(created_by);
-CREATE INDEX idx_job_templates_usage_count ON job_templates(usage_count DESC);
-CREATE INDEX idx_job_templates_is_public ON job_templates(is_public) WHERE is_public = true;
+CREATE INDEX IF NOT EXISTS idx_job_templates_category ON job_templates(category);
+CREATE INDEX IF NOT EXISTS idx_job_templates_created_by ON job_templates(created_by);
+CREATE INDEX IF NOT EXISTS idx_job_templates_usage_count ON job_templates(usage_count DESC);
+CREATE INDEX IF NOT EXISTS idx_job_templates_is_public ON job_templates(is_public)
+  WHERE is_public = true;
 
 -- Enable RLS
 ALTER TABLE job_templates ENABLE ROW LEVEL SECURITY;
+
+-- Drop previous policies (from 013)
+DROP POLICY IF EXISTS "Allow reading active job templates" ON job_templates;
+DROP POLICY IF EXISTS "Allow creating job templates" ON job_templates;
+DROP POLICY IF EXISTS "Allow updating job templates" ON job_templates;
+
+-- Drop new policies if rerunning
+DROP POLICY IF EXISTS "Users can view public templates and their own templates"
+  ON job_templates;
+DROP POLICY IF EXISTS "Users can create their own templates" ON job_templates;
+DROP POLICY IF EXISTS "Users can update their own templates" ON job_templates;
+DROP POLICY IF EXISTS "Users can delete their own templates" ON job_templates;
 
 -- Create policies
 CREATE POLICY "Users can view public templates and their own templates"
@@ -48,10 +103,7 @@ CREATE POLICY "Users can update their own templates"
 CREATE POLICY "Users can delete their own templates"
   ON job_templates FOR DELETE USING (auth.uid() = created_by);
 
--- Allow all authenticated users to manage templates (simplified RLS)
--- In a production app, you'd implement proper role-based access control
-
--- Update trigger
+-- Update trigger (idempotent)
 CREATE OR REPLACE FUNCTION update_job_templates_updated_at()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -60,10 +112,19 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
-CREATE TRIGGER job_templates_updated_at
-  BEFORE UPDATE ON job_templates
-  FOR EACH ROW
-  EXECUTE FUNCTION update_job_templates_updated_at();
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1
+    FROM pg_trigger
+    WHERE tgname = 'job_templates_updated_at'
+  ) THEN
+    CREATE TRIGGER job_templates_updated_at
+      BEFORE UPDATE ON job_templates
+      FOR EACH ROW
+      EXECUTE FUNCTION update_job_templates_updated_at();
+  END IF;
+END $$;
 
 -- Function to increment usage count
 CREATE OR REPLACE FUNCTION increment_template_usage(template_id UUID)
@@ -75,133 +136,3 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- Insert some default templates
-INSERT INTO job_templates (name, description, category, estimated_duration_hours, estimated_cost, default_priority, is_public, template_data) VALUES
-(
-  'Basic Plumbing Repair',
-  'Standard plumbing repair for common household issues',
-  'plumbing',
-  2.0,
-  150.00,
-  'medium',
-  true,
-  '{
-    "title": "Plumbing Repair",
-    "description": "Diagnosed and repaired plumbing issue",
-    "status": "scheduled",
-    "line_items": [
-      {
-        "item_type": "labor",
-        "description": "Plumbing diagnosis and repair",
-        "quantity": 2,
-        "unit_price": 75.00
-      },
-      {
-        "item_type": "material",
-        "description": "Replacement parts",
-        "quantity": 1,
-        "unit_price": 25.00
-      }
-    ]
-  }'::jsonb
-),
-(
-  'Kitchen Faucet Installation',
-  'Complete kitchen faucet replacement and installation',
-  'plumbing',
-  3.0,
-  250.00,
-  'medium',
-  true,
-  '{
-    "title": "Kitchen Faucet Installation",
-    "description": "Replaced old kitchen faucet with new model",
-    "status": "scheduled",
-    "line_items": [
-      {
-        "item_type": "labor",
-        "description": "Faucet removal and installation",
-        "quantity": 3,
-        "unit_price": 75.00
-      },
-      {
-        "item_type": "material",
-        "description": "New faucet and supply lines",
-        "quantity": 1,
-        "unit_price": 125.00
-      }
-    ]
-  }'::jsonb
-),
-(
-  'Basic Electrical Outlet Installation',
-  'Install new electrical outlet with proper grounding',
-  'electrical',
-  2.5,
-  200.00,
-  'high',
-  true,
-  '{
-    "title": "Electrical Outlet Installation",
-    "description": "Installed new GFCI electrical outlet",
-    "status": "scheduled",
-    "line_items": [
-      {
-        "item_type": "labor",
-        "description": "Electrical outlet installation",
-        "quantity": 2.5,
-        "unit_price": 80.00
-      }
-    ]
-  }'::jsonb
-),
-(
-  'HVAC Filter Replacement',
-  'Replace HVAC filters and basic system check',
-  'hvac',
-  1.0,
-  75.00,
-  'low',
-  true,
-  '{
-    "title": "HVAC Filter Replacement",
-    "description": "Replaced HVAC filters and performed basic system check",
-    "status": "scheduled",
-    "line_items": [
-      {
-        "item_type": "labor",
-        "description": "Filter replacement and system check",
-        "quantity": 1,
-        "unit_price": 75.00
-      }
-    ]
-  }'::jsonb
-),
-(
-  'Interior Painting - Single Room',
-  'Paint interior of a single room with primer and two coats',
-  'painting',
-  8.0,
-  600.00,
-  'medium',
-  true,
-  '{
-    "title": "Interior Room Painting",
-    "description": "Complete interior painting of single room",
-    "status": "scheduled",
-    "line_items": [
-      {
-        "item_type": "labor",
-        "description": "Painting labor (primer + 2 coats)",
-        "quantity": 8,
-        "unit_price": 65.00
-      },
-      {
-        "item_type": "material",
-        "description": "Paint and supplies",
-        "quantity": 1,
-        "unit_price": 120.00
-      }
-    ]
-  }'::jsonb
-);

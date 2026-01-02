@@ -106,6 +106,10 @@ export async function createJob(
   job: JobInsert,
   lineItems: LineItemInsert[]
 ): Promise<Job | null> {
+  if (!job.account_id) {
+    throw new Error('account_id is required to create a job');
+  }
+
   // Generate job number
   const { data: jobNumberData } = await supabase.rpc('generate_job_number');
   const jobNumber = jobNumberData || 'JOB-00001';
@@ -127,9 +131,14 @@ export async function createJob(
 
   // Create line items if any
   if (lineItems.length > 0) {
+    const accountId = jobData.account_id || job.account_id;
+    if (!accountId) {
+      throw new Error('account_id is required to create job line items');
+    }
     const itemsWithJobId = lineItems.map((item) => ({
       ...item,
       job_id: jobData.id,
+      account_id: accountId,
       total: item.quantity * item.unit_price,
     }));
 
@@ -636,14 +645,18 @@ export async function createJobFromEstimate(estimateId: string): Promise<Job> {
     throw new Error('Estimate must be approved to create a job');
   }
 
+  if (!estimate.account_id) {
+    throw new Error('Estimate is missing account context');
+  }
+
   // Create job data
   const jobData = {
     client_id: estimate.client_id || '',
-    account_id: estimate.account_id || '6785bba1-553c-4886-9638-460033ad6b01', // Default account
+    account_id: estimate.account_id,
     estimate_id: estimateId,
     title: estimate.title,
     description: estimate.description,
-    status: 'draft' as const,
+    status: 'quote' as const,
     subtotal: estimate.subtotal,
     tax: 0,
     total: estimate.total,
@@ -664,6 +677,17 @@ export async function createJobFromEstimate(estimateId: string): Promise<Job> {
 
   if (!job) {
     throw new Error('Failed to create job from estimate');
+  }
+
+  try {
+    await supabase.from('job_notes').insert({
+      job_id: job.id,
+      technician_id: null,
+      note: 'Job created from approved estimate',
+      account_id: estimate.account_id,
+    });
+  } catch (error) {
+    console.error('Failed to log job creation note:', error);
   }
 
   // Update estimate with job reference

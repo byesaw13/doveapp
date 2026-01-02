@@ -4,6 +4,10 @@ import { canManageAdmin } from '@/lib/auth-guards';
 import { createAdminClient, errorResponse } from '@/lib/api-helpers';
 import { logAuditEvent } from '@/lib/audit-log';
 
+type UpdateUserRoleBody = {
+  role?: 'OWNER' | 'ADMIN' | 'TECH' | string;
+};
+
 export async function PUT(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -20,8 +24,12 @@ export async function PUT(
 
     const supabase = createAdminClient();
     const { id: userId } = await params;
-    const body = await request.json();
+    const body = (await request.json()) as UpdateUserRoleBody;
     const { role } = body;
+
+    if (!role) {
+      return NextResponse.json({ error: 'Role is required' }, { status: 400 });
+    }
 
     // Validate role
     if (!['OWNER', 'ADMIN', 'TECH'].includes(role)) {

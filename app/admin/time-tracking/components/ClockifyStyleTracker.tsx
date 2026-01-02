@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import type { JobWithClient } from '@/types/job';
 import type { TimeEntry as DBTimeEntry } from '@/types/time-tracking';
 import { Play, Pause, Plus, Edit3, Trash2, Clock } from 'lucide-react';
@@ -62,18 +62,17 @@ const TECHNICIAN_NAME = 'Demo Technician'; // TODO: Get from auth context
 
 export function ClockifyStyleTracker() {
   // Simple toast replacement
-  const toast = ({
-    title,
-    description,
-    variant,
-  }: {
-    title: string;
-    description: string;
-    variant?: 'default' | 'destructive';
-  }) => {
-    const level = variant === 'destructive' ? 'error' : 'info';
-    // You can replace this with your preferred notification system
-  };
+  const toast = useCallback(
+    (params: {
+      title: string;
+      description: string;
+      variant?: 'default' | 'destructive';
+    }) => {
+      void params;
+      // You can replace this with your preferred notification system
+    },
+    []
+  );
   const [currentTime, setCurrentTime] = useState(new Date());
   const [isHydrated, setIsHydrated] = useState(false);
   const [isRunning, setIsRunning] = useState(false);
@@ -95,13 +94,6 @@ export function ClockifyStyleTracker() {
     return () => clearInterval(timer);
   }, []);
 
-  // Load jobs on component mount
-  useEffect(() => {
-    loadJobs();
-    loadTodaysEntries();
-    checkForActiveEntry();
-  }, []);
-
   // Calculate current entry duration (computed in render to avoid infinite loops)
   const currentEntryDuration =
     currentEntry && isRunning && currentTime
@@ -111,7 +103,7 @@ export function ClockifyStyleTracker() {
       : currentEntry?.duration || 0;
 
   // Load jobs from API
-  const loadJobs = async () => {
+  const loadJobs = useCallback(async () => {
     try {
       const response = await fetch('/api/jobs');
       const data = await response.json();
@@ -150,10 +142,10 @@ export function ClockifyStyleTracker() {
         variant: 'destructive',
       });
     }
-  };
+  }, [toast]);
 
   // Load today's time entries
-  const loadTodaysEntries = async () => {
+  const loadTodaysEntries = useCallback(async () => {
     try {
       const today = new Date().toISOString().split('T')[0];
       const response = await fetch(
@@ -184,10 +176,10 @@ export function ClockifyStyleTracker() {
     } catch (error) {
       console.error('Error loading time entries:', error);
     }
-  };
+  }, []);
 
   // Check for active time entry
-  const checkForActiveEntry = async () => {
+  const checkForActiveEntry = useCallback(async () => {
     try {
       const response = await fetch(
         `/api/time-tracking?action=active_entry&technician_name=${encodeURIComponent(TECHNICIAN_NAME)}`
@@ -214,7 +206,14 @@ export function ClockifyStyleTracker() {
     } catch (error) {
       console.error('Error checking for active entry:', error);
     }
-  };
+  }, []);
+
+  // Load jobs on component mount
+  useEffect(() => {
+    void loadJobs();
+    void loadTodaysEntries();
+    void checkForActiveEntry();
+  }, [loadJobs, loadTodaysEntries, checkForActiveEntry]);
 
   // Format duration to HH:MM:SS
   const formatDuration = (seconds: number): string => {
@@ -566,7 +565,7 @@ export function ClockifyStyleTracker() {
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle className="flex items-center gap-2">
             <Clock className="w-5 h-5" />
-            Today's Time Entries
+            Today&apos;s Time Entries
           </CardTitle>
           <Dialog open={showManualEntry} onOpenChange={setShowManualEntry}>
             <DialogTrigger asChild>

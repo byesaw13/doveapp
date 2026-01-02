@@ -1,3 +1,5 @@
+import type { JsonObject } from '@/types/json';
+
 export type AutomationType =
   | 'estimate_followup'
   | 'invoice_followup'
@@ -19,8 +21,8 @@ export interface AutomationRecord {
   run_at: string;
   last_attempt?: string | null;
   attempts: number;
-  payload?: Record<string, any> | null;
-  result?: Record<string, any> | null;
+  payload?: JsonObject | null;
+  result?: JsonObject | null;
   created_at: string;
 }
 

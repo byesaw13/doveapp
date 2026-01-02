@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Check, X, Clock, User, Calendar, Briefcase } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -73,11 +73,7 @@ export function TimeApprovals() {
   const [approvalNotes, setApprovalNotes] = useState('');
   const [rejectionReason, setRejectionReason] = useState('');
 
-  useEffect(() => {
-    loadPendingApprovals();
-  }, []);
-
-  const loadPendingApprovals = async () => {
+  const loadPendingApprovals = useCallback(async () => {
     try {
       setLoading(true);
       const response = await fetch(
@@ -97,7 +93,11 @@ export function TimeApprovals() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [toast]);
+
+  useEffect(() => {
+    void loadPendingApprovals();
+  }, [loadPendingApprovals]);
 
   const handleApprove = async (approval: TimeApproval) => {
     try {

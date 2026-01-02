@@ -2,7 +2,7 @@ import { NextRequest } from 'next/server';
 import { GET } from '@/app/api/tech/today-visits/route';
 
 // Mock the auth guards
-jest.mock('@/lib/auth-guards', () => ({
+jest.mock('@/lib/auth-guards-api', () => ({
   requireTechContext: jest.fn(),
 }));
 

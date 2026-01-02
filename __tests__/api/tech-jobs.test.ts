@@ -11,7 +11,7 @@ import {
 } from '@/app/api/tech/jobs/[id]/route';
 
 // Mock the auth guards
-jest.mock('@/lib/auth-guards', () => ({
+jest.mock('@/lib/auth-guards-api', () => ({
   requireTechContext: jest.fn(),
 }));
 
@@ -69,7 +69,7 @@ describe('/api/tech/jobs', () => {
       const data = await response.json();
 
       expect(response.status).toBe(401);
-      expect(data.error).toBe('Technician access required');
+      expect(data.error).toBe('Authentication required');
     });
 
     it('should return only assigned jobs for authenticated tech', async () => {

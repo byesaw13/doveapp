@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -34,7 +34,6 @@ import {
   Plus,
   Edit,
   Trash2,
-  Copy,
   Star,
   Clock,
   DollarSign,
@@ -99,7 +98,6 @@ export function JobTemplatesManager() {
   );
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [isPreviewDialogOpen, setIsPreviewDialogOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const { toast } = useToast();
@@ -126,11 +124,7 @@ export function JobTemplatesManager() {
     },
   });
 
-  useEffect(() => {
-    loadTemplates();
-  }, []);
-
-  const loadTemplates = async () => {
+  const loadTemplates = useCallback(async () => {
     try {
       const response = await fetch(
         '/api/admin/job-templates?include_public=true'
@@ -155,7 +149,11 @@ export function JobTemplatesManager() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [toast]);
+
+  useEffect(() => {
+    void loadTemplates();
+  }, [loadTemplates]);
 
   const resetForm = () => {
     setFormData({
@@ -317,7 +315,7 @@ export function JobTemplatesManager() {
       await fetch(`/api/admin/job-templates/${template.id}/use`, {
         method: 'POST',
       });
-    } catch (error) {
+    } catch {
       // Silently fail - usage tracking is not critical
     }
 
@@ -888,7 +886,7 @@ function TemplateForm({
 
         {formData.template_data.line_items.length === 0 ? (
           <p className="text-muted-foreground text-center py-4">
-            No line items added yet. Click "Add Item" to get started.
+            No line items added yet. Click &quot;Add Item&quot; to get started.
           </p>
         ) : (
           <div className="space-y-3">

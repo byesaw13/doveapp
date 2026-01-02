@@ -33,7 +33,7 @@ export async function POST(
     // Update estimate with decline info
     const declineInfo = {
       declinedAt: new Date().toISOString(),
-      reason: body.reason?.trim(),
+      reason: body.reason?.trim() || null,
       ipAddress:
         request.headers.get('x-forwarded-for') ||
         request.headers.get('x-real-ip') ||

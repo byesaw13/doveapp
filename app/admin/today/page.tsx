@@ -93,7 +93,9 @@ export default function AdminTodayPage() {
         <div className="flex items-center justify-center py-12">
           <div className="text-center">
             <RefreshCw className="h-8 w-8 animate-spin mx-auto mb-4 text-muted-foreground" />
-            <p className="text-muted-foreground">Loading today's overview...</p>
+            <p className="text-muted-foreground">
+              Loading today&apos;s overview...
+            </p>
           </div>
         </div>
       </div>
@@ -320,7 +322,7 @@ export default function AdminTodayPage() {
                     href="/admin/jobs?date=today"
                     className="text-xs text-blue-600 hover:text-blue-800 underline"
                   >
-                    View today's jobs →
+                    View today&apos;s jobs →
                   </Link>
                 </div>
               )}

@@ -5,6 +5,9 @@ ALTER TABLE jobs
 
 DROP INDEX IF EXISTS idx_jobs_technician_id;
 
+-- Drop the policy that references jobs.technician_id before dropping the column
+DROP POLICY IF EXISTS "Users can view assignments for jobs they're assigned to" ON public.team_assignments;
+
 ALTER TABLE jobs
   DROP COLUMN IF EXISTS technician_id;
 
@@ -15,6 +18,7 @@ ALTER TABLE jobs
 
 CREATE INDEX IF NOT EXISTS idx_jobs_assigned_tech_id ON jobs(assigned_tech_id);
 
+-- Recreate the policy with the new assigned_tech_id column
 DO $$
 BEGIN
   IF EXISTS (

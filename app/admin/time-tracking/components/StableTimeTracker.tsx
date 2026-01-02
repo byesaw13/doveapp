@@ -1,8 +1,7 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect } from 'react';
 import { useToast } from '@/components/ui/toast';
-import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
   Select,
@@ -11,7 +10,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Play, Pause, Clock, Coffee, Bell } from 'lucide-react';
+import { Coffee, Bell } from 'lucide-react';
 
 interface Project {
   id: string;
@@ -44,10 +43,8 @@ export function StableTimeTracker() {
   const [timeEntries, setTimeEntries] = useState<TimeEntry[]>([]);
   const [loading, setLoading] = useState(false);
   const [initialLoading, setInitialLoading] = useState(false);
-  const [dataLoaded, setDataLoaded] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [onBreak, setOnBreak] = useState(false);
-  const [currentBreakId, setCurrentBreakId] = useState<string | null>(null);
   const [punchSound, setPunchSound] = useState(false);
 
   // Initialize component safely
@@ -90,21 +87,18 @@ export function StableTimeTracker() {
               const breakData = await breakRes.json();
               if (breakData.active_break) {
                 setOnBreak(true);
-                setCurrentBreakId(breakData.active_break.id);
               } else {
                 setOnBreak(false);
-                setCurrentBreakId(null);
               }
             }
           } else {
             setRunning(false);
             setStartTime(null);
             setOnBreak(false);
-            setCurrentBreakId(null);
           }
         }
-      } catch (err) {
-        console.warn('Failed to restore active timer state:', err);
+      } catch (_err) {
+        console.warn('Failed to restore active timer state:', _err);
       }
     };
 
@@ -117,7 +111,8 @@ export function StableTimeTracker() {
     };
 
     document.addEventListener('visibilitychange', handleVisibility);
-    return () => document.removeEventListener('visibilitychange', handleVisibility);
+    return () =>
+      document.removeEventListener('visibilitychange', handleVisibility);
   }, [hydrated]);
 
   // Punch sound effect
@@ -150,7 +145,7 @@ export function StableTimeTracker() {
         oscillator.stop(audioContext.currentTime + 0.3);
 
         setTimeout(() => setPunchSound(false), 300);
-      } catch (err) {
+      } catch {
         // Fallback - no sound
         setTimeout(() => setPunchSound(false), 300);
       }
@@ -344,18 +339,12 @@ export function StableTimeTracker() {
     return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
   };
 
-  const elapsedTime = useMemo(
-    () => formatElapsedTime(),
-    [time, startTime, hydrated]
-  );
-
   // Load data on mount
   useEffect(() => {
     const loadData = async () => {
       setInitialLoading(true);
       try {
         await Promise.all([loadProjectsSafely(), loadTimeEntriesSafely()]);
-        setDataLoaded(true);
       } catch (err) {
         console.warn('Failed to load initial data:', err);
       } finally {

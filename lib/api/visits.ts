@@ -33,7 +33,7 @@ export async function listTodayVisits(
     // Default to today if no date provided
     const targetDate = filters.date || new Date().toISOString().split('T')[0];
 
-    let query = context.supabase
+    const query = context.supabase
       .from('visits')
       .select(
         `

@@ -31,16 +31,18 @@ interface PWAStatus {
 
 export function PWARegistration() {
   const { toast } = useToast();
-  const [mounted, setMounted] = useState(false);
+  const isClient = typeof window !== 'undefined';
   const [status, setStatus] = useState<PWAStatus>(() => ({
     isOnline: typeof navigator !== 'undefined' ? navigator.onLine : true,
-    isInstalled:
-      typeof window !== 'undefined'
-        ? window.matchMedia('(display-mode: standalone)').matches ||
-          (window.navigator as any).standalone === true
-        : false,
+    isInstalled: isClient
+      ? window.matchMedia('(display-mode: standalone)').matches ||
+        (window.navigator as any).standalone === true
+      : false,
     canInstall: false,
-    hasNotifications: false, // Start with false, update after mount
+    hasNotifications:
+      isClient &&
+      'Notification' in window &&
+      Notification.permission === 'granted',
     serviceWorkerStatus: null,
     syncStatus: 'idle',
   }));
@@ -260,17 +262,6 @@ export function PWARegistration() {
   }, [registration, toast]);
 
   useEffect(() => {
-    setMounted(true);
-
-    // Update notification status after mount
-    if ('Notification' in window && Notification.permission === 'granted') {
-      setStatus((prev) => ({ ...prev, hasNotifications: true }));
-    }
-  }, []);
-
-  useEffect(() => {
-    if (!mounted) return;
-
     // Register service worker
     const registrationTimeout = window.setTimeout(() => {
       void registerServiceWorker();
@@ -294,7 +285,6 @@ export function PWARegistration() {
       window.removeEventListener('appinstalled', handleAppInstalled);
     };
   }, [
-    mounted,
     handleAppInstalled,
     handleInstallPrompt,
     handleOfflineStatus,
@@ -377,7 +367,7 @@ export function PWARegistration() {
         {/* Notifications */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            {mounted ? (
+            {isClient ? (
               status.hasNotifications ? (
                 <Bell className="h-4 w-4 text-green-600" />
               ) : (
@@ -388,7 +378,7 @@ export function PWARegistration() {
             )}
             <span className="text-sm">Notifications</span>
           </div>
-          {mounted ? (
+          {isClient ? (
             status.hasNotifications ? (
               <Badge variant="default">Enabled</Badge>
             ) : (

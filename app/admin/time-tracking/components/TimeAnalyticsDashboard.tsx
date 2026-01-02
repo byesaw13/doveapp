@@ -1,16 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import {
-  BarChart3,
-  TrendingUp,
-  Clock,
-  DollarSign,
-  Users,
-  CheckCircle,
-  Calendar,
-  Activity,
-} from 'lucide-react';
+import { useState, useEffect, useCallback } from 'react';
+import { BarChart3, TrendingUp, Clock, Users, CheckCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -60,11 +51,7 @@ export function TimeAnalyticsDashboard() {
     'week' | 'month' | 'quarter' | 'year'
   >('month');
 
-  useEffect(() => {
-    loadAnalytics();
-  }, [dateRange]);
-
-  const loadAnalytics = async () => {
+  const loadAnalytics = useCallback(async () => {
     try {
       setLoading(true);
       const response = await fetch(
@@ -87,7 +74,11 @@ export function TimeAnalyticsDashboard() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [dateRange, toast]);
+
+  useEffect(() => {
+    void loadAnalytics();
+  }, [loadAnalytics]);
 
   const formatHours = (hours: number) => {
     const h = Math.floor(hours);
@@ -257,7 +248,7 @@ export function TimeAnalyticsDashboard() {
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            {analytics.productivity_trends.map((day, index) => (
+            {analytics.productivity_trends.map((day) => (
               <div key={day.date} className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
@@ -305,7 +296,7 @@ export function TimeAnalyticsDashboard() {
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            {analytics.technician_performance.map((tech, index) => (
+            {analytics.technician_performance.map((tech) => (
               <div
                 key={tech.technician_name}
                 className="flex items-center justify-between p-4 border rounded-lg"

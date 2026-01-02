@@ -12,10 +12,8 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import {
   User,
   Phone,
-  Mail,
   MapPin,
   DollarSign,
-  Calendar,
   Briefcase,
   AlertTriangle,
   Loader2,
@@ -169,7 +167,7 @@ export default function EmployeeProfileRequestPage() {
               No Profile Found
             </h3>
             <p className="mt-1 text-sm text-gray-500">
-              Your profile hasn't been set up yet. Please contact your
+              Your profile hasn&apos;t been set up yet. Please contact your
               administrator.
             </p>
           </CardContent>

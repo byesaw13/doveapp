@@ -89,6 +89,32 @@ export const createClientSchema = z.object({
 export const updateClientSchema = createClientSchema.partial();
 
 /**
+ * Property validation schemas
+ */
+export const createPropertySchema = z.object({
+  client_id: uuidSchema,
+  name: z.string().min(1, 'Name is required').max(100),
+  address_line1: z.string().max(255).optional(),
+  address_line2: z.string().max(255).optional(),
+  city: z.string().max(100).optional(),
+  state: z.string().max(50).optional(),
+  zip_code: z.string().max(20).optional(),
+  property_type: z
+    .enum([
+      'Residential',
+      'Commercial',
+      'Condo',
+      'Apartment',
+      'Townhouse',
+      'Other',
+    ])
+    .optional(),
+  notes: z.string().max(1000).optional(),
+});
+
+export const updatePropertySchema = createPropertySchema.partial();
+
+/**
  * Estimate validation schemas
  */
 export const createEstimateSchema = z.object({

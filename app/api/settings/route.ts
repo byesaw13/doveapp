@@ -7,6 +7,7 @@ import { requireAccountContext } from '@/lib/auth-guards-api';
 import { canManageAdmin } from '@/lib/auth-guards';
 import { createRouteHandlerClient } from '@/lib/supabase/route-handler';
 import { isDemoMode } from '@/lib/auth/demo';
+import type { JsonObject } from '@/types/json';
 
 // GET /api/settings - Get business settings
 export async function GET(request: NextRequest) {
@@ -73,7 +74,7 @@ export async function PUT(request: NextRequest) {
     }
 
     const supabase = await createRouteHandlerClient();
-    const updates = await request.json();
+    const updates = (await request.json()) as JsonObject;
     const settings = await updateBusinessSettings(updates, supabase);
     return NextResponse.json(settings);
   } catch (error) {

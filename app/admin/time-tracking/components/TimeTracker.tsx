@@ -176,10 +176,13 @@ export function TimeTracker() {
 
   // Load projects on mount
   useEffect(() => {
-    loadProjects();
-    loadTodaysEntries();
-    checkActiveEntry();
-     
+    const timeoutId = window.setTimeout(() => {
+      void loadProjects();
+      void loadTodaysEntries();
+      void checkActiveEntry();
+    }, 0);
+
+    return () => window.clearTimeout(timeoutId);
   }, []);
 
   return (
@@ -281,7 +284,7 @@ export function TimeTracker() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Clock className="w-5 h-5" />
-            Today's Time Entries
+            Today&apos;s Time Entries
           </CardTitle>
         </CardHeader>
         <CardContent>

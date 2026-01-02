@@ -60,7 +60,7 @@ export async function logJobCreated(
     description: jobAmount ? `Total: $${jobAmount.toFixed(2)}` : undefined,
     related_id: jobId,
     related_type: 'job',
-    metadata: { amount: jobAmount },
+    metadata: jobAmount ? { amount: jobAmount } : {},
   });
 }
 
@@ -134,7 +134,7 @@ export async function logPropertyAdded(
     description: [city, state].filter(Boolean).join(', '),
     related_id: propertyId,
     related_type: 'property',
-    metadata: { city, state },
+    metadata: { city: city || null, state: state || null },
   });
 }
 
@@ -194,7 +194,7 @@ export async function logEstimateDeclined(
     description: reason,
     related_id: estimateId,
     related_type: 'estimate',
-    metadata: { estimate_number: estimateNumber, reason },
+    metadata: { estimate_number: estimateNumber, reason: reason || null },
   });
 }
 
@@ -214,7 +214,7 @@ export async function logPaymentReceived(
     description: paymentMethod ? `via ${paymentMethod}` : undefined,
     related_id: paymentId,
     related_type: 'payment',
-    metadata: { amount, payment_method: paymentMethod },
+    metadata: { amount, payment_method: paymentMethod || null },
   });
 }
 
@@ -292,7 +292,7 @@ export async function logCall(
     title: `${callType === 'incoming' ? 'Incoming' : 'Outgoing'} call`,
     description: notes,
     created_by: createdBy,
-    metadata: { call_type: callType, duration },
+    metadata: { call_type: callType, duration: duration || null },
   });
 }
 

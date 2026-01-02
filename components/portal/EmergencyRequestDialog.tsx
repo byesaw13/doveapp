@@ -135,7 +135,7 @@ export function EmergencyRequestDialog({
           <p className="text-sm text-red-800">
             <strong>Emergency services are available 24/7.</strong> If this is a
             life-threatening emergency, please call 911 immediately. For urgent
-            service needs, submit this form and we'll respond as quickly as
+            service needs, submit this form and we&apos;ll respond as quickly as
             possible.
           </p>
         </div>

@@ -20,6 +20,18 @@ import { ThemeToggle } from '@/components/theme-toggle';
 import type { SidebarNotificationCounts } from '@/app/api/sidebar/notifications/route';
 import type { SidebarPerformanceData } from '@/app/api/sidebar/performance/route';
 
+const getInitialCollapsedGroups = (
+  navigationGroups: PortalNavGroup[]
+): Set<string> => {
+  const initialCollapsed = new Set<string>();
+  navigationGroups.forEach((group) => {
+    if (!group.defaultOpen) {
+      initialCollapsed.add(group.name);
+    }
+  });
+  return initialCollapsed;
+};
+
 export interface PortalNavItem {
   name: string;
   href: string;
@@ -85,39 +97,25 @@ export function PortalSidebar({
   const pathname = usePathname();
   const router = useRouter();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(
-    new Set()
-  );
-  const [mounted, setMounted] = useState(false);
-
-  // Initialize collapsed groups after mount to avoid hydration mismatch
-  useEffect(() => {
-    setMounted(true);
+  const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(() => {
+    const initialCollapsed = getInitialCollapsedGroups(navigationGroups);
 
     if (typeof window === 'undefined') {
-      return;
+      return initialCollapsed;
     }
 
     const stored = localStorage.getItem('sidebar-collapsed-groups');
 
     if (stored) {
       try {
-        setCollapsedGroups(new Set(JSON.parse(stored)));
-        return;
+        return new Set(JSON.parse(stored));
       } catch (e) {
         console.error('Failed to parse collapsed groups:', e);
       }
     }
 
-    const initialCollapsed = new Set<string>();
-    navigationGroups.forEach((group) => {
-      if (!group.defaultOpen) {
-        initialCollapsed.add(group.name);
-      }
-    });
-
-    setCollapsedGroups(initialCollapsed);
-  }, [navigationGroups]);
+    return initialCollapsed;
+  });
 
   const [notifications, setNotifications] = useState<SidebarNotificationCounts>(
     {
@@ -172,27 +170,31 @@ export function PortalSidebar({
     }
   }, [showPerformanceWidget]);
 
+  const runFetches = useCallback(async () => {
+    await fetchNotifications();
+    await fetchPerformance();
+  }, [fetchNotifications, fetchPerformance]);
+
   // Initial load and refresh every 30 seconds
   useEffect(() => {
-    const runFetches = async () => {
-      await fetchNotifications();
-      await fetchPerformance();
-    };
+    const initialTimeout = window.setTimeout(() => {
+      void runFetches();
+    }, 0);
 
-    void runFetches();
-
-    const interval = setInterval(() => {
+    const interval = window.setInterval(() => {
       void runFetches();
     }, 30000);
 
-    return () => clearInterval(interval);
-  }, [fetchNotifications, fetchPerformance]);
+    return () => {
+      window.clearTimeout(initialTimeout);
+      window.clearInterval(interval);
+    };
+  }, [runFetches]);
 
   // Keyboard shortcuts for navigation (Alt+Key)
-  useEffect(() => {
-    if (!showKeyboardShortcuts) return;
-
-    const handleKeyDown = (e: KeyboardEvent): void => {
+  const handleKeyDown = useCallback(
+    (e: KeyboardEvent): void => {
+      if (!showKeyboardShortcuts) return;
       if (e.altKey && !e.ctrlKey && !e.metaKey) {
         const key = e.key.toUpperCase();
         navigationGroups.forEach((group) => {
@@ -205,11 +207,15 @@ export function PortalSidebar({
           });
         });
       }
-    };
+    },
+    [navigationGroups, router, showKeyboardShortcuts]
+  );
 
+  useEffect(() => {
+    if (!showKeyboardShortcuts) return;
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [router, navigationGroups, showKeyboardShortcuts]);
+  }, [handleKeyDown, showKeyboardShortcuts]);
 
   const toggleGroup = (groupName: string): void => {
     setCollapsedGroups((prev) => {
@@ -390,9 +396,7 @@ export function PortalSidebar({
           {/* Navigation - Grouped */}
           <nav className="flex-1 px-3 py-4 space-y-3 overflow-y-auto">
             {navigationGroups.map((group) => {
-              const isCollapsed = mounted
-                ? collapsedGroups.has(group.name)
-                : !group.defaultOpen;
+              const isCollapsed = collapsedGroups.has(group.name);
               return (
                 <div key={group.name} className="space-y-1">
                   <button

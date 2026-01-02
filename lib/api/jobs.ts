@@ -18,9 +18,7 @@ export interface JobWithClient {
   clients?: any;
 }
 
-export interface JobWithDetails extends JobWithClient {
-  // Add details
-}
+export type JobWithDetails = JobWithClient;
 
 export interface JobServiceContext {
   accountId: string;
@@ -225,6 +223,12 @@ export async function createJob(
       const lineItems = jobData.line_items.map((item: any) => ({
         ...item,
         job_id: job.id,
+        account_id: context.accountId,
+        total:
+          item.total ??
+          (item.quantity && item.unit_price
+            ? item.quantity * item.unit_price
+            : 0),
       }));
 
       const { error: lineItemsError } = await context.supabase
@@ -234,6 +238,19 @@ export async function createJob(
       if (lineItemsError) {
         console.error('Error creating line items:', lineItemsError);
       }
+    }
+
+    const { error: noteError } = await context.supabase
+      .from('job_notes')
+      .insert({
+        job_id: job.id,
+        technician_id: context.userId,
+        note: 'Job created',
+        account_id: context.accountId,
+      });
+
+    if (noteError) {
+      console.warn('Failed to log job creation note:', noteError);
     }
 
     return { data: job, error: null };

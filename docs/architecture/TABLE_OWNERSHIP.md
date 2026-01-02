@@ -1,25 +1,81 @@
-# Table Ownership & Permissions
+# Table Ownership
 
-This document is the single source of truth for table ownership, write authorities, and satellite permissions in the Doveapp ecosystem. It defines the contract for multi-app boundaries and ensures all systems respect RLS-first data isolation.
+This document is generated from the live schema baseline (`supabase/schema_baseline.sql`)
+with migrations used to flag drift (missing/extra tables).
 
-Based on supabase/schema_baseline.sql and supabase/migrations/\*.sql. All tables have RLS enabled and filter by account_id unless noted otherwise.
+Write Mode definitions:
 
-Canonical Owner determines who has final authority over lifecycle-critical fields. Primary Producer indicates which system typically writes records (often drafts/events) without owning truth.
+- CRUD: create/update/delete allowed
+- Append-only: inserts allowed; updates discouraged
+- Draft-only: mutable until finalization
+- Events-only: immutable event stream
+- Workflow: state transitions governed by approvals
+- Event Log: audit/telemetry with controlled writers
 
-| Table                | Purpose                       | Canonical Owner | Primary Producer           | Canonical State? | Allowed Writers | Write Mode                                | Notes                                                                                          |
-| -------------------- | ----------------------------- | --------------- | -------------------------- | ---------------- | --------------- | ----------------------------------------- | ---------------------------------------------------------------------------------------------- |
-| account_memberships  | User-account role mappings    | Doveapp Core    | Doveapp Core               | Yes              | service_role    | CRUD                                      | Global-ish admin table; reads scoped by membership                                             |
-| clients              | Customer contact records      | Doveapp Core    | Doveapp Core               | Yes              | authenticated   | CRUD                                      | RLS: account_id filter                                                                         |
-| customers            | Portal customer profiles      | Doveapp Core    | Doveapp Core               | Yes              | authenticated   | CRUD                                      | Portal identity/profile; relates to clients (internal CRM)                                     |
-| estimates            | Quote proposals and pricing   | Doveapp Core    | Estimator App              | Yes              | authenticated   | Draft-only (satellite) + lifecycle (core) | Estimator creates/edits drafts; Doveapp controls sent/accepted/rejected and conversion to jobs |
-| invoices             | Billing documents             | Doveapp Core    | Doveapp Core               | Yes              | service_role    | CRUD                                      | Generated from jobs by Doveapp server routes; never client-written                             |
-| jobs                 | Core work units and lifecycle | Doveapp Core    | Doveapp Core               | Yes              | authenticated   | CRUD                                      | Prefer satellites write events/notes; Doveapp finalizes lifecycle transitions                  |
-| leads                | Sales pipeline records        | Doveapp Core    | Doveapp Core               | Yes              | authenticated   | CRUD                                      | RLS: account_id filter                                                                         |
-| properties           | Physical locations            | Doveapp Core    | Doveapp Core               | Yes              | authenticated   | CRUD                                      | RLS: account_id filter                                                                         |
-| technician_locations | GPS tracking data             | Event Log       | Automation Workers / Tech  | No               | authenticated   | Append-only                               | RLS: account_id filter; event log                                                              |
-| time_entries         | Work time records             | Doveapp Core    | Automation Workers / Tech  | Yes              | authenticated   | CRUD                                      | Impacts billing; approvals manage workflow                                                     |
-| technician_rates     | Pay rate configurations       | Doveapp Core    | Doveapp Core               | Yes              | authenticated   | CRUD                                      | RLS: account_id filter                                                                         |
-| time_approvals       | Time entry approvals          | Workflow        | Automation Workers / Admin | No               | authenticated   | CRUD                                      | RLS: account_id filter; workflow state                                                         |
-| time_breaks          | Break time records            | Event Log       | Automation Workers / Tech  | No               | authenticated   | Append-only                               | RLS: account_id filter; event log                                                              |
-| visits               | Job site visit logs           | Event Log       | Automation Workers / Tech  | No               | authenticated   | Append-only                               | RLS: account_id filter; audit trail                                                            |
-| job_notes            | Job activity and comments     | Doveapp Core    | AI App + Humans            | No               | authenticated   | Append-only                               | Append-only timeline/events; restrict edits/deletes (admin-only if ever allowed)               |
+| Table                             | Purpose | Canonical Owner | Primary Producer          | Canonical State? | Allowed Writers | Write Mode  | Notes                                                                 |
+| --------------------------------- | ------- | --------------- | ------------------------- | ---------------- | --------------- | ----------- | --------------------------------------------------------------------- |
+| `public.account_memberships`      | TBD     | Doveapp Core    | Doveapp Core              | TBD              | authenticated   | CRUD        | Present in DB (see SCHEMA_DRIFT_REPORT.md)                            |
+| `public.accounts`                 | TBD     | Doveapp Core    | Doveapp Core              | TBD              | authenticated   | CRUD        | Present in DB (see SCHEMA_DRIFT_REPORT.md)                            |
+| `public.activity_log`             | TBD     | Event Log       | Automation Workers / Tech | TBD              | service_role    | Event Log   | Present in DB (see SCHEMA_DRIFT_REPORT.md)                            |
+| `public.ai_estimate_settings`     | TBD     | TBD             | TBD                       | TBD              | TBD             | CRUD        | Present in DB (see SCHEMA_DRIFT_REPORT.md)                            |
+| `public.alerts`                   | TBD     | Event Log       | Automation Workers / Tech | TBD              | service_role    | Event Log   | Present in DB (see SCHEMA_DRIFT_REPORT.md)                            |
+| `public.audit_logs`               | TBD     | Event Log       | Automation Workers / Tech | TBD              | service_role    | Event Log   | Present in DB (see SCHEMA_DRIFT_REPORT.md)                            |
+| `public.automation_history`       | TBD     | Event Log       | Automation Workers / Tech | TBD              | service_role    | Event Log   | Present in DB (see SCHEMA_DRIFT_REPORT.md)                            |
+| `public.automations`              | TBD     | Event Log       | Automation Workers / Tech | TBD              | service_role    | Event Log   | Present in DB (see SCHEMA_DRIFT_REPORT.md)                            |
+| `public.billing_events`           | TBD     | Event Log       | Automation Workers / Tech | TBD              | service_role    | Event Log   | Present in DB (see SCHEMA_DRIFT_REPORT.md)                            |
+| `public.business_settings`        | TBD     | Doveapp Core    | Doveapp Core              | TBD              | authenticated   | CRUD        | Present in DB (see SCHEMA_DRIFT_REPORT.md)                            |
+| `public.channel_accounts`         | TBD     | Doveapp Core    | Doveapp Core              | TBD              | authenticated   | CRUD        | Present in DB (see SCHEMA_DRIFT_REPORT.md)                            |
+| `public.client_activities`        | TBD     | Doveapp Core    | Doveapp Core              | TBD              | authenticated   | CRUD        | Present in DB (see SCHEMA_DRIFT_REPORT.md)                            |
+| `public.clients`                  | TBD     | Doveapp Core    | Doveapp Core              | TBD              | authenticated   | CRUD        | Present in DB (see SCHEMA_DRIFT_REPORT.md)                            |
+| `public.conversations`            | TBD     | Doveapp Core    | Doveapp Core              | TBD              | authenticated   | CRUD        | Present in DB (see SCHEMA_DRIFT_REPORT.md)                            |
+| `public.customer_communications`  | TBD     | Doveapp Core    | Doveapp Core              | TBD              | authenticated   | CRUD        | Present in DB (see SCHEMA_DRIFT_REPORT.md)                            |
+| `public.customers`                | TBD     | Doveapp Core    | Doveapp Core              | TBD              | authenticated   | CRUD        | Present in DB (see SCHEMA_DRIFT_REPORT.md)                            |
+| `public.email_insights`           | TBD     | Event Log       | Automation Workers / Tech | TBD              | service_role    | Event Log   | Present in DB (see SCHEMA_DRIFT_REPORT.md)                            |
+| `public.email_lead_details`       | TBD     | Event Log       | Automation Workers / Tech | TBD              | service_role    | Event Log   | Present in DB (see SCHEMA_DRIFT_REPORT.md)                            |
+| `public.email_templates`          | TBD     | Doveapp Core    | Doveapp Core              | TBD              | authenticated   | CRUD        | Present in DB (see SCHEMA_DRIFT_REPORT.md)                            |
+| `public.emails_raw`               | TBD     | Event Log       | Automation Workers / Tech | TBD              | service_role    | Event Log   | Present in DB (see SCHEMA_DRIFT_REPORT.md)                            |
+| `public.employee_profiles`        | TBD     | TBD             | TBD                       | TBD              | TBD             | CRUD        | Present in DB (see SCHEMA_DRIFT_REPORT.md)                            |
+| `public.estimate_templates`       | TBD     | TBD             | TBD                       | TBD              | TBD             | CRUD        | Present in DB (see SCHEMA_DRIFT_REPORT.md)                            |
+| `public.estimates`                | TBD     | Doveapp Core    | Doveapp Core              | TBD              | authenticated   | CRUD        | Present in DB (see SCHEMA_DRIFT_REPORT.md)                            |
+| `public.gmail_connections`        | TBD     | Doveapp Core    | Doveapp Core              | TBD              | authenticated   | CRUD        | Present in DB (see SCHEMA_DRIFT_REPORT.md)                            |
+| `public.invoice_line_items`       | TBD     | Doveapp Core    | Doveapp Core              | TBD              | authenticated   | CRUD        | Present in DB (see SCHEMA_DRIFT_REPORT.md)                            |
+| `public.invoice_payments`         | TBD     | Doveapp Core    | Doveapp Core              | TBD              | authenticated   | CRUD        | Present in DB (see SCHEMA_DRIFT_REPORT.md)                            |
+| `public.invoices`                 | TBD     | Doveapp Core    | Doveapp Core              | TBD              | authenticated   | CRUD        | Present in DB (see SCHEMA_DRIFT_REPORT.md)                            |
+| `public.job_line_items`           | TBD     | Doveapp Core    | Doveapp Core              | TBD              | authenticated   | CRUD        | Present in DB (see SCHEMA_DRIFT_REPORT.md)                            |
+| `public.job_materials`            | TBD     | Doveapp Core    | Doveapp Core              | TBD              | authenticated   | CRUD        | Present in DB (see SCHEMA_DRIFT_REPORT.md)                            |
+| `public.job_notes`                | TBD     | TBD             | AI App + Humans           | TBD              | authenticated   | Append-only | Present in DB (see SCHEMA_DRIFT_REPORT.md)                            |
+| `public.job_photos`               | TBD     | TBD             | TBD                       | TBD              | TBD             | CRUD        | Present in DB (see SCHEMA_DRIFT_REPORT.md)                            |
+| `public.job_templates`            | TBD     | Doveapp Core    | Doveapp Core              | TBD              | authenticated   | CRUD        | Present in DB (see SCHEMA_DRIFT_REPORT.md)                            |
+| `public.job_tools`                | TBD     | Doveapp Core    | Doveapp Core              | TBD              | authenticated   | CRUD        | Present in DB (see SCHEMA_DRIFT_REPORT.md)                            |
+| `public.job_workflow_executions`  | TBD     | Doveapp Core    | Doveapp Core              | TBD              | authenticated   | CRUD        | Present in DB (see SCHEMA_DRIFT_REPORT.md)                            |
+| `public.job_workflows`            | TBD     | Doveapp Core    | Doveapp Core              | TBD              | authenticated   | CRUD        | Present in DB (see SCHEMA_DRIFT_REPORT.md)                            |
+| `public.jobs`                     | TBD     | Doveapp Core    | Doveapp Core              | TBD              | authenticated   | CRUD        | Present in DB (see SCHEMA_DRIFT_REPORT.md)                            |
+| `public.lead_activities`          | TBD     | Doveapp Core    | Doveapp Core              | TBD              | authenticated   | CRUD        | Present in DB (see SCHEMA_DRIFT_REPORT.md)                            |
+| `public.leads`                    | TBD     | Doveapp Core    | Doveapp Core              | TBD              | authenticated   | CRUD        | Present in DB (see SCHEMA_DRIFT_REPORT.md)                            |
+| `public.material_transactions`    | TBD     | Doveapp Core    | Doveapp Core              | TBD              | authenticated   | CRUD        | Present in DB (see SCHEMA_DRIFT_REPORT.md)                            |
+| `public.materials`                | TBD     | Doveapp Core    | Doveapp Core              | TBD              | authenticated   | CRUD        | Present in DB (see SCHEMA_DRIFT_REPORT.md)                            |
+| `public.messages`                 | TBD     | Doveapp Core    | Doveapp Core              | TBD              | authenticated   | CRUD        | Present in DB (see SCHEMA_DRIFT_REPORT.md)                            |
+| `public.payments`                 | TBD     | Doveapp Core    | Doveapp Core              | TBD              | authenticated   | CRUD        | Present in DB (see SCHEMA_DRIFT_REPORT.md)                            |
+| `public.profile_change_requests`  | TBD     | Workflow        | Doveapp Core              | TBD              | authenticated   | Workflow    | Present in DB (see SCHEMA_DRIFT_REPORT.md)                            |
+| `public.properties`               | TBD     | Doveapp Core    | Doveapp Core              | TBD              | authenticated   | CRUD        | Present in DB (see SCHEMA_DRIFT_REPORT.md)                            |
+| `public.security_settings`        | TBD     | Doveapp Core    | Doveapp Core              | TBD              | authenticated   | CRUD        | Present in DB (see SCHEMA_DRIFT_REPORT.md)                            |
+| `public.square_connections`       | TBD     | Doveapp Core    | Doveapp Core              | TBD              | authenticated   | CRUD        | Present in DB (see SCHEMA_DRIFT_REPORT.md)                            |
+| `public.technician_locations`     | TBD     | Doveapp Core    | Doveapp Core              | TBD              | authenticated   | CRUD        | Present in DB (see SCHEMA_DRIFT_REPORT.md)                            |
+| `public.technician_rates`         | TBD     | Doveapp Core    | Doveapp Core              | TBD              | authenticated   | CRUD        | Present in DB (see SCHEMA_DRIFT_REPORT.md)                            |
+| `public.time_approvals`           | TBD     | Doveapp Core    | Doveapp Core              | TBD              | authenticated   | CRUD        | Present in DB (see SCHEMA_DRIFT_REPORT.md)                            |
+| `public.time_breaks`              | TBD     | Doveapp Core    | Doveapp Core              | TBD              | authenticated   | CRUD        | Present in DB (see SCHEMA_DRIFT_REPORT.md)                            |
+| `public.time_entries`             | TBD     | Doveapp Core    | Doveapp Core              | TBD              | authenticated   | CRUD        | Present in DB (see SCHEMA_DRIFT_REPORT.md)                            |
+| `public.tool_assignments`         | TBD     | Doveapp Core    | Doveapp Core              | TBD              | authenticated   | CRUD        | Present in DB (see SCHEMA_DRIFT_REPORT.md)                            |
+| `public.tool_images`              | TBD     | Doveapp Core    | Doveapp Core              | TBD              | authenticated   | CRUD        | Present in DB (see SCHEMA_DRIFT_REPORT.md)                            |
+| `public.tool_inventory_counts`    | TBD     | Doveapp Core    | Doveapp Core              | TBD              | authenticated   | CRUD        | Present in DB (see SCHEMA_DRIFT_REPORT.md)                            |
+| `public.tool_maintenance`         | TBD     | Doveapp Core    | Doveapp Core              | TBD              | authenticated   | CRUD        | Present in DB (see SCHEMA_DRIFT_REPORT.md)                            |
+| `public.tool_recognition_matches` | TBD     | Doveapp Core    | Doveapp Core              | TBD              | authenticated   | CRUD        | Present in DB (see SCHEMA_DRIFT_REPORT.md)                            |
+| `public.tool_recognition_results` | TBD     | Doveapp Core    | Doveapp Core              | TBD              | authenticated   | CRUD        | Present in DB (see SCHEMA_DRIFT_REPORT.md)                            |
+| `public.users`                    | TBD     | Doveapp Core    | Doveapp Core              | TBD              | authenticated   | CRUD        | Present in DB (see SCHEMA_DRIFT_REPORT.md)                            |
+| `public.visits`                   | TBD     | Doveapp Core    | Doveapp Core              | TBD              | authenticated   | CRUD        | Present in DB (see SCHEMA_DRIFT_REPORT.md)                            |
+| `public.contact_requests`         | TBD     | TBD             | TBD                       | TBD              | TBD             | CRUD        | Expected by migrations but missing in DB (see SCHEMA_DRIFT_REPORT.md) |
+| `public.invoice_reminders`        | TBD     | Workflow        | Doveapp Core              | TBD              | authenticated   | Workflow    | Expected by migrations but missing in DB (see SCHEMA_DRIFT_REPORT.md) |
+| `public.job_checklist_items`      | TBD     | Workflow        | Doveapp Core              | TBD              | authenticated   | Workflow    | Expected by migrations but missing in DB (see SCHEMA_DRIFT_REPORT.md) |
+| `public.team_assignments`         | TBD     | Workflow        | Doveapp Core              | TBD              | authenticated   | Workflow    | Expected by migrations but missing in DB (see SCHEMA_DRIFT_REPORT.md) |
+| `public.team_availability`        | TBD     | Workflow        | Doveapp Core              | TBD              | authenticated   | Workflow    | Expected by migrations but missing in DB (see SCHEMA_DRIFT_REPORT.md) |
+| `public.team_schedules`           | TBD     | Workflow        | Doveapp Core              | TBD              | authenticated   | Workflow    | Expected by migrations but missing in DB (see SCHEMA_DRIFT_REPORT.md) |

@@ -1,8 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useToast } from '@/components/ui/toast';
-import type { BusinessSettings } from '@/types/business-settings';
 import type { AutomationSettings } from '@/types/automation';
 import { DEFAULT_AUTOMATION_SETTINGS } from '@/types/automation';
 
@@ -21,7 +20,6 @@ const automationDescriptions: Record<keyof AutomationSettings, string> = {
 
 export default function SettingsPage() {
   const { toast } = useToast();
-  const [settings, setSettings] = useState<BusinessSettings | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [backupLoading, setBackupLoading] = useState(false);
@@ -54,10 +52,6 @@ export default function SettingsPage() {
     ai_automation: DEFAULT_AUTOMATION_SETTINGS,
   });
 
-  useEffect(() => {
-    loadSettings();
-  }, []);
-
   // Persist advanced settings toggle preference
   useEffect(() => {
     localStorage.setItem(
@@ -66,13 +60,12 @@ export default function SettingsPage() {
     );
   }, [showAdvancedSettings]);
 
-  const loadSettings = async () => {
+  const loadSettings = useCallback(async () => {
     try {
       setLoading(true);
       const response = await fetch('/api/settings');
       if (response.ok) {
         const data = await response.json();
-        setSettings(data);
         setFormData({
           company_name: data.company_name || '',
           company_address: data.company_address || '',
@@ -105,7 +98,11 @@ export default function SettingsPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [toast]);
+
+  useEffect(() => {
+    void loadSettings();
+  }, [loadSettings]);
 
   const handleSave = async () => {
     try {
@@ -118,7 +115,6 @@ export default function SettingsPage() {
 
       if (response.ok) {
         const updated = await response.json();
-        setSettings(updated);
         setFormData((prev) => ({
           ...prev,
           ai_automation: {
@@ -251,7 +247,6 @@ export default function SettingsPage() {
         throw new Error(errorData.error || 'Import failed');
       }
 
-      const result = await response.json();
       toast({
         title: 'Import Successful',
         description: 'Your data has been restored from the backup.',

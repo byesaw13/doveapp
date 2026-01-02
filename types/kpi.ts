@@ -1,5 +1,7 @@
 // KPI (Key Performance Indicator) types for business metrics
 
+import type { JsonValue } from '@/types/json';
+
 export type KPIPeriod = 'day' | 'week' | 'month' | 'quarter' | 'year' | 'all';
 export type KPITrend = 'up' | 'down' | 'stable';
 export type KPICategory =
@@ -145,7 +147,7 @@ export interface KPIReport {
   metrics: KPIMetric[];
   charts?: {
     type: 'line' | 'bar' | 'pie' | 'gauge';
-    data: any;
+    data: JsonValue;
     title: string;
   }[];
 }

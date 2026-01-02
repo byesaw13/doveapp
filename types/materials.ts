@@ -38,6 +38,14 @@ export interface Material {
   next_maintenance_date?: string;
 }
 
+interface JobSummary {
+  id: string;
+  title?: string;
+  job_number?: string;
+  status?: string;
+  client_name?: string;
+}
+
 export interface JobMaterial {
   id: string;
   job_id: string;
@@ -118,7 +126,7 @@ export interface ToolAssignment {
   updated_at: string;
   // Populated from joins
   material?: Material;
-  job?: any; // Would need to import Job type
+  job?: JobSummary;
 }
 
 export interface ToolMaintenance {
@@ -152,7 +160,7 @@ export interface JobTool {
   created_at: string;
   // Populated from joins
   material?: Material;
-  job?: any; // Would need to import Job type
+  job?: JobSummary;
 }
 
 export interface ToolAvailability {

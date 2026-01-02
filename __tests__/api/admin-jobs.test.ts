@@ -27,7 +27,7 @@ import type { Permission } from '@/lib/auth-guards';
 import type { JobStatus } from '@/types/job';
 
 // Mock the auth guards
-jest.mock('@/lib/auth-guards', () => ({
+jest.mock('@/lib/auth-guards-api', () => ({
   requireAdminContext: jest.fn(),
 }));
 
@@ -90,7 +90,7 @@ describe('/api/admin/jobs', () => {
       const data = await response.json();
 
       expect(response.status).toBe(401);
-      expect(data.error).toBe('Admin access required');
+      expect(data.error).toBe('Authentication required');
     });
 
     it('should return jobs list for authenticated admin', async () => {

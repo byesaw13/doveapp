@@ -1,7 +1,15 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import * as React from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
+import {
+  PageHeader,
+  PageContainer,
+  EmptyState,
+  Spinner,
+  Button,
+} from '@/components/ui';
 import { useToast } from '@/components/ui/toast';
 import {
   Calendar,
@@ -19,10 +27,10 @@ import 'react-big-calendar/lib/css/react-big-calendar.css';
 import 'react-big-calendar/lib/addons/dragAndDrop/styles.css';
 
 import { updateJob, createJob } from '@/lib/db/jobs';
-import { JobWithClient } from '@/types/job';
+import type { JobWithClient, JobStatus } from '@/types/job';
 import type { Client } from '@/types/client';
 
-import { Badge } from '@/components/ui/badge';
+import { StatusBadge } from '@/components/ui/status-badge';
 import {
   Dialog,
   DialogContent,
@@ -31,41 +39,54 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import {
+  Plus,
+  ChevronLeft,
+  ChevronRight,
   CalendarDays,
   Clock,
   User,
-  Plus,
-  CheckCircle,
-  ChevronLeft,
-  ChevronRight,
 } from 'lucide-react';
-import Link from 'next/link';
+import { cn } from '@/lib/utils';
 
-// Setup the localizer for react-big-calendar
 const localizer = momentLocalizer(moment);
-
-// Create drag and drop calendar
 const DnDCalendar = withDragAndDrop(Calendar);
 
-// Custom event component for the calendar
+const statusVariantMap: Record<
+  JobStatus,
+  | 'scheduled'
+  | 'in_progress'
+  | 'completed'
+  | 'cancelled'
+  | 'quote'
+  | 'draft'
+  | 'invoiced'
+> = {
+  draft: 'draft',
+  quote: 'quote',
+  scheduled: 'scheduled',
+  in_progress: 'in_progress',
+  completed: 'completed',
+  invoiced: 'invoiced',
+  cancelled: 'cancelled',
+};
+
 const EventComponent: React.ComponentType<EventProps<object>> = ({ event }) => {
   const typedEvent = event as {
     title: string;
-    resource: { status: string };
+    resource: { status: JobStatus; job_number: string };
     clientName: string;
   };
 
   return (
     <div className="text-white text-xs p-1.5 rounded-md h-full overflow-hidden">
-      <div className="font-semibold truncate">{typedEvent.title}</div>
-      <div className="opacity-90 text-[10px] truncate">
-        {typedEvent.clientName}
+      <div className="font-semibold truncate">
+        #{typedEvent.resource?.job_number}
       </div>
+      <div className="opacity-90 text-[10px] truncate">{typedEvent.title}</div>
     </div>
   );
 };
 
-// Custom toolbar component with Jobber styling
 const CustomToolbar: React.ComponentType<ToolbarProps<object, object>> = ({
   label,
   onNavigate,
@@ -73,74 +94,40 @@ const CustomToolbar: React.ComponentType<ToolbarProps<object, object>> = ({
   view,
 }) => {
   return (
-    <div className="px-6 py-5 border-b border-slate-200 bg-gradient-to-r from-slate-50 to-white">
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <button
-            onClick={() => onNavigate('PREV' as NavigateAction)}
-            className="p-2 hover:bg-slate-100 rounded-lg transition-colors border border-slate-300"
-          >
-            <ChevronLeft className="w-4 h-4 text-slate-600" />
-          </button>
-          <h2 className="text-xl font-bold text-slate-900 min-w-[200px] text-center">
-            {label}
-          </h2>
-          <button
-            onClick={() => onNavigate('NEXT' as NavigateAction)}
-            className="p-2 hover:bg-slate-100 rounded-lg transition-colors border border-slate-300"
-          >
-            <ChevronRight className="w-4 h-4 text-slate-600" />
-          </button>
-          <button
-            onClick={() => onNavigate('TODAY' as NavigateAction)}
-            className="px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-white font-semibold rounded-lg transition-colors"
-          >
-            Today
-          </button>
-        </div>
+    <div className="px-4 py-3 border-b flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+      <div className="flex items-center gap-2">
+        <Button
+          variant="outline"
+          size="icon"
+          onClick={() => onNavigate('PREV' as NavigateAction)}
+        >
+          <ChevronLeft className="h-4 w-4" />
+        </Button>
+        <h2 className="text-lg font-bold min-w-[180px] text-center">{label}</h2>
+        <Button
+          variant="outline"
+          size="icon"
+          onClick={() => onNavigate('NEXT' as NavigateAction)}
+        >
+          <ChevronRight className="h-4 w-4" />
+        </Button>
+        <Button size="sm" onClick={() => onNavigate('TODAY' as NavigateAction)}>
+          Today
+        </Button>
+      </div>
 
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => onView('month' as View)}
-            className={`px-4 py-2 font-medium rounded-lg transition-colors ${
-              view === 'month'
-                ? 'bg-emerald-500 text-white'
-                : 'bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300'
-            }`}
+      <div className="flex items-center gap-1">
+        {(['month', 'week', 'day', 'agenda'] as View[]).map((v) => (
+          <Button
+            key={v}
+            variant={view === v ? 'default' : 'outline'}
+            size="sm"
+            onClick={() => onView(v)}
+            className="capitalize"
           >
-            Month
-          </button>
-          <button
-            onClick={() => onView('week' as View)}
-            className={`px-4 py-2 font-medium rounded-lg transition-colors ${
-              view === 'week'
-                ? 'bg-emerald-500 text-white'
-                : 'bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300'
-            }`}
-          >
-            Week
-          </button>
-          <button
-            onClick={() => onView('day' as View)}
-            className={`px-4 py-2 font-medium rounded-lg transition-colors ${
-              view === 'day'
-                ? 'bg-emerald-500 text-white'
-                : 'bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300'
-            }`}
-          >
-            Day
-          </button>
-          <button
-            onClick={() => onView('agenda' as View)}
-            className={`px-4 py-2 font-medium rounded-lg transition-colors ${
-              view === 'agenda'
-                ? 'bg-emerald-500 text-white'
-                : 'bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300'
-            }`}
-          >
-            Agenda
-          </button>
-        </div>
+            {v}
+          </Button>
+        ))}
       </div>
     </div>
   );
@@ -149,20 +136,21 @@ const CustomToolbar: React.ComponentType<ToolbarProps<object, object>> = ({
 export default function CalendarPage() {
   const router = useRouter();
   const { toast } = useToast();
-  const [jobs, setJobs] = useState<JobWithClient[]>([]);
-  const [clients, setClients] = useState<Client[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [selectedEvent, setSelectedEvent] = useState<any>(null);
-  const [currentView, setCurrentView] = useState<View>(Views.MONTH);
-  const [currentDate, setCurrentDate] = useState(new Date());
-  const [dragSuccess, setDragSuccess] = useState<string | null>(null);
-  const [showEventModal, setShowEventModal] = useState(false);
-  const [selectedSlot, setSelectedSlot] = useState<{
+
+  const [jobs, setJobs] = React.useState<JobWithClient[]>([]);
+  const [clients, setClients] = React.useState<Client[]>([]);
+  const [loading, setLoading] = React.useState(true);
+  const [selectedEvent, setSelectedEvent] = React.useState<any>(null);
+  const [currentView, setCurrentView] = React.useState<View>(Views.MONTH);
+  const [currentDate, setCurrentDate] = React.useState(new Date());
+  const [dragSuccess, setDragSuccess] = React.useState<string | null>(null);
+  const [showEventModal, setShowEventModal] = React.useState(false);
+  const [selectedSlot, setSelectedSlot] = React.useState<{
     start: Date;
     end: Date;
   } | null>(null);
-  const [creatingEvent, setCreatingEvent] = useState(false);
-  const [eventForm, setEventForm] = useState({
+  const [creatingEvent, setCreatingEvent] = React.useState(false);
+  const [eventForm, setEventForm] = React.useState({
     title: '',
     description: '',
     clientId: '',
@@ -170,11 +158,11 @@ export default function CalendarPage() {
     endTime: '10:00',
   });
 
-  useEffect(() => {
-    loadJobs();
+  React.useEffect(() => {
+    loadData();
   }, []);
 
-  const loadJobs = async () => {
+  const loadData = async () => {
     try {
       setLoading(true);
       const [jobsRes, clientsRes] = await Promise.all([
@@ -182,22 +170,23 @@ export default function CalendarPage() {
         fetch('/api/clients'),
       ]);
 
-      if (!jobsRes.ok || !clientsRes.ok) {
+      if (!jobsRes.ok || !clientsRes.ok)
         throw new Error('Failed to fetch data');
-      }
 
       const [jobsData, clientsData] = await Promise.all([
         jobsRes.json(),
         clientsRes.json(),
       ]);
 
-      setJobs(jobsData);
-      setClients(clientsData);
+      setJobs(Array.isArray(jobsData) ? jobsData : jobsData.jobs || []);
+      setClients(
+        Array.isArray(clientsData) ? clientsData : clientsData.clients || []
+      );
     } catch (error) {
       console.error('Failed to load data:', error);
       toast({
         title: 'Error',
-        description: 'Failed to load calendar data. Please refresh the page.',
+        description: 'Failed to load calendar data',
         variant: 'destructive',
       });
     } finally {
@@ -205,10 +194,9 @@ export default function CalendarPage() {
     }
   };
 
-  // Convert jobs to calendar events
-  const events = useMemo(() => {
+  const events = React.useMemo(() => {
     return jobs
-      .filter((job) => job.service_date) // Only jobs with service dates
+      .filter((job) => job.service_date)
       .map((job) => {
         const startDate = parseISO(job.service_date!);
         const endDate = job.scheduled_time
@@ -222,8 +210,8 @@ export default function CalendarPage() {
           end: endDate,
           resource: job,
           clientName: job.client
-            ? `${job.client.first_name} ${job.client.last_name}`
-            : 'Quick Event',
+            ? `${(job.client as any).first_name || ''} ${(job.client as any).last_name || ''}`.trim()
+            : 'Unknown',
           status: job.status,
           total: job.total,
         };
@@ -262,29 +250,30 @@ export default function CalendarPage() {
         )
       );
 
-      setDragSuccess(
-        `"${event.title}" rescheduled to ${format(start, 'PPP')} at ${format(start, 'p')}`
-      );
+      setDragSuccess(`"${event.title}" rescheduled to ${format(start, 'PPP')}`);
       setTimeout(() => setDragSuccess(null), 3000);
+
+      toast({
+        title: 'Job Rescheduled',
+        description: `Moved to ${format(start, 'PPP')}`,
+      });
     } catch (error) {
       console.error('Failed to reschedule job:', error);
       toast({
         title: 'Error',
-        description: 'Failed to reschedule job. Please try again.',
+        description: 'Failed to reschedule job',
         variant: 'destructive',
       });
-      loadJobs();
+      loadData();
     }
   };
 
-  const handleEventResize = async ({ event, start, end }: any) => {
+  const handleEventResize = async ({ event, start }: any) => {
     try {
       const typedEvent = event as { id: string };
       const newScheduledTime = format(start, 'HH:mm:ss');
 
-      await updateJob(typedEvent.id, {
-        scheduled_time: newScheduledTime,
-      });
+      await updateJob(typedEvent.id, { scheduled_time: newScheduledTime });
 
       setJobs((prevJobs) =>
         prevJobs.map((job) =>
@@ -294,31 +283,26 @@ export default function CalendarPage() {
         )
       );
 
-      toast({
-        title: 'Job Updated',
-        description: 'Job time has been updated successfully.',
-      });
+      toast({ title: 'Job Updated', description: 'Job time has been updated' });
     } catch (error) {
       console.error('Failed to update job time:', error);
       toast({
         title: 'Error',
-        description: 'Failed to update job time. Please try again.',
+        description: 'Failed to update job time',
         variant: 'destructive',
       });
-      loadJobs();
+      loadData();
     }
   };
 
-  const handleNavigate = (newDate: Date) => {
-    setCurrentDate(newDate);
-  };
+  const handleNavigate = (newDate: Date) => setCurrentDate(newDate);
 
   const handleCreateEvent = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedSlot || !eventForm.clientId) {
       toast({
         title: 'Validation Error',
-        description: 'Please select a client for this event.',
+        description: 'Please select a client',
         variant: 'destructive',
       });
       return;
@@ -328,10 +312,7 @@ export default function CalendarPage() {
       setCreatingEvent(true);
 
       const serviceDate = format(selectedSlot.start, 'yyyy-MM-dd');
-      const startTime = eventForm.startTime || '09:00';
-      const endTime = eventForm.endTime || '10:00';
 
-      // Create a basic job with minimal required fields
       await createJob(
         {
           client_id: eventForm.clientId,
@@ -340,19 +321,17 @@ export default function CalendarPage() {
           description: eventForm.description || null,
           status: 'scheduled',
           service_date: serviceDate,
-          scheduled_time: startTime,
-          notes: `Quick event created from calendar. End time: ${endTime}`,
+          scheduled_time: eventForm.startTime,
+          notes: `Quick event created from calendar. End time: ${eventForm.endTime}`,
           subtotal: 0,
           tax: 0,
           total: 0,
         },
-        [] // No line items for quick events
+        []
       );
 
-      // Reload jobs to show the new event
-      await loadJobs();
+      await loadData();
 
-      // Close modal and reset form
       setShowEventModal(false);
       setSelectedSlot(null);
       setEventForm({
@@ -365,13 +344,13 @@ export default function CalendarPage() {
 
       toast({
         title: 'Event Created',
-        description: `"${eventForm.title}" has been scheduled for ${format(selectedSlot.start, 'PPP')}`,
+        description: `"${eventForm.title}" scheduled for ${format(selectedSlot.start, 'PPP')}`,
       });
     } catch (error) {
       console.error('Failed to create event:', error);
       toast({
         title: 'Error',
-        description: 'Failed to create event. Please try again.',
+        description: 'Failed to create event',
         variant: 'destructive',
       });
     } finally {
@@ -379,367 +358,187 @@ export default function CalendarPage() {
     }
   };
 
-  const getStatusBadge = (status: string) => {
-    const statusColors = {
-      quote: 'bg-gray-100 text-gray-800 border-gray-300',
-      scheduled: 'bg-blue-100 text-blue-800 border-blue-300',
-      in_progress: 'bg-yellow-100 text-yellow-800 border-yellow-300',
-      completed: 'bg-green-100 text-green-800 border-green-300',
-      invoiced: 'bg-purple-100 text-purple-800 border-purple-300',
-      cancelled: 'bg-red-100 text-red-800 border-red-300',
-    };
-
-    return (
-      <Badge
-        variant="outline"
-        className={
-          statusColors[status as keyof typeof statusColors] ||
-          'bg-gray-100 text-gray-800'
-        }
-      >
-        {status.replace('_', ' ')}
-      </Badge>
-    );
-  };
-
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-slate-50">
-        <div className="text-center">
-          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-500 mb-4"></div>
-          <div className="text-slate-600 font-medium">Loading calendar...</div>
+      <PageContainer maxWidth="xl">
+        <div className="flex items-center justify-center py-24">
+          <Spinner size="lg" />
         </div>
-      </div>
+      </PageContainer>
     );
   }
 
   return (
-    <div className="space-y-6">
-      {/* Header - Jobber style with emerald gradient */}
-      <div className="bg-gradient-to-r from-emerald-500 to-emerald-600 rounded-xl shadow-lg overflow-hidden">
-        <div className="px-6 sm:px-8 lg:px-10 py-6">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6">
-            <div className="flex-1 min-w-0">
-              <h1 className="text-3xl font-bold text-white">Calendar</h1>
-              <p className="mt-2 text-emerald-50 text-sm">
-                Drag & drop to reschedule • Click events for details
-              </p>
-            </div>
-            <div className="flex-shrink-0">
-              <Link href="/jobs/new">
-                <button className="px-6 py-3 bg-white hover:bg-emerald-50 text-emerald-600 font-semibold rounded-lg shadow-md hover:shadow-lg transition-all focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-emerald-500 inline-flex items-center">
-                  <Plus className="w-5 h-5 mr-2" />
-                  New Job
-                </button>
-              </Link>
-            </div>
-          </div>
-        </div>
-      </div>
+    <PageContainer maxWidth="full" padding="none">
+      <PageHeader
+        title="Calendar"
+        description="Drag & drop to reschedule, click events for details"
+        breadcrumbs={[
+          { label: 'Dashboard', href: '/admin/dashboard' },
+          { label: 'Calendar' },
+        ]}
+        actions={
+          <Button size="sm" asChild>
+            <Link href="/admin/jobs/new">
+              <Plus className="h-4 w-4 mr-2" />
+              New Job
+            </Link>
+          </Button>
+        }
+        className="px-4 lg:px-6"
+      />
 
-      {/* Success Notification - Jobber style */}
       {dragSuccess && (
-        <div className="bg-white rounded-xl border border-emerald-200 shadow-sm p-6">
-          <div className="flex items-start gap-3">
-            <div className="p-2 bg-emerald-100 rounded-lg flex-shrink-0">
-              <CheckCircle className="h-5 w-5 text-emerald-600" />
-            </div>
-            <div>
-              <h3 className="text-sm font-semibold text-emerald-800 mb-1">
-                Job Rescheduled
-              </h3>
-              <p className="text-sm text-emerald-700">{dragSuccess}</p>
-            </div>
-          </div>
+        <div className="mx-4 lg:mx-6 mt-4 p-4 bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-900 rounded-lg">
+          <p className="text-sm text-green-700 dark:text-green-400">
+            {dragSuccess}
+          </p>
         </div>
       )}
 
-      {/* Legend - Jobber style */}
-      <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
-        <div className="flex items-center gap-3 mb-4">
-          <div className="p-2 bg-blue-100 rounded-lg">
-            <CalendarDays className="h-5 w-5 text-blue-600" />
-          </div>
-          <h2 className="text-lg font-bold text-slate-900">
-            Job Status Legend
-          </h2>
-        </div>
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
-          <div className="flex items-center gap-3">
-            <div className="w-4 h-4 rounded bg-blue-500"></div>
-            <span className="text-sm font-medium text-slate-700">
-              Scheduled
-            </span>
-          </div>
-          <div className="flex items-center gap-3">
-            <div className="w-4 h-4 rounded bg-yellow-500"></div>
-            <span className="text-sm font-medium text-slate-700">
-              In Progress
-            </span>
-          </div>
-          <div className="flex items-center gap-3">
-            <div className="w-4 h-4 rounded bg-green-500"></div>
-            <span className="text-sm font-medium text-slate-700">
-              Completed
-            </span>
-          </div>
-          <div className="flex items-center gap-3">
-            <div className="w-4 h-4 rounded bg-red-500"></div>
-            <span className="text-sm font-medium text-slate-700">
-              Cancelled
-            </span>
-          </div>
-          <div className="flex items-center gap-3">
-            <div className="w-4 h-4 rounded bg-gray-500"></div>
-            <span className="text-sm font-medium text-slate-700">Quote</span>
-          </div>
-        </div>
-      </div>
-
-      {/* Calendar - Jobber style */}
-      <div className="bg-white rounded-xl border border-slate-200 shadow-md">
-        <div className="p-0">
-          <div className="calendar-wrapper" style={{ height: '700px' }}>
-            <DnDCalendar
-              localizer={localizer}
-              events={events}
-              startAccessor={(event: any) => new Date(event.start)}
-              endAccessor={(event: any) => new Date(event.end)}
-              date={currentDate}
-              onNavigate={handleNavigate}
-              style={{ height: '100%' }}
-              onSelectEvent={handleSelectEvent}
-              onSelectSlot={handleSelectSlot}
-              selectable
-              components={{
-                event: EventComponent,
-                toolbar: CustomToolbar,
-              }}
-              views={[Views.MONTH, Views.WEEK, Views.DAY, Views.AGENDA]}
-              defaultView={Views.MONTH}
-              onView={setCurrentView}
-              view={currentView}
-              onEventDrop={handleEventDrop}
-              onEventResize={handleEventResize}
-              resizable
-              eventPropGetter={(event: any) => {
-                const typedEvent = event as { resource: { status: string } };
-                const statusColors = {
-                  scheduled: {
-                    style: {
-                      backgroundColor: '#3b82f6',
-                      borderRadius: '6px',
-                      border: 'none',
-                      boxShadow: '0 1px 3px rgba(59, 130, 246, 0.3)',
-                    },
-                  },
-                  in_progress: {
-                    style: {
-                      backgroundColor: '#eab308',
-                      borderRadius: '6px',
-                      border: 'none',
-                      boxShadow: '0 1px 3px rgba(234, 179, 8, 0.3)',
-                    },
-                  },
-                  completed: {
-                    style: {
-                      backgroundColor: '#22c55e',
-                      borderRadius: '6px',
-                      border: 'none',
-                      boxShadow: '0 1px 3px rgba(34, 197, 94, 0.3)',
-                    },
-                  },
-                  cancelled: {
-                    style: {
-                      backgroundColor: '#ef4444',
-                      borderRadius: '6px',
-                      border: 'none',
-                      boxShadow: '0 1px 3px rgba(239, 68, 68, 0.3)',
-                    },
-                  },
-                  quote: {
-                    style: {
-                      backgroundColor: '#6b7280',
-                      borderRadius: '6px',
-                      border: 'none',
-                      boxShadow: '0 1px 3px rgba(107, 114, 128, 0.3)',
-                    },
-                  },
-                };
-                return (
-                  statusColors[
-                    typedEvent.resource.status as keyof typeof statusColors
-                  ] || {
-                    style: {
-                      backgroundColor: '#6b7280',
-                      borderRadius: '6px',
-                      border: 'none',
-                    },
-                  }
-                );
-              }}
-            />
-          </div>
+      <div className="px-4 lg:px-6 py-4">
+        <div className="bg-card rounded-lg border shadow-sm">
+          <DnDCalendar
+            localizer={localizer}
+            events={events}
+            startAccessor={(event: any) => new Date(event.start)}
+            endAccessor={(event: any) => new Date(event.end)}
+            date={currentDate}
+            onNavigate={handleNavigate}
+            style={{ height: 'calc(100vh - 280px)', minHeight: '500px' }}
+            onSelectEvent={handleSelectEvent}
+            onSelectSlot={handleSelectSlot}
+            selectable
+            components={{
+              event: EventComponent,
+              toolbar: CustomToolbar,
+            }}
+            views={[Views.MONTH, Views.WEEK, Views.DAY, Views.AGENDA]}
+            defaultView={Views.MONTH}
+            onView={setCurrentView}
+            view={currentView}
+            onEventDrop={handleEventDrop}
+            onEventResize={handleEventResize}
+            resizable
+            eventPropGetter={(event: any) => {
+              const status = event.resource?.status as JobStatus;
+              const colors: Record<JobStatus, string> = {
+                scheduled: '#3b82f6',
+                in_progress: '#f59e0b',
+                completed: '#22c55e',
+                cancelled: '#ef4444',
+                invoiced: '#8b5cf6',
+                quote: '#6b7280',
+                draft: '#6b7280',
+              };
+              return {
+                style: {
+                  backgroundColor: colors[status] || '#6b7280',
+                  borderRadius: '6px',
+                  border: 'none',
+                },
+              };
+            }}
+          />
         </div>
       </div>
 
-      {/* Job Details Modal - Jobber style */}
       <Dialog
         open={!!selectedEvent}
         onOpenChange={() => setSelectedEvent(null)}
       >
-        <DialogContent className="max-w-2xl bg-white border-slate-200">
-          <DialogHeader className="pb-4">
-            <div className="flex items-center gap-3 mb-2">
-              <div className="p-2 bg-blue-100 rounded-lg">
-                <CalendarDays className="w-6 h-6 text-blue-600" />
-              </div>
-              <div>
-                <DialogTitle className="text-xl font-bold text-slate-900">
-                  {selectedEvent?.title}
-                </DialogTitle>
-                <DialogDescription className="text-slate-600">
-                  Job #{selectedEvent?.resource?.job_number}
-                </DialogDescription>
-              </div>
-            </div>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <CalendarDays className="h-5 w-5 text-primary" />
+              {selectedEvent?.title}
+            </DialogTitle>
+            <DialogDescription>
+              Job #{selectedEvent?.resource?.job_number}
+            </DialogDescription>
           </DialogHeader>
 
           {selectedEvent && (
-            <div className="space-y-6">
-              {/* Status and Client */}
+            <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
-                <div className="bg-slate-50 p-4 rounded-lg border border-slate-200">
-                  <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
-                    Status
-                  </label>
-                  <div className="mt-2">
-                    {getStatusBadge(selectedEvent.status)}
-                  </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">Status</p>
+                  <StatusBadge
+                    variant={
+                      statusVariantMap[selectedEvent.status as JobStatus]
+                    }
+                    size="sm"
+                    className="mt-1"
+                  >
+                    {selectedEvent.status.replace('_', ' ')}
+                  </StatusBadge>
                 </div>
-                <div className="bg-slate-50 p-4 rounded-lg border border-slate-200">
-                  <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
-                    Client
-                  </label>
-                  <div className="mt-2 flex items-center gap-2">
-                    <div className="p-1 bg-slate-200 rounded">
-                      <User className="w-4 h-4 text-slate-600" />
-                    </div>
-                    <span className="font-medium text-slate-900">
-                      {selectedEvent.clientName}
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Date and Time */}
-              <div className="grid grid-cols-2 gap-4">
-                <div className="bg-slate-50 p-4 rounded-lg border border-slate-200">
-                  <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
-                    Service Date
-                  </label>
-                  <div className="mt-2 flex items-center gap-2">
-                    <div className="p-1 bg-slate-200 rounded">
-                      <CalendarDays className="w-4 h-4 text-slate-600" />
-                    </div>
-                    <span className="font-medium text-slate-900">
-                      {format(selectedEvent.start, 'PPP')}
-                    </span>
-                  </div>
-                </div>
-                <div className="bg-slate-50 p-4 rounded-lg border border-slate-200">
-                  <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
-                    Scheduled Time
-                  </label>
-                  <div className="mt-2 flex items-center gap-2">
-                    <div className="p-1 bg-slate-200 rounded">
-                      <Clock className="w-4 h-4 text-slate-600" />
-                    </div>
-                    <span className="font-medium text-slate-900">
-                      {selectedEvent.resource?.scheduled_time
-                        ? format(
-                            parseISO(
-                              `${selectedEvent.resource.service_date}T${selectedEvent.resource.scheduled_time}`
-                            ),
-                            'p'
-                          )
-                        : 'Not specified'}
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Description */}
-              {selectedEvent.resource?.description && (
-                <div className="bg-slate-50 p-4 rounded-lg border border-slate-200">
-                  <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
-                    Description
-                  </label>
-                  <p className="mt-2 text-sm text-slate-700 leading-relaxed">
-                    {selectedEvent.resource.description}
+                <div>
+                  <p className="text-xs text-muted-foreground">Client</p>
+                  <p className="font-medium flex items-center gap-1 mt-1">
+                    <User className="h-3 w-3" />
+                    {selectedEvent.clientName}
                   </p>
                 </div>
-              )}
+              </div>
 
-              {/* Total Value - Highlighted */}
-              <div className="bg-gradient-to-br from-emerald-50 to-emerald-100 p-6 rounded-xl border-2 border-emerald-200">
-                <label className="text-xs font-semibold text-emerald-700 uppercase tracking-wide">
-                  Total Value
-                </label>
-                <p className="mt-1 text-3xl font-bold text-emerald-600">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-xs text-muted-foreground">Date</p>
+                  <p className="font-medium flex items-center gap-1">
+                    <CalendarDays className="h-3 w-3" />
+                    {format(selectedEvent.start, 'MMM d, yyyy')}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">Time</p>
+                  <p className="font-medium flex items-center gap-1">
+                    <Clock className="h-3 w-3" />
+                    {selectedEvent.resource?.scheduled_time || 'Not set'}
+                  </p>
+                </div>
+              </div>
+
+              <div className="pt-2 border-t">
+                <p className="text-xs text-muted-foreground">Total</p>
+                <p className="text-2xl font-bold text-primary">
                   ${selectedEvent.total?.toFixed(2) || '0.00'}
                 </p>
               </div>
 
-              {/* Actions */}
-              <div className="flex gap-3 pt-6 border-t border-slate-200">
-                <Link href={`/jobs/${selectedEvent.id}`} className="flex-1">
-                  <button className="w-full px-4 py-3 bg-emerald-500 hover:bg-emerald-600 text-white font-semibold rounded-lg transition-colors">
-                    View Full Details
-                  </button>
-                </Link>
-                <Link
-                  href={`/jobs/${selectedEvent.id}/edit`}
-                  className="flex-1"
-                >
-                  <button className="w-full px-4 py-3 bg-white hover:bg-slate-50 text-slate-700 font-semibold rounded-lg border border-slate-300 transition-colors">
-                    Edit Job
-                  </button>
-                </Link>
+              <div className="flex gap-2">
+                <Button className="flex-1" asChild>
+                  <Link href={`/admin/jobs/${selectedEvent.id}`}>
+                    View Details
+                  </Link>
+                </Button>
+                <Button variant="outline" className="flex-1" asChild>
+                  <Link href={`/admin/jobs/${selectedEvent.id}/edit`}>
+                    Edit
+                  </Link>
+                </Button>
               </div>
             </div>
           )}
         </DialogContent>
       </Dialog>
 
-      {/* Quick Event Creation Modal */}
       <Dialog open={showEventModal} onOpenChange={setShowEventModal}>
-        <DialogContent className="max-w-md bg-white border-slate-200">
-          <DialogHeader className="pb-4">
-            <div className="flex items-center gap-3 mb-2">
-              <div className="p-2 bg-blue-100 rounded-lg">
-                <Plus className="w-6 h-6 text-blue-600" />
-              </div>
-              <div>
-                <DialogTitle className="text-xl font-bold text-slate-900">
-                  Create Event
-                </DialogTitle>
-                <DialogDescription className="text-slate-600">
-                  {selectedSlot && format(selectedSlot.start, 'PPP')}
-                </DialogDescription>
-              </div>
-            </div>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Create Quick Event</DialogTitle>
+            <DialogDescription>
+              {selectedSlot && format(selectedSlot.start, 'EEEE, MMMM d, yyyy')}
+            </DialogDescription>
           </DialogHeader>
 
           <form onSubmit={handleCreateEvent} className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">
-                Title *
-              </label>
+              <label className="block text-sm font-medium mb-1">Title *</label>
               <input
                 type="text"
                 required
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                className="w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-primary"
                 placeholder="Event title"
                 value={eventForm.title}
                 onChange={(e) =>
@@ -749,12 +548,10 @@ export default function CalendarPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">
-                Client
-              </label>
+              <label className="block text-sm font-medium mb-1">Client *</label>
               <select
                 required
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 bg-white"
+                className="w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-primary bg-background"
                 value={eventForm.clientId}
                 onChange={(e) =>
                   setEventForm((prev) => ({
@@ -763,7 +560,7 @@ export default function CalendarPage() {
                   }))
                 }
               >
-                <option value="">Select a client *</option>
+                <option value="">Select a client</option>
                 {clients.map((client) => (
                   <option key={client.id} value={client.id}>
                     {client.first_name} {client.last_name}
@@ -774,13 +571,13 @@ export default function CalendarPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">
+              <label className="block text-sm font-medium mb-1">
                 Description
               </label>
               <textarea
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
-                placeholder="Event description (optional)"
-                rows={3}
+                className="w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-primary"
+                placeholder="Optional description"
+                rows={2}
                 value={eventForm.description}
                 onChange={(e) =>
                   setEventForm((prev) => ({
@@ -793,12 +590,12 @@ export default function CalendarPage() {
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">
+                <label className="block text-sm font-medium mb-1">
                   Start Time
                 </label>
                 <input
                   type="time"
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                  className="w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-primary"
                   value={eventForm.startTime}
                   onChange={(e) =>
                     setEventForm((prev) => ({
@@ -809,12 +606,12 @@ export default function CalendarPage() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">
+                <label className="block text-sm font-medium mb-1">
                   End Time
                 </label>
                 <input
                   type="time"
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                  className="w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-primary"
                   value={eventForm.endTime}
                   onChange={(e) =>
                     setEventForm((prev) => ({
@@ -826,161 +623,25 @@ export default function CalendarPage() {
               </div>
             </div>
 
-            <div className="flex gap-3 pt-4 border-t border-slate-200">
-              <button
+            <div className="flex gap-2 pt-2">
+              <Button
                 type="button"
+                variant="outline"
+                className="flex-1"
                 onClick={() => {
                   setShowEventModal(false);
                   setSelectedSlot(null);
-                  setEventForm({
-                    title: '',
-                    description: '',
-                    clientId: '',
-                    startTime: '09:00',
-                    endTime: '10:00',
-                  });
                 }}
-                className="flex-1 px-4 py-2 bg-white hover:bg-slate-50 text-slate-700 font-semibold rounded-lg border border-slate-300 transition-colors"
               >
                 Cancel
-              </button>
-              <button
-                type="submit"
-                disabled={creatingEvent}
-                className="flex-1 px-4 py-2 bg-emerald-500 hover:bg-emerald-600 disabled:bg-emerald-400 text-white font-semibold rounded-lg transition-colors disabled:cursor-not-allowed"
-              >
-                {creatingEvent ? 'Creating...' : 'Create Event'}
-              </button>
+              </Button>
+              <Button type="submit" className="flex-1" disabled={creatingEvent}>
+                {creatingEvent ? 'Creating...' : 'Create'}
+              </Button>
             </div>
           </form>
         </DialogContent>
       </Dialog>
-
-      <style jsx global>{`
-        .calendar-wrapper .rbc-calendar {
-          font-family: inherit;
-        }
-
-        .calendar-wrapper .rbc-header {
-          padding: 12px 4px;
-          font-weight: 600;
-          font-size: 14px;
-          background: linear-gradient(to bottom, #f8fafc, #f1f5f9);
-          border-bottom: 2px solid #e2e8f0;
-          color: #475569;
-        }
-
-        .calendar-wrapper .rbc-today {
-          background-color: #f0f9ff;
-        }
-
-        .calendar-wrapper .rbc-off-range-bg {
-          background-color: #fafafa;
-        }
-
-        .calendar-wrapper .rbc-date-cell {
-          padding: 6px 8px;
-          font-size: 13px;
-        }
-
-        .calendar-wrapper .rbc-date-cell.rbc-now {
-          font-weight: 700;
-        }
-
-        .calendar-wrapper .rbc-date-cell > a {
-          color: #1e293b;
-        }
-
-        .calendar-wrapper .rbc-today .rbc-date-cell > a {
-          color: #059669;
-          font-weight: 700;
-        }
-
-        .calendar-wrapper .rbc-event {
-          padding: 4px 6px;
-          border-radius: 6px;
-          cursor: pointer;
-          transition: all 0.2s;
-          border: none !important;
-        }
-
-        .calendar-wrapper .rbc-event:hover {
-          transform: translateY(-1px);
-          box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3) !important;
-        }
-
-        .calendar-wrapper .rbc-event-label {
-          font-size: 11px;
-        }
-
-        .calendar-wrapper .rbc-month-view {
-          border: none;
-          border-radius: 12px;
-          overflow: hidden;
-        }
-
-        .calendar-wrapper .rbc-month-row {
-          border: 1px solid #e2e8f0;
-          border-top: none;
-          min-height: 100px;
-        }
-
-        .calendar-wrapper .rbc-day-bg {
-          border-left: 1px solid #e2e8f0;
-        }
-
-        .calendar-wrapper .rbc-day-bg:first-child {
-          border-left: none;
-        }
-
-        .calendar-wrapper .rbc-month-view .rbc-header {
-          border-bottom: none;
-        }
-
-        .calendar-wrapper .rbc-time-view {
-          border: none;
-        }
-
-        .calendar-wrapper .rbc-time-header {
-          border-left: 1px solid #e2e8f0;
-        }
-
-        .calendar-wrapper .rbc-time-content {
-          border-top: 1px solid #e2e8f0;
-        }
-
-        .calendar-wrapper .rbc-timeslot-group {
-          min-height: 60px;
-        }
-
-        .calendar-wrapper .rbc-current-time-indicator {
-          background-color: #10b981;
-          height: 2px;
-        }
-
-        .calendar-wrapper .rbc-agenda-view {
-          padding: 16px;
-        }
-
-        .calendar-wrapper .rbc-agenda-table {
-          border-radius: 12px;
-          overflow: hidden;
-        }
-
-        .calendar-wrapper .rbc-agenda-date-cell {
-          padding: 12px;
-          background: #f8fafc;
-          font-weight: 600;
-        }
-
-        .calendar-wrapper .rbc-agenda-time-cell {
-          padding: 12px;
-        }
-
-        .calendar-wrapper .rbc-agenda-event-cell {
-          padding: 12px;
-        }
-      `}</style>
-    </div>
+    </PageContainer>
   );
 }

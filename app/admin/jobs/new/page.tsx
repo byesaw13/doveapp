@@ -1,23 +1,29 @@
 'use client';
 
-import { useState, useEffect, Suspense } from 'react';
+import * as React from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useForm, useFieldArray } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
 import {
-  jobSchema,
-  lineItemSchema,
-  type JobFormData,
-  type LineItemFormData,
-} from '@/lib/validations/job';
-import { getClients } from '@/lib/db/clients';
-import { getAllProperties } from '@/lib/db/properties';
-import { createJob } from '@/lib/db/jobs';
-import type { Client } from '@/types/client';
-import type { PropertyWithClient } from '@/types/property';
-import type { LineItemInsert } from '@/types/job';
-
+  PageHeader,
+  PageContainer,
+  ContentSection,
+  Button,
+  ButtonLoader,
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import {
   Form,
   FormControl,
@@ -27,41 +33,69 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+  ArrowLeft,
+  Plus,
+  Trash2,
+  Save,
+  Calendar,
+  User,
+  FileText,
+} from 'lucide-react';
+import { useToast } from '@/components/ui/toast';
+import type { Client } from '@/types/client';
+import type { PropertyWithClient } from '@/types/property';
+import type { LineItemType } from '@/types/job';
+import { cn } from '@/lib/utils';
+
+interface LineItemFormData {
+  item_type: LineItemType;
+  description: string;
+  quantity: number;
+  unit_price: number;
+}
+
+interface JobFormData {
+  client_id: string;
+  property_id: string;
+  title: string;
+  description: string;
+  status: 'quote' | 'scheduled' | 'in_progress' | 'completed';
+  service_date: string;
+  scheduled_time: string;
+  notes: string;
+  lineItems: LineItemFormData[];
+}
+
+const defaultLineItem = {
+  item_type: 'labor' as const,
+  description: '',
+  quantity: 1,
+  unit_price: 0,
+};
 
 function NewJobPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [clients, setClients] = useState<Client[]>([]);
-  const [properties, setProperties] = useState<PropertyWithClient[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [submitting, setSubmitting] = useState(false);
+  const { toast } = useToast();
+
+  const [clients, setClients] = React.useState<Client[]>([]);
+  const [properties, setProperties] = React.useState<PropertyWithClient[]>([]);
+  const [loading, setLoading] = React.useState(true);
+  const [submitting, setSubmitting] = React.useState(false);
 
   const prefilledDate = searchParams.get('date') || '';
 
-  const form = useForm({
+  const form = useForm<JobFormData>({
     defaultValues: {
       client_id: '',
       property_id: 'none',
       title: '',
       description: '',
-      status: 'quote' as const,
+      status: 'quote',
       service_date: prefilledDate,
       scheduled_time: '',
       notes: '',
-      lineItems: [
-        {
-          item_type: 'labor' as const,
-          description: '',
-          quantity: 1,
-          unit_price: 0,
-        },
-      ],
+      lineItems: [{ ...defaultLineItem }],
     },
   });
 
@@ -70,38 +104,53 @@ function NewJobPageContent() {
     name: 'lineItems',
   });
 
-  useEffect(() => {
+  React.useEffect(() => {
     loadData();
   }, []);
 
   const loadData = async () => {
     try {
-      const [clientsData, propertiesData] = await Promise.all([
-        getClients(),
-        getAllProperties(),
+      const [clientsRes, propertiesRes] = await Promise.all([
+        fetch('/api/clients'),
+        fetch('/api/properties'),
       ]);
-      setClients(clientsData);
-      setProperties(propertiesData);
-    } catch (error) {
-      console.error('Failed to load data:', error);
+
+      if (clientsRes.ok) {
+        const data = await clientsRes.json();
+        setClients(Array.isArray(data) ? data : data.clients || []);
+      }
+
+      if (propertiesRes.ok) {
+        const data = await propertiesRes.json();
+        setProperties(Array.isArray(data) ? data : data.properties || []);
+      }
+    } catch (err) {
+      console.error('Failed to load data:', err);
+      toast({
+        title: 'Error',
+        description: 'Failed to load form data',
+        variant: 'destructive',
+      });
     } finally {
       setLoading(false);
     }
   };
 
-  const handleSubmit = async (data: any) => {
+  const handleSubmit = async (data: JobFormData) => {
     try {
       setSubmitting(true);
 
-      const lineItems: LineItemInsert[] = data.lineItems.map((item: any) => ({
+      const lineItems = data.lineItems.map((item) => ({
         item_type: item.item_type,
         description: item.description,
         quantity: item.quantity,
         unit_price: item.unit_price,
       }));
 
-      await createJob(
-        {
+      const response = await fetch('/api/jobs', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
           client_id: data.client_id,
           property_id:
             data.property_id === 'none' ? null : data.property_id || null,
@@ -114,524 +163,467 @@ function NewJobPageContent() {
           subtotal: 0,
           tax: 0,
           total: 0,
-        },
-        lineItems
-      );
+          line_items: lineItems,
+        }),
+      });
 
-      router.push('/jobs');
-    } catch (error) {
-      console.error('Failed to create job:', error);
-      alert('Failed to create job. Please try again.');
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to create job');
+      }
+
+      const job = await response.json();
+
+      toast({
+        title: 'Job Created',
+        description: `Job #${job.job_number} has been created`,
+      });
+
+      router.push(`/admin/jobs/${job.id}`);
+    } catch (err) {
+      console.error('Failed to create job:', err);
+      toast({
+        title: 'Error',
+        description:
+          err instanceof Error ? err.message : 'Failed to create job',
+        variant: 'destructive',
+      });
     } finally {
       setSubmitting(false);
     }
   };
 
+  const calculateLineTotal = (index: number) => {
+    const qty = form.watch(`lineItems.${index}.quantity`) || 0;
+    const price = form.watch(`lineItems.${index}.unit_price`) || 0;
+    return qty * price;
+  };
+
+  const calculateTotal = () => {
+    return fields.reduce((sum, _, index) => sum + calculateLineTotal(index), 0);
+  };
+
   if (loading) {
     return (
-      <div className="space-y-6">
-        {/* Header - Jobber style with emerald gradient */}
-        <div className="bg-gradient-to-r from-emerald-500 to-emerald-600 rounded-xl shadow-lg overflow-hidden">
-          <div className="px-6 sm:px-8 lg:px-10 py-6">
-            <div className="flex items-center justify-center">
-              <div className="text-center">
-                <h1 className="text-3xl font-bold text-white">
-                  Create New Job
-                </h1>
-                <p className="mt-2 text-emerald-50 text-sm">
-                  Loading form data...
-                </p>
-              </div>
-            </div>
-          </div>
+      <PageContainer maxWidth="lg">
+        <div className="flex items-center justify-center py-24">
+          <div className="text-muted-foreground">Loading...</div>
         </div>
-        <div className="flex items-center justify-center py-12">
-          <div className="flex items-center gap-3">
-            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-emerald-500"></div>
-            <div className="text-slate-600">Loading...</div>
-          </div>
-        </div>
-      </div>
+      </PageContainer>
     );
   }
 
   return (
-    <div className="space-y-6">
-      {/* Header - Jobber style with emerald gradient */}
-      <div className="bg-gradient-to-r from-emerald-500 to-emerald-600 rounded-xl shadow-lg overflow-hidden">
-        <div className="px-6 sm:px-8 lg:px-10 py-6">
-          <div className="flex items-center justify-center">
-            <div className="text-center">
-              <h1 className="text-3xl font-bold text-white">Create New Job</h1>
-              <p className="mt-2 text-emerald-50 text-sm">
-                Fill out the details below to create a new job
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Form Container - Jobber style */}
-      <div className="max-w-4xl mx-auto">
-        <div className="bg-white rounded-xl border border-slate-200 shadow-md">
-          <div className="px-6 py-5 border-b border-slate-200 bg-gradient-to-r from-slate-50 to-white">
+    <PageContainer maxWidth="lg" padding="none">
+      <div className="sticky top-0 z-20 bg-background/95 backdrop-blur border-b">
+        <div className="px-4 lg:px-6 py-4">
+          <div className="flex items-center justify-between gap-4">
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-blue-100 rounded-lg">
-                <svg
-                  className="h-5 w-5 text-blue-600"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                  />
-                </svg>
-              </div>
-              <h2 className="text-lg font-bold text-slate-900">Job Details</h2>
-            </div>
-          </div>
-          <div className="p-6">
-            <Form {...form}>
-              <form
-                onSubmit={form.handleSubmit(handleSubmit)}
-                className="space-y-8"
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => router.push('/admin/jobs')}
               >
-                {/* Client & Property Section */}
-                <div className="bg-slate-50 p-6 rounded-lg border border-slate-200">
-                  <h3 className="text-lg font-semibold text-slate-900 mb-4 flex items-center gap-2">
-                    <div className="p-1.5 bg-blue-100 rounded">
-                      <svg
-                        className="h-4 w-4 text-blue-600"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-                        />
-                      </svg>
-                    </div>
-                    Client & Property
-                  </h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <FormField
-                      control={form.control}
-                      name="client_id"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="text-sm font-semibold text-slate-700">
-                            Client *
-                          </FormLabel>
-                          <Select
-                            onValueChange={field.onChange}
-                            value={field.value}
-                          >
-                            <FormControl>
-                              <SelectTrigger className="bg-white border-slate-300 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500">
-                                <SelectValue
-                                  placeholder="Select a client"
-                                  className="text-slate-700 font-medium"
-                                />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              {clients.map((client) => (
-                                <SelectItem key={client.id} value={client.id}>
-                                  {client.first_name} {client.last_name}
-                                  {client.company_name &&
-                                    ` - ${client.company_name}`}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name="property_id"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="text-sm font-semibold text-slate-700">
-                            Property (Optional)
-                          </FormLabel>
-                          <Select
-                            onValueChange={field.onChange}
-                            value={field.value}
-                          >
-                            <FormControl>
-                              <SelectTrigger className="bg-white border-slate-300 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500">
-                                <SelectValue
-                                  placeholder="Select a property (optional)"
-                                  className="text-slate-700 font-medium"
-                                />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              <SelectItem value="none">
-                                No specific property
-                              </SelectItem>
-                              {properties
-                                .filter(
-                                  (property) =>
-                                    !form.watch('client_id') ||
-                                    property.client_id ===
-                                      form.watch('client_id')
-                                )
-                                .map((property) => (
-                                  <SelectItem
-                                    key={property.id}
-                                    value={property.id}
-                                  >
-                                    {property.name} -{' '}
-                                    {property.client.first_name}{' '}
-                                    {property.client.last_name}
-                                    {property.city && ` (${property.city})`}
-                                  </SelectItem>
-                                ))}
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-                </div>
-
-                {/* Job Details Section */}
-                <div className="bg-slate-50 p-6 rounded-lg border border-slate-200">
-                  <h3 className="text-lg font-semibold text-slate-900 mb-4 flex items-center gap-2">
-                    <div className="p-1.5 bg-purple-100 rounded">
-                      <svg
-                        className="h-4 w-4 text-purple-600"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                        />
-                      </svg>
-                    </div>
-                    Job Details
-                  </h3>
-                  <div className="space-y-6">
-                    <FormField
-                      control={form.control}
-                      name="title"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="text-sm font-semibold text-slate-700">
-                            Job Title *
-                          </FormLabel>
-                          <FormControl>
-                            <Input
-                              {...field}
-                              placeholder="e.g., Interior Painting - Living Room"
-                              className="bg-white border-slate-300"
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name="description"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="text-sm font-semibold text-slate-700">
-                            Description
-                          </FormLabel>
-                          <FormControl>
-                            <Input
-                              {...field}
-                              placeholder="Additional details about the job"
-                              className="bg-white border-slate-300"
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <FormField
-                        control={form.control}
-                        name="status"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel className="text-sm font-semibold text-slate-700">
-                              Status *
-                            </FormLabel>
-                            <Select
-                              onValueChange={field.onChange}
-                              value={field.value}
-                            >
-                              <FormControl>
-                                <SelectTrigger className="bg-white border-slate-300 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500">
-                                  <SelectValue className="text-slate-700 font-medium" />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                <SelectItem value="quote">Quote</SelectItem>
-                                <SelectItem value="scheduled">
-                                  Scheduled
-                                </SelectItem>
-                                <SelectItem value="in_progress">
-                                  In Progress
-                                </SelectItem>
-                                <SelectItem value="completed">
-                                  Completed
-                                </SelectItem>
-                              </SelectContent>
-                            </Select>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-
-                      <FormField
-                        control={form.control}
-                        name="service_date"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel className="text-sm font-semibold text-slate-700">
-                              Service Date
-                            </FormLabel>
-                            <FormControl>
-                              <Input
-                                {...field}
-                                type="date"
-                                className="bg-white border-slate-300"
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-
-                    <FormField
-                      control={form.control}
-                      name="notes"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="text-sm font-semibold text-slate-700">
-                            Notes
-                          </FormLabel>
-                          <FormControl>
-                            <Input
-                              {...field}
-                              placeholder="Special instructions, access codes, etc."
-                              className="bg-white border-slate-300"
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-                </div>
-
-                {/* Line Items Section */}
-                <div className="bg-slate-50 p-6 rounded-lg border border-slate-200">
-                  <div className="flex items-center justify-between mb-6">
-                    <h3 className="text-lg font-semibold text-slate-900 flex items-center gap-2">
-                      <div className="p-1.5 bg-emerald-100 rounded">
-                        <svg
-                          className="h-4 w-4 text-emerald-600"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"
-                          />
-                        </svg>
-                      </div>
-                      Line Items
-                    </h3>
-                    <button
-                      type="button"
-                      onClick={() =>
-                        append({
-                          item_type: 'labor',
-                          description: '',
-                          quantity: 1,
-                          unit_price: 0,
-                        })
-                      }
-                      className="px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-white font-semibold rounded-lg transition-colors"
-                    >
-                      Add Item
-                    </button>
-                  </div>
-
-                  <div className="space-y-4">
-                    {fields.map((field, index) => (
-                      <div
-                        key={field.id}
-                        className="bg-white p-6 rounded-lg border border-slate-200 shadow-sm"
-                      >
-                        <div className="flex items-center justify-between mb-4">
-                          <h4 className="font-semibold text-slate-900">
-                            Item {index + 1}
-                          </h4>
-                          {fields.length > 1 && (
-                            <button
-                              type="button"
-                              onClick={() => remove(index)}
-                              className="px-3 py-1.5 bg-red-50 hover:bg-red-100 text-red-700 font-medium rounded-lg transition-colors text-sm border border-red-200"
-                            >
-                              Remove
-                            </button>
-                          )}
-                        </div>
-
-                        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                          <FormField
-                            control={form.control}
-                            name={`lineItems.${index}.item_type`}
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel className="text-sm font-semibold text-slate-700">
-                                  Type
-                                </FormLabel>
-                                <Select
-                                  onValueChange={field.onChange}
-                                  value={field.value}
-                                >
-                                  <FormControl>
-                                    <SelectTrigger className="bg-white border-slate-300 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500">
-                                      <SelectValue className="text-slate-700 font-medium" />
-                                    </SelectTrigger>
-                                  </FormControl>
-                                  <SelectContent>
-                                    <SelectItem value="labor">Labor</SelectItem>
-                                    <SelectItem value="material">
-                                      Material
-                                    </SelectItem>
-                                  </SelectContent>
-                                </Select>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-
-                          <FormField
-                            control={form.control}
-                            name={`lineItems.${index}.description`}
-                            render={({ field }) => (
-                              <FormItem className="md:col-span-2">
-                                <FormLabel className="text-sm font-semibold text-slate-700">
-                                  Description
-                                </FormLabel>
-                                <FormControl>
-                                  <Input
-                                    {...field}
-                                    placeholder="e.g., Paint 2 rooms"
-                                    className="bg-white border-slate-300"
-                                  />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-
-                          <FormField
-                            control={form.control}
-                            name={`lineItems.${index}.quantity`}
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel className="text-sm font-semibold text-slate-700">
-                                  Qty
-                                </FormLabel>
-                                <FormControl>
-                                  <Input
-                                    {...field}
-                                    type="number"
-                                    step="0.01"
-                                    className="bg-white border-slate-300"
-                                  />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                        </div>
-
-                        <FormField
-                          control={form.control}
-                          name={`lineItems.${index}.unit_price`}
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel className="text-sm font-semibold text-slate-700">
-                                Unit Price ($)
-                              </FormLabel>
-                              <FormControl>
-                                <Input
-                                  {...field}
-                                  type="number"
-                                  step="0.01"
-                                  className="bg-white border-slate-300"
-                                />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Actions */}
-                <div className="flex justify-end gap-3 pt-6 border-t border-slate-200">
-                  <button
-                    type="button"
-                    onClick={() => router.push('/jobs')}
-                    className="px-6 py-3 bg-white hover:bg-slate-50 text-slate-700 font-semibold rounded-lg border border-slate-300 transition-colors"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={submitting}
-                    className="px-6 py-3 bg-emerald-500 hover:bg-emerald-600 disabled:bg-emerald-400 text-white font-semibold rounded-lg transition-colors disabled:cursor-not-allowed"
-                  >
-                    {submitting ? 'Creating...' : 'Create Job'}
-                  </button>
-                </div>
-              </form>
-            </Form>
+                <ArrowLeft className="h-4 w-4" />
+              </Button>
+              <div>
+                <h1 className="text-lg font-bold">New Job</h1>
+                <p className="text-sm text-muted-foreground">
+                  Create a new job
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => router.push('/admin/jobs')}
+              >
+                Cancel
+              </Button>
+              <ButtonLoader
+                size="sm"
+                loading={submitting}
+                onClick={form.handleSubmit(handleSubmit)}
+              >
+                <Save className="h-4 w-4 mr-2" />
+                Create Job
+              </ButtonLoader>
+            </div>
           </div>
         </div>
       </div>
-    </div>
+
+      <Form {...form}>
+        <form
+          onSubmit={form.handleSubmit(handleSubmit)}
+          className="p-4 lg:p-6 space-y-6"
+        >
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="flex items-center gap-2 text-base">
+                <User className="h-4 w-4" />
+                Client & Property
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="client_id"
+                rules={{ required: 'Client is required' }}
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Client *</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select client" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {clients.map((client) => (
+                          <SelectItem key={client.id} value={client.id}>
+                            {client.first_name} {client.last_name}
+                            {client.company_name && ` - ${client.company_name}`}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="property_id"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Property</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select property (optional)" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="none">
+                          No specific property
+                        </SelectItem>
+                        {properties
+                          .filter(
+                            (p) =>
+                              !form.watch('client_id') ||
+                              p.client_id === form.watch('client_id')
+                          )
+                          .map((property) => (
+                            <SelectItem key={property.id} value={property.id}>
+                              {property.name}{' '}
+                              {property.city && `(${property.city})`}
+                            </SelectItem>
+                          ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="flex items-center gap-2 text-base">
+                <FileText className="h-4 w-4" />
+                Job Details
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <FormField
+                control={form.control}
+                name="title"
+                rules={{ required: 'Title is required' }}
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Job Title *</FormLabel>
+                    <FormControl>
+                      <Input
+                        {...field}
+                        placeholder="e.g., Interior Painting - Living Room"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="description"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Description</FormLabel>
+                    <FormControl>
+                      <Textarea
+                        {...field}
+                        placeholder="Additional details about the job..."
+                        rows={3}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <FormField
+                  control={form.control}
+                  name="status"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Status</FormLabel>
+                      <Select
+                        onValueChange={field.onChange}
+                        value={field.value}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="quote">Quote</SelectItem>
+                          <SelectItem value="scheduled">Scheduled</SelectItem>
+                          <SelectItem value="in_progress">
+                            In Progress
+                          </SelectItem>
+                          <SelectItem value="completed">Completed</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="service_date"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Service Date</FormLabel>
+                      <FormControl>
+                        <Input {...field} type="date" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="scheduled_time"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Time</FormLabel>
+                      <FormControl>
+                        <Input {...field} type="time" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              <FormField
+                control={form.control}
+                name="notes"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Notes</FormLabel>
+                    <FormControl>
+                      <Textarea
+                        {...field}
+                        placeholder="Special instructions, access codes, etc."
+                        rows={2}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="pb-3">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-base">Line Items</CardTitle>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => append({ ...defaultLineItem })}
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Item
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {fields.map((field, index) => (
+                <div
+                  key={field.id}
+                  className="grid grid-cols-12 gap-3 items-start p-3 bg-muted/50 rounded-lg"
+                >
+                  <FormField
+                    control={form.control}
+                    name={`lineItems.${index}.item_type`}
+                    render={({ field }) => (
+                      <FormItem className="col-span-2">
+                        <FormLabel className="text-xs">Type</FormLabel>
+                        <Select
+                          onValueChange={field.onChange}
+                          value={field.value}
+                        >
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="labor">Labor</SelectItem>
+                            <SelectItem value="material">Material</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name={`lineItems.${index}.description`}
+                    rules={{ required: 'Required' }}
+                    render={({ field }) => (
+                      <FormItem className="col-span-5">
+                        <FormLabel className="text-xs">Description</FormLabel>
+                        <FormControl>
+                          <Input {...field} placeholder="Description" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name={`lineItems.${index}.quantity`}
+                    rules={{ min: { value: 0.01, message: 'Required' } }}
+                    render={({ field }) => (
+                      <FormItem className="col-span-2">
+                        <FormLabel className="text-xs">Qty</FormLabel>
+                        <FormControl>
+                          <Input
+                            {...field}
+                            type="number"
+                            step="0.01"
+                            min="0"
+                            onChange={(e) =>
+                              field.onChange(parseFloat(e.target.value) || 0)
+                            }
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name={`lineItems.${index}.unit_price`}
+                    render={({ field }) => (
+                      <FormItem className="col-span-2">
+                        <FormLabel className="text-xs">Price</FormLabel>
+                        <FormControl>
+                          <Input
+                            {...field}
+                            type="number"
+                            step="0.01"
+                            min="0"
+                            onChange={(e) =>
+                              field.onChange(parseFloat(e.target.value) || 0)
+                            }
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <div className="col-span-1 flex items-end justify-center pb-2">
+                    {fields.length > 1 && (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="text-destructive hover:text-destructive"
+                        onClick={() => remove(index)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              ))}
+
+              <div className="flex justify-end pt-2 border-t">
+                <div className="text-right">
+                  <p className="text-sm text-muted-foreground">
+                    Estimated Total
+                  </p>
+                  <p className="text-xl font-bold">
+                    ${calculateTotal().toFixed(2)}
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <div className="flex justify-end gap-3 pt-4 pb-20 lg:pb-0">
+            <Button
+              variant="outline"
+              type="button"
+              onClick={() => router.push('/admin/jobs')}
+            >
+              Cancel
+            </Button>
+            <ButtonLoader type="submit" loading={submitting}>
+              <Save className="h-4 w-4 mr-2" />
+              Create Job
+            </ButtonLoader>
+          </div>
+        </form>
+      </Form>
+
+      <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-background border-t p-4 z-20">
+        <ButtonLoader
+          className="w-full"
+          loading={submitting}
+          onClick={form.handleSubmit(handleSubmit)}
+        >
+          <Save className="h-4 w-4 mr-2" />
+          Create Job
+        </ButtonLoader>
+      </div>
+    </PageContainer>
   );
 }
 
 export default function NewJobPage() {
   return (
-    <Suspense fallback={<div>Loading...</div>}>
+    <React.Suspense
+      fallback={<div className="p-8 text-center">Loading...</div>}
+    >
       <NewJobPageContent />
-    </Suspense>
+    </React.Suspense>
   );
 }

@@ -123,10 +123,27 @@ __tests__/ui/layout.test.tsx
 
 ### Follow-ups (P7-T2+)
 
-1. **Jobs/Visits Workspace** - Apply new components to jobs pages
+1. **Jobs/Visits Workspace** - Apply new components to jobs pages ✅ DONE (P7-T2)
 2. **Estimates/Invoices** - Use StatusBadge for lifecycle states
 3. **Dashboard** - Replace ad-hoc cards with DataCard/MetricCard
 4. **E2E Tests** - Add accessibility checks for new components
+
+---
+
+## P7-T2 Progress Update (2026-02-22)
+
+P7-T2 (Jobs + Visits Workspace Rewrite) has been implemented, building on the P7-T1 primitives. Key improvements:
+
+- Jobs list page now uses PageContainer, PageHeader, StatusBadge, EmptyState
+- Job detail page uses operational hub layout with sticky action rail
+- New Job page uses P7-T1 form patterns
+- Today page reorganized for visits workflow (Today/Upcoming/Overdue)
+- Schedule page updated for coherence with job workflow
+- URL-persisted filters for jobs list
+- Dense table + card + kanban toggle views
+- Mobile-first responsive design throughout
+
+See `docs/P7_T2_IMPLEMENTATION.md` for full details.
 
 ## Usage Examples
 

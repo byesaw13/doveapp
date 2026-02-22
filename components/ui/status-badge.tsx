@@ -41,6 +41,8 @@ const statusBadgeVariants = cva(
           'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
         quote:
           'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400',
+        invoiced:
+          'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400',
       },
       size: {
         sm: 'px-2 py-0.5 text-xs rounded',
@@ -98,6 +100,7 @@ function StatusBadge({
     sent: 'bg-blue-500',
     scheduled: 'bg-blue-500',
     quote: 'bg-purple-500',
+    invoiced: 'bg-purple-500',
   };
 
   return (

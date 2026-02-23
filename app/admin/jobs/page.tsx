@@ -1,142 +1,124 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import * as React from 'react';
+import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import dynamic from 'next/dynamic';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
+  PageHeader,
+  PageContainer,
+  ContentSection,
+  EmptyState,
+  Spinner,
+  Button,
+  ButtonLoader,
+} from '@/components/ui';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+  JobFilters,
+  JobFiltersState,
+  JobTable,
+  JobCard,
+} from '@/components/jobs';
 import type { JobWithClient, JobStatus } from '@/types/job';
 import {
-  Search,
   Plus,
-  Calendar,
-  User,
-  FileText,
-  Wrench,
-  CheckCircle,
-  XCircle,
-  Clock,
   Download,
-  X,
+  LayoutGrid,
+  List,
+  Briefcase,
+  AlertCircle,
+  RefreshCw,
+  Trash2,
 } from 'lucide-react';
 import { exportJobsToCSV } from '@/lib/csv-export';
 import { useToast } from '@/components/ui/toast';
-import AdvancedFilters from '@/components/ui/advanced-filters';
+import { cn } from '@/lib/utils';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
-// Lazy load KanbanBoard component
 const KanbanBoard = dynamic(() => import('@/components/kanban/KanbanBoard'), {
   loading: () => (
     <div className="flex items-center justify-center h-64">
-      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+      <Spinner size="lg" />
     </div>
   ),
 }) as any;
 
+type ViewMode = 'table' | 'cards' | 'kanban';
+
 export default function JobsPage() {
   const { toast } = useToast();
   const router = useRouter();
-  const [jobs, setJobs] = useState<JobWithClient[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState<JobStatus | 'all'>('all');
-  const [viewMode, setViewMode] = useState<'list' | 'kanban'>('kanban'); // Default to kanban
-  const [selectedJob, setSelectedJob] = useState<JobWithClient | null>(null);
-  const [jobDetailsExpanded, setJobDetailsExpanded] = useState(true);
+  const searchParams = useSearchParams();
+  const pathname = usePathname();
 
-  // Advanced filter states
-  const [dateRange, setDateRange] = useState<{
-    from: Date | undefined;
-    to: Date | undefined;
-  }>({ from: undefined, to: undefined });
-  const [amountRange, setAmountRange] = useState<{
-    min: number | undefined;
-    max: number | undefined;
-  }>({ min: undefined, max: undefined });
-  const [selectedStatuses, setSelectedStatuses] = useState<JobStatus[]>([]);
-  const [selectedClients, setSelectedClients] = useState<string[]>([]);
-  const [clients, setClients] = useState<any[]>([]);
-  const [techs, setTechs] = useState<any[]>([]);
+  const [jobs, setJobs] = React.useState<JobWithClient[]>([]);
+  const [loading, setLoading] = React.useState(true);
+  const [error, setError] = React.useState<string | null>(null);
+  const [techs, setTechs] = React.useState<
+    Array<{ id: string; full_name?: string; email: string }>
+  >([]);
 
-  // Bulk actions
-  const [selectedJobs, setSelectedJobs] = useState<string[]>([]);
-  const [bulkActionLoading, setBulkActionLoading] = useState(false);
+  const [viewMode, setViewMode] = React.useState<ViewMode>(() => {
+    const v = searchParams.get('view') as ViewMode;
+    return v === 'cards' || v === 'table' || v === 'kanban' ? v : 'kanban';
+  });
 
-  // Quick action states
-  const [assignTechDialogOpen, setAssignTechDialogOpen] = useState(false);
-  const [addPhotosDialogOpen, setAddPhotosDialogOpen] = useState(false);
-  const [addNotesDialogOpen, setAddNotesDialogOpen] = useState(false);
-  const [selectedTechId, setSelectedTechId] = useState('');
-  const [noteText, setNoteText] = useState('');
+  const [filters, setFilters] = React.useState<JobFiltersState>(() => ({
+    search: searchParams.get('search') || '',
+    status: (searchParams.get('status') as JobStatus | 'all') || 'all',
+    priority:
+      (searchParams.get('priority') as JobFiltersState['priority']) || 'all',
+    assignedTech: searchParams.get('tech') || '',
+    dateFrom: searchParams.get('dateFrom')
+      ? new Date(searchParams.get('dateFrom')!)
+      : undefined,
+    dateTo: searchParams.get('dateTo')
+      ? new Date(searchParams.get('dateTo')!)
+      : undefined,
+  }));
 
-  const statusTabs = [
-    { value: 'all', label: 'All Jobs' },
-    { value: 'scheduled', label: 'Scheduled' },
-    { value: 'in_progress', label: 'In Progress' },
-    { value: 'completed', label: 'Completed' },
-    { value: 'invoiced', label: 'Invoiced' },
-    { value: 'cancelled', label: 'Cancelled' },
-  ];
+  const [selectedJobs, setSelectedJobs] = React.useState<string[]>([]);
+  const [bulkActionLoading, setBulkActionLoading] = React.useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = React.useState(false);
+  const [jobToDelete, setJobToDelete] = React.useState<string | null>(null);
 
-  useEffect(() => {
+  React.useEffect(() => {
     loadJobs();
-    loadClients();
     loadTechs();
-  }, [
-    searchQuery,
-    statusFilter,
-    dateRange,
-    amountRange,
-    selectedStatuses,
-    selectedClients,
-  ]);
+  }, [filters]);
 
   const loadJobs = async () => {
     try {
       setLoading(true);
-      const params = new URLSearchParams();
+      setError(null);
 
-      if (searchQuery.trim()) params.set('search', searchQuery.trim());
-      if (statusFilter !== 'all') params.set('status', statusFilter);
-      if (dateRange.from) params.set('dateFrom', dateRange.from.toISOString());
-      if (dateRange.to) params.set('dateTo', dateRange.to.toISOString());
-      if (amountRange.min !== undefined)
-        params.set('amountMin', amountRange.min.toString());
-      if (amountRange.max !== undefined)
-        params.set('amountMax', amountRange.max.toString());
-      if (selectedStatuses.length > 0)
-        params.set('statuses', selectedStatuses.join(','));
-      if (selectedClients.length > 0)
-        params.set('clients', selectedClients.join(','));
+      const params = new URLSearchParams();
+      if (filters.search) params.set('search', filters.search);
+      if (filters.status !== 'all') params.set('status', filters.status);
+      if (filters.priority !== 'all') params.set('priority', filters.priority);
+      if (filters.assignedTech)
+        params.set('assigned_tech_id', filters.assignedTech);
+      if (filters.dateFrom)
+        params.set('dateFrom', filters.dateFrom.toISOString().split('T')[0]);
+      if (filters.dateTo)
+        params.set('dateTo', filters.dateTo.toISOString().split('T')[0]);
 
       const response = await fetch(`/api/jobs?${params.toString()}`);
-      if (!response.ok) {
-        throw new Error('Failed to load jobs');
-      }
+      if (!response.ok) throw new Error('Failed to load jobs');
 
       const data = await response.json();
-      setJobs(Array.isArray(data) ? data : []);
-    } catch (error) {
-      console.error('Failed to load jobs:', error);
+      setJobs(Array.isArray(data) ? data : data.jobs || []);
+    } catch (err) {
+      console.error('Failed to load jobs:', err);
+      setError(err instanceof Error ? err.message : 'Failed to load jobs');
       toast({
         title: 'Error',
         description: 'Failed to load jobs',
@@ -147,19 +129,6 @@ export default function JobsPage() {
     }
   };
 
-  const loadClients = async () => {
-    try {
-      const response = await fetch('/api/admin/clients?limit=100');
-      if (response.ok) {
-        const data = await response.json();
-        setClients(Array.isArray(data) ? data : []);
-      }
-    } catch (error) {
-      console.error('Failed to load clients:', error);
-      setClients([]);
-    }
-  };
-
   const loadTechs = async () => {
     try {
       const response = await fetch('/api/admin/users?role=TECH');
@@ -167,161 +136,77 @@ export default function JobsPage() {
         const data = await response.json();
         setTechs(Array.isArray(data) ? data : []);
       }
-    } catch (error) {
-      console.error('Failed to load techs:', error);
-      setTechs([]);
+    } catch (err) {
+      console.error('Failed to load techs:', err);
     }
   };
 
-  const getKanbanColumns = () => {
-    return [
-      {
-        id: 'scheduled',
-        title: 'Scheduled',
-        items: jobs.filter((job) => job.status === 'scheduled'),
-        color: 'border-blue-400',
-      },
-      {
-        id: 'in_progress',
-        title: 'In Progress',
-        items: jobs.filter((job) => job.status === 'in_progress'),
-        color: 'border-orange-400',
-      },
-      {
-        id: 'completed',
-        title: 'Completed',
-        items: jobs.filter((job) => job.status === 'completed'),
-        color: 'border-green-400',
-      },
-      {
-        id: 'invoiced',
-        title: 'Invoiced',
-        items: jobs.filter((job) => job.status === 'invoiced'),
-        color: 'border-purple-400',
-      },
-    ];
+  const handleFiltersChange = (newFilters: JobFiltersState) => {
+    setFilters(newFilters);
+    setSelectedJobs([]);
   };
 
-  const handleStatusChange = async (jobId: string, newStatus: string) => {
+  const handleViewModeChange = (mode: ViewMode) => {
+    setViewMode(mode);
+    const params = new URLSearchParams(searchParams.toString());
+    params.set('view', mode);
+    router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+  };
+
+  const handleStatusChange = async (jobId: string, newStatus: JobStatus) => {
     try {
       const response = await fetch(`/api/jobs/${jobId}`, {
         method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: newStatus }),
       });
 
-      if (!response.ok) {
-        throw new Error('Failed to update job status');
-      }
+      if (!response.ok) throw new Error('Failed to update status');
 
       toast({
         title: 'Status Updated',
-        description: `Job moved to ${newStatus}`,
+        description: `Job moved to ${newStatus.replace('_', ' ')}`,
       });
 
       loadJobs();
-    } catch (error) {
-      console.error('Failed to update status:', error);
+    } catch (err) {
+      console.error('Failed to update status:', err);
       toast({
         title: 'Error',
         description: 'Failed to update job status',
         variant: 'destructive',
       });
-      throw error; // Re-throw to let KanbanBoard handle the error
+      throw err;
     }
   };
 
-  const getStatusColor = (status: JobStatus) => {
-    switch (status) {
-      case 'scheduled':
-        return 'bg-blue-100 text-blue-800 border-blue-300';
-      case 'in_progress':
-        return 'bg-orange-100 text-orange-800 border-orange-300';
-      case 'completed':
-        return 'bg-green-100 text-green-800 border-green-300';
-      case 'invoiced':
-        return 'bg-purple-100 text-purple-800 border-purple-300';
-      case 'cancelled':
-        return 'bg-red-100 text-red-800 border-red-300';
-      default:
-        return 'bg-gray-100 text-gray-800 border-gray-300';
-    }
-  };
+  const handleDeleteJob = async () => {
+    if (!jobToDelete) return;
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric',
-    });
-  };
+    try {
+      const response = await fetch(`/api/jobs/${jobToDelete}`, {
+        method: 'DELETE',
+      });
 
-  const renderKanbanCard = (job: JobWithClient) => {
-    const clientName = job.client ? job.client.name || 'No Name' : 'No Client';
-    const isSelected = selectedJob?.id === job.id;
+      if (!response.ok) throw new Error('Failed to delete job');
 
-    return (
-      <div
-        className={`bg-card rounded-lg border p-4 shadow-sm hover:shadow-lg transition-all cursor-pointer transform hover:scale-[1.02] ${
-          isSelected
-            ? 'ring-2 ring-primary border-primary shadow-lg'
-            : 'border-border'
-        }`}
-        onClick={() => setSelectedJob(job)}
-      >
-        <div className="flex items-start justify-between mb-3">
-          <div className="flex-1 min-w-0">
-            <h4 className="font-semibold text-slate-900 text-sm truncate">
-              #{job.job_number}
-            </h4>
-            <p className="text-slate-600 text-sm truncate mt-1">{job.title}</p>
-          </div>
-          <Badge className={`text-xs ml-2 ${getStatusColor(job.status)}`}>
-            {job.status
-              .replace('_', ' ')
-              .replace(/\b\w/g, (l) => l.toUpperCase())}
-          </Badge>
-        </div>
+      toast({
+        title: 'Job Deleted',
+        description: 'The job has been removed',
+      });
 
-        <div className="space-y-2">
-          <div className="flex items-center justify-between text-sm">
-            <span className="text-slate-600 truncate">{clientName}</span>
-            <span className="font-semibold text-emerald-600">
-              ${job.total.toLocaleString()}
-            </span>
-          </div>
-
-          {job.service_date && (
-            <div className="text-xs text-slate-500">
-              📅 {formatDate(job.service_date)}
-            </div>
-          )}
-
-          {/* Quick indicators */}
-          <div className="flex items-center gap-2 text-xs text-slate-500">
-            {job.notes && <span>📝</span>}
-            {/* Add more indicators as needed */}
-          </div>
-        </div>
-      </div>
-    );
-  };
-
-  const handleSelectAll = (checked: boolean) => {
-    if (checked) {
-      setSelectedJobs(jobs.map((job) => job.id));
-    } else {
-      setSelectedJobs([]);
-    }
-  };
-
-  const handleSelectJob = (jobId: string, checked: boolean) => {
-    if (checked) {
-      setSelectedJobs((prev) => [...prev, jobId]);
-    } else {
-      setSelectedJobs((prev) => prev.filter((id) => id !== jobId));
+      setJobs((prev) => prev.filter((j) => j.id !== jobToDelete));
+      setSelectedJobs((prev) => prev.filter((id) => id !== jobToDelete));
+    } catch (err) {
+      console.error('Failed to delete job:', err);
+      toast({
+        title: 'Error',
+        description: 'Failed to delete job',
+        variant: 'destructive',
+      });
+    } finally {
+      setJobToDelete(null);
+      setDeleteDialogOpen(false);
     }
   };
 
@@ -330,8 +215,8 @@ export default function JobsPage() {
 
     try {
       setBulkActionLoading(true);
-      const promises = selectedJobs.map((jobId) =>
-        fetch(`/api/jobs/${jobId}`, {
+      const promises = selectedJobs.map((id) =>
+        fetch(`/api/jobs/${id}`, {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ status }),
@@ -342,13 +227,13 @@ export default function JobsPage() {
 
       toast({
         title: 'Success',
-        description: `Updated ${selectedJobs.length} jobs to ${status}`,
+        description: `Updated ${selectedJobs.length} jobs to ${status.replace('_', ' ')}`,
       });
 
       setSelectedJobs([]);
       loadJobs();
-    } catch (error) {
-      console.error('Bulk status update failed:', error);
+    } catch (err) {
+      console.error('Bulk status update failed:', err);
       toast({
         title: 'Error',
         description: 'Failed to update jobs',
@@ -359,29 +244,13 @@ export default function JobsPage() {
     }
   };
 
-  const handleBulkExport = () => {
-    const selectedJobData = jobs.filter((job) => selectedJobs.includes(job.id));
-    exportJobsToCSV(selectedJobData);
-    setSelectedJobs([]);
-  };
-
   const handleBulkDelete = async () => {
     if (selectedJobs.length === 0) return;
 
-    if (
-      !confirm(
-        `Are you sure you want to delete ${selectedJobs.length} jobs? This action cannot be undone.`
-      )
-    ) {
-      return;
-    }
-
     try {
       setBulkActionLoading(true);
-      const promises = selectedJobs.map((jobId) =>
-        fetch(`/api/jobs/${jobId}`, {
-          method: 'DELETE',
-        })
+      const promises = selectedJobs.map((id) =>
+        fetch(`/api/jobs/${id}`, { method: 'DELETE' })
       );
 
       await Promise.all(promises);
@@ -393,8 +262,8 @@ export default function JobsPage() {
 
       setSelectedJobs([]);
       loadJobs();
-    } catch (error) {
-      console.error('Bulk delete failed:', error);
+    } catch (err) {
+      console.error('Bulk delete failed:', err);
       toast({
         title: 'Error',
         description: 'Failed to delete jobs',
@@ -402,635 +271,303 @@ export default function JobsPage() {
       });
     } finally {
       setBulkActionLoading(false);
+      setDeleteDialogOpen(false);
     }
   };
 
-  const handleAssignTech = async () => {
-    if (!selectedJob || !selectedTechId) return;
-
-    try {
-      const response = await fetch(`/api/jobs/${selectedJob.id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ assigned_tech_id: selectedTechId }),
-      });
-
-      if (!response.ok) throw new Error('Failed to assign tech');
-
-      toast({
-        title: 'Success',
-        description: 'Technician assigned successfully',
-      });
-
-      setAssignTechDialogOpen(false);
-      setSelectedTechId('');
-      loadJobs();
-    } catch (error) {
-      console.error('Failed to assign tech:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to assign technician',
-        variant: 'destructive',
-      });
-    }
+  const handleExport = () => {
+    const dataToExport =
+      selectedJobs.length > 0
+        ? jobs.filter((j) => selectedJobs.includes(j.id))
+        : jobs;
+    exportJobsToCSV(dataToExport);
+    toast({
+      title: 'Export Complete',
+      description: `Exported ${dataToExport.length} jobs`,
+    });
   };
 
-  const handleAddNote = async () => {
-    if (!selectedJob || !noteText.trim()) return;
-
-    try {
-      const response = await fetch(`/api/jobs/${selectedJob.id}/notes`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          note: noteText,
-          internalNotes: noteText,
-        }),
-      });
-
-      if (!response.ok) throw new Error('Failed to add note');
-
-      toast({
-        title: 'Success',
-        description: 'Note added successfully',
-      });
-
-      setAddNotesDialogOpen(false);
-      setNoteText('');
-      loadJobs();
-    } catch (error) {
-      console.error('Failed to add note:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to add note',
-        variant: 'destructive',
-      });
-    }
+  const handleSelectAll = (checked: boolean) => {
+    setSelectedJobs(checked ? jobs.map((j) => j.id) : []);
   };
+
+  const handleSelectJob = (jobId: string, checked: boolean) => {
+    setSelectedJobs((prev) =>
+      checked ? [...prev, jobId] : prev.filter((id) => id !== jobId)
+    );
+  };
+
+  const getKanbanColumns = () => [
+    {
+      id: 'scheduled',
+      title: 'Scheduled',
+      items: jobs.filter((job) => job.status === 'scheduled'),
+      color: 'border-blue-400',
+    },
+    {
+      id: 'in_progress',
+      title: 'In Progress',
+      items: jobs.filter((job) => job.status === 'in_progress'),
+      color: 'border-orange-400',
+    },
+    {
+      id: 'completed',
+      title: 'Completed',
+      items: jobs.filter((job) => job.status === 'completed'),
+      color: 'border-green-400',
+    },
+    {
+      id: 'invoiced',
+      title: 'Invoiced',
+      items: jobs.filter((job) => job.status === 'invoiced'),
+      color: 'border-purple-400',
+    },
+  ];
+
+  const renderKanbanCard = (job: JobWithClient) => {
+    const clientName = job.client
+      ? (job.client as any).name ||
+        `${(job.client as any).first_name || ''} ${(job.client as any).last_name || ''}`.trim()
+      : 'No Client';
+
+    return (
+      <div
+        className="bg-card rounded-lg border p-4 shadow-sm hover:shadow-md transition-all cursor-pointer"
+        onClick={() => router.push(`/admin/jobs/${job.id}`)}
+      >
+        <div className="flex items-start justify-between mb-2">
+          <span className="font-semibold text-sm">#{job.job_number}</span>
+          <span className="text-xs text-muted-foreground">
+            {job.status.replace('_', ' ')}
+          </span>
+        </div>
+        <p className="font-medium text-sm mb-1 truncate">{job.title}</p>
+        <p className="text-xs text-muted-foreground truncate mb-2">
+          {clientName}
+        </p>
+        <div className="flex items-center justify-between text-sm">
+          <span className="text-muted-foreground">
+            {job.service_date
+              ? new Date(job.service_date).toLocaleDateString('en-US', {
+                  month: 'short',
+                  day: 'numeric',
+                })
+              : 'Not scheduled'}
+          </span>
+          <span className="font-semibold text-emerald-600">
+            ${job.total.toLocaleString()}
+          </span>
+        </div>
+      </div>
+    );
+  };
+
+  const filteredCount = jobs.length;
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Compact Header */}
-      <div className="bg-white border-b border-border">
-        <div className="max-w-7xl mx-auto px-4 py-4">
+    <PageContainer maxWidth="xl" padding="md">
+      <PageHeader
+        title="Jobs"
+        description={`${filteredCount} job${filteredCount !== 1 ? 's' : ''}`}
+        breadcrumbs={[
+          { label: 'Dashboard', href: '/admin/dashboard' },
+          { label: 'Jobs' },
+        ]}
+        actions={
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleExport}
+              disabled={jobs.length === 0}
+            >
+              <Download className="h-4 w-4 mr-2" />
+              Export
+            </Button>
+            <Button size="sm" onClick={() => router.push('/admin/jobs/new')}>
+              <Plus className="h-4 w-4 mr-2" />
+              New Job
+            </Button>
+          </div>
+        }
+      />
+
+      <ContentSection className="mt-6">
+        <JobFilters
+          techs={techs}
+          onFiltersChange={handleFiltersChange}
+          initialFilters={filters}
+        />
+      </ContentSection>
+
+      {selectedJobs.length > 0 && (
+        <div className="mt-4 p-3 bg-primary/5 border border-primary/20 rounded-lg">
           <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-bold text-foreground">Jobs</h1>
-              <p className="text-muted-foreground text-sm">
-                Manage and track field operations
-              </p>
-            </div>
-            <div className="flex gap-2">
+            <span className="text-sm font-medium text-primary">
+              {selectedJobs.length} job{selectedJobs.length !== 1 ? 's' : ''}{' '}
+              selected
+            </span>
+            <div className="flex items-center gap-2">
               <Button
-                onClick={() => exportJobsToCSV(jobs)}
                 variant="outline"
                 size="sm"
-                disabled={jobs.length === 0}
+                onClick={() => setSelectedJobs([])}
               >
-                <Download className="w-4 h-4 mr-2" />
-                Export
+                Clear
               </Button>
-              <div className="flex bg-muted rounded-lg p-1">
-                <Button
-                  onClick={() => setViewMode('list')}
-                  variant={viewMode === 'list' ? 'default' : 'ghost'}
-                  size="sm"
-                  className="px-3 py-1"
-                >
-                  List
-                </Button>
-                <Button
-                  onClick={() => setViewMode('kanban')}
-                  variant={viewMode === 'kanban' ? 'default' : 'ghost'}
-                  size="sm"
-                  className="px-3 py-1"
-                >
-                  Kanban
-                </Button>
-              </div>
+              {(['scheduled', 'in_progress', 'completed'] as JobStatus[]).map(
+                (status) => (
+                  <ButtonLoader
+                    key={status}
+                    variant="outline"
+                    size="sm"
+                    loading={bulkActionLoading}
+                    onClick={() => handleBulkStatusChange(status)}
+                  >
+                    Mark {status.replace('_', ' ')}
+                  </ButtonLoader>
+                )
+              )}
               <Button
-                onClick={() => router.push('/jobs/new')}
+                variant="destructive"
                 size="sm"
-                className="bg-primary hover:bg-primary/90"
+                onClick={() => setDeleteDialogOpen(true)}
+                disabled={bulkActionLoading}
               >
-                <Plus className="w-4 h-4 mr-2" />
-                New Job
+                <Trash2 className="h-4 w-4 mr-1" />
+                Delete
               </Button>
             </div>
           </div>
         </div>
+      )}
+
+      <div className="mt-4 flex items-center justify-between">
+        <div className="flex items-center gap-1 bg-muted rounded-lg p-1">
+          <Button
+            variant={viewMode === 'table' ? 'default' : 'ghost'}
+            size="sm"
+            onClick={() => handleViewModeChange('table')}
+            className="gap-2"
+          >
+            <List className="h-4 w-4" />
+            <span className="hidden sm:inline">Table</span>
+          </Button>
+          <Button
+            variant={viewMode === 'cards' ? 'default' : 'ghost'}
+            size="sm"
+            onClick={() => handleViewModeChange('cards')}
+            className="gap-2"
+          >
+            <LayoutGrid className="h-4 w-4" />
+            <span className="hidden sm:inline">Cards</span>
+          </Button>
+          <Button
+            variant={viewMode === 'kanban' ? 'default' : 'ghost'}
+            size="sm"
+            onClick={() => handleViewModeChange('kanban')}
+            className="gap-2"
+          >
+            <Briefcase className="h-4 w-4" />
+            <span className="hidden sm:inline">Kanban</span>
+          </Button>
+        </div>
+        <Button variant="ghost" size="sm" onClick={loadJobs} disabled={loading}>
+          <RefreshCw
+            className={cn('h-4 w-4 mr-2', loading && 'animate-spin')}
+          />
+          Refresh
+        </Button>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4">
-        {/* Filters - Compact */}
-        <div className="py-4">
-          <AdvancedFilters
-            searchQuery={searchQuery}
-            onSearchChange={setSearchQuery}
-            dateRange={dateRange}
-            onDateRangeChange={setDateRange}
-            amountRange={amountRange}
-            onAmountRangeChange={setAmountRange}
-            statusOptions={statusTabs.map((tab) => ({
-              id: tab.value,
-              label: tab.label,
-              value: tab.value,
-            }))}
-            selectedStatuses={selectedStatuses}
-            onStatusChange={(statuses: string[]) =>
-              setSelectedStatuses(statuses as JobStatus[])
-            }
-            clientOptions={clients.map((client) => ({
-              id: client.id,
-              label:
-                (client as any).name ||
-                `${client.first_name} ${client.last_name}`,
-              value: client.id,
-            }))}
-            selectedClients={selectedClients}
-            onClientChange={setSelectedClients}
-            quickFilters={[
-              {
-                id: 'today',
-                label: 'Today',
-                icon: <Calendar className="w-4 h-4" />,
-                onClick: () => {
-                  const today = new Date();
-                  setDateRange({ from: today, to: today });
-                },
-              },
-              {
-                id: 'this-week',
-                label: 'This Week',
-                icon: <Calendar className="w-4 h-4" />,
-                onClick: () => {
-                  const today = new Date();
-                  const weekStart = new Date(today);
-                  weekStart.setDate(today.getDate() - today.getDay());
-                  const weekEnd = new Date(weekStart);
-                  weekEnd.setDate(weekStart.getDate() + 6);
-                  setDateRange({ from: weekStart, to: weekEnd });
-                },
-              },
-              {
-                id: 'active',
-                label: 'Active Jobs',
-                onClick: () => {
-                  setSelectedStatuses(['scheduled', 'in_progress']);
-                },
-              },
-            ]}
-            onClearAll={() => {
-              setDateRange({ from: undefined, to: undefined });
-              setAmountRange({ min: undefined, max: undefined });
-              setSelectedStatuses([]);
-              setSelectedClients([]);
+      <div className="mt-4">
+        {loading ? (
+          <div className="flex items-center justify-center py-12">
+            <Spinner size="lg" />
+          </div>
+        ) : error ? (
+          <EmptyState
+            icon={<AlertCircle className="h-12 w-12" />}
+            title="Failed to load jobs"
+            description={error}
+            action={{
+              label: 'Try Again',
+              onClick: loadJobs,
             }}
           />
-        </div>
-
-        {/* Bulk Actions Toolbar */}
-        {selectedJobs.length > 0 && (
-          <Card className="mb-4 border-primary/20 bg-primary/5">
-            <CardContent className="pt-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <span className="font-medium text-primary">
-                    {selectedJobs.length} job
-                    {selectedJobs.length !== 1 ? 's' : ''} selected
-                  </span>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setSelectedJobs([])}
-                    className="text-primary border-primary/30"
-                  >
-                    <X className="w-4 h-4 mr-1" />
-                    Clear Selection
-                  </Button>
-                </div>
-
-                <div className="flex gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={handleBulkExport}
-                    disabled={bulkActionLoading}
-                    className="text-primary border-primary/30"
-                  >
-                    <Download className="w-4 h-4 mr-1" />
-                    Export Selected
-                  </Button>
-
-                  <div className="flex gap-1">
-                    {(
-                      [
-                        'scheduled',
-                        'in_progress',
-                        'completed',
-                        'invoiced',
-                      ] as JobStatus[]
-                    ).map((status) => (
-                      <Button
-                        key={status}
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleBulkStatusChange(status)}
-                        disabled={bulkActionLoading}
-                        className="text-primary border-primary/30 capitalize"
-                      >
-                        Mark {status.replace('_', ' ')}
-                      </Button>
-                    ))}
-                  </div>
-
-                  <Button
-                    variant="destructive"
-                    size="sm"
-                    onClick={handleBulkDelete}
-                    disabled={bulkActionLoading}
-                  >
-                    <X className="w-4 h-4 mr-1" />
-                    Delete Selected
-                  </Button>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Main Content Area */}
-        <div className="flex flex-col h-[calc(100vh-250px)]">
-          {/* Kanban Board - Full Width */}
-          {viewMode === 'kanban' && (
-            <div className="flex-1">
-              <KanbanBoard
-                columns={getKanbanColumns()}
-                onItemMove={handleStatusChange}
-                renderCard={renderKanbanCard}
-                loading={loading}
+        ) : jobs.length === 0 ? (
+          <EmptyState
+            icon={<Briefcase className="h-12 w-12" />}
+            title="No jobs found"
+            description="Try adjusting your filters or create a new job to get started."
+            action={{
+              label: 'Create Job',
+              onClick: () => router.push('/admin/jobs/new'),
+            }}
+          />
+        ) : viewMode === 'table' ? (
+          <JobTable
+            jobs={jobs}
+            onStatusChange={handleStatusChange}
+            onDelete={(id) => {
+              setJobToDelete(id);
+              setDeleteDialogOpen(true);
+            }}
+            selectedIds={selectedJobs}
+            onSelect={handleSelectJob}
+            onSelectAll={handleSelectAll}
+          />
+        ) : viewMode === 'cards' ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {jobs.map((job) => (
+              <JobCard
+                key={job.id}
+                job={job}
+                onStatusChange={handleStatusChange}
+                onDelete={(id) => {
+                  setJobToDelete(id);
+                  setDeleteDialogOpen(true);
+                }}
+                selected={selectedJobs.includes(job.id)}
+                onSelect={handleSelectJob}
               />
-            </div>
-          )}
-
-          {/* Job Details Panel */}
-          {selectedJob && jobDetailsExpanded && (
-            <div className="bg-white rounded-lg border border-border shadow-sm">
-              <div className="p-4 border-b border-border">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-lg font-semibold text-foreground">
-                    Job Details: #{selectedJob.job_number}
-                  </h3>
-                  <div className="flex items-center gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => router.push(`/jobs/${selectedJob.id}`)}
-                    >
-                      <FileText className="w-4 h-4 mr-1" />
-                      Full Details
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setJobDetailsExpanded(false)}
-                    >
-                      ✕
-                    </Button>
-                  </div>
-                </div>
-              </div>
-
-              <div className="p-4">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  {/* Job Info */}
-                  <div className="space-y-3">
-                    <div>
-                      <h4 className="font-medium text-foreground mb-2">
-                        Job Information
-                      </h4>
-                      <div className="space-y-2 text-sm">
-                        <div>
-                          <strong>Title:</strong> {selectedJob.title}
-                        </div>
-                        <div>
-                          <strong>Status:</strong>{' '}
-                          <Badge className={getStatusColor(selectedJob.status)}>
-                            {selectedJob.status.replace('_', ' ')}
-                          </Badge>
-                        </div>
-                        <div>
-                          <strong>Total:</strong> $
-                          {selectedJob.total.toLocaleString()}
-                        </div>
-                        {selectedJob.service_date && (
-                          <div>
-                            <strong>Scheduled:</strong>{' '}
-                            {formatDate(selectedJob.service_date)}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Client Info */}
-                  <div className="space-y-3">
-                    <div>
-                      <h4 className="font-medium text-foreground mb-2">
-                        Client Information
-                      </h4>
-                      <div className="space-y-2 text-sm">
-                        {selectedJob.client ? (
-                          <>
-                            <div>
-                              <strong>Name:</strong>{' '}
-                              {(selectedJob.client as any).name ||
-                                `${selectedJob.client.first_name} ${selectedJob.client.last_name}`}
-                            </div>
-                            <div>
-                              <strong>Phone:</strong>{' '}
-                              {selectedJob.client.phone || 'N/A'}
-                            </div>
-                            <div>
-                              <strong>Email:</strong>{' '}
-                              {selectedJob.client.email || 'N/A'}
-                            </div>
-                          </>
-                        ) : (
-                          <div>No client assigned</div>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Quick Actions */}
-                  <div className="space-y-3">
-                    <div>
-                      <h4 className="font-medium text-foreground mb-2">
-                        Quick Actions
-                      </h4>
-                      <div className="flex flex-wrap gap-2">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => setAssignTechDialogOpen(true)}
-                        >
-                          <User className="w-4 h-4 mr-1" />
-                          Assign Tech
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() =>
-                            router.push(`/admin/jobs/${selectedJob.id}`)
-                          }
-                        >
-                          📷 Add Photos
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => setAddNotesDialogOpen(true)}
-                        >
-                          💬 Add Notes
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() =>
-                            router.push(`/admin/jobs/${selectedJob.id}`)
-                          }
-                        >
-                          ⏱️ Start Timer
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Job Description */}
-                {selectedJob.description && (
-                  <div className="mt-6 pt-4 border-t border-border">
-                    <h4 className="font-medium text-foreground mb-2">
-                      Description
-                    </h4>
-                    <p className="text-sm text-muted-foreground">
-                      {selectedJob.description}
-                    </p>
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* List View */}
-          {viewMode === 'list' && (
-            <div className="flex-1 bg-white rounded-lg border border-border overflow-hidden">
-              {loading ? (
-                <div className="p-8 text-center">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-                </div>
-              ) : jobs.length === 0 ? (
-                <div className="p-8 text-center text-muted-foreground">
-                  <p className="text-lg mb-2">No jobs found</p>
-                  <p className="text-sm">
-                    Try adjusting your filters or create a new job to get
-                    started.
-                  </p>
-                </div>
-              ) : (
-                <div className="overflow-x-auto">
-                  <table className="w-full">
-                    <thead className="bg-slate-50 border-b border-border">
-                      <tr>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-slate-600 uppercase tracking-wider">
-                          <input
-                            type="checkbox"
-                            checked={
-                              selectedJobs.length === jobs.length &&
-                              jobs.length > 0
-                            }
-                            onChange={(e) => handleSelectAll(e.target.checked)}
-                            className="rounded border-gray-300"
-                          />
-                        </th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-slate-600 uppercase tracking-wider">
-                          Job #
-                        </th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-slate-600 uppercase tracking-wider">
-                          Title
-                        </th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-slate-600 uppercase tracking-wider">
-                          Client
-                        </th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-slate-600 uppercase tracking-wider">
-                          Status
-                        </th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-slate-600 uppercase tracking-wider">
-                          Date
-                        </th>
-                        <th className="px-4 py-3 text-right text-xs font-medium text-slate-600 uppercase tracking-wider">
-                          Total
-                        </th>
-                        <th className="px-4 py-3 text-right text-xs font-medium text-slate-600 uppercase tracking-wider">
-                          Actions
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody className="bg-white divide-y divide-border">
-                      {jobs.map((job) => {
-                        const clientName = job.client
-                          ? job.client.name ||
-                            `${job.client.first_name} ${job.client.last_name}`
-                          : 'No Client';
-
-                        return (
-                          <tr
-                            key={job.id}
-                            className={`hover:bg-slate-50 cursor-pointer ${
-                              selectedJob?.id === job.id ? 'bg-blue-50' : ''
-                            }`}
-                            onClick={() => setSelectedJob(job)}
-                          >
-                            <td className="px-4 py-3">
-                              <input
-                                type="checkbox"
-                                checked={selectedJobs.includes(job.id)}
-                                onChange={(e) => {
-                                  e.stopPropagation();
-                                  handleSelectJob(job.id, e.target.checked);
-                                }}
-                                onClick={(e) => e.stopPropagation()}
-                                className="rounded border-gray-300"
-                              />
-                            </td>
-                            <td className="px-4 py-3 text-sm font-medium text-slate-900">
-                              {job.job_number}
-                            </td>
-                            <td className="px-4 py-3 text-sm text-slate-900">
-                              {job.title}
-                            </td>
-                            <td className="px-4 py-3 text-sm text-slate-600">
-                              {clientName}
-                            </td>
-                            <td className="px-4 py-3 text-sm">
-                              <Badge
-                                className={`text-xs ${getStatusColor(job.status)}`}
-                              >
-                                {job.status
-                                  .replace('_', ' ')
-                                  .replace(/\b\w/g, (l) => l.toUpperCase())}
-                              </Badge>
-                            </td>
-                            <td className="px-4 py-3 text-sm text-slate-600">
-                              {job.service_date
-                                ? formatDate(job.service_date)
-                                : 'Not scheduled'}
-                            </td>
-                            <td className="px-4 py-3 text-sm text-right font-semibold text-emerald-600">
-                              ${job.total.toLocaleString()}
-                            </td>
-                            <td className="px-4 py-3 text-sm text-right">
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  router.push(`/admin/jobs/${job.id}`);
-                                }}
-                              >
-                                View
-                              </Button>
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-            </div>
-          )}
-        </div>
+            ))}
+          </div>
+        ) : (
+          <KanbanBoard
+            columns={getKanbanColumns()}
+            onItemMove={handleStatusChange}
+            renderCard={renderKanbanCard}
+            loading={loading}
+          />
+        )}
       </div>
 
-      {/* Assign Tech Dialog */}
-      <Dialog
-        open={assignTechDialogOpen}
-        onOpenChange={setAssignTechDialogOpen}
-      >
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Assign Technician</DialogTitle>
-            <DialogDescription>
-              Assign a technician to job #{selectedJob?.job_number}
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div>
-              <Label htmlFor="tech-select">Select Technician</Label>
-              <Select value={selectedTechId} onValueChange={setSelectedTechId}>
-                <SelectTrigger id="tech-select">
-                  <SelectValue placeholder="Choose a technician" />
-                </SelectTrigger>
-                <SelectContent>
-                  {techs.map((tech) => (
-                    <SelectItem key={tech.id} value={tech.id}>
-                      {tech.full_name || tech.email}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setAssignTechDialogOpen(false)}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              Delete Job{selectedJobs.length > 1 ? 's' : ''}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {selectedJobs.length > 1
+                ? `Are you sure you want to delete ${selectedJobs.length} jobs? This action cannot be undone.`
+                : 'Are you sure you want to delete this job? This action cannot be undone.'}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={
+                selectedJobs.length > 1 ? handleBulkDelete : handleDeleteJob
+              }
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              Cancel
-            </Button>
-            <Button onClick={handleAssignTech} disabled={!selectedTechId}>
-              Assign
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Add Notes Dialog */}
-      <Dialog open={addNotesDialogOpen} onOpenChange={setAddNotesDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Add Note</DialogTitle>
-            <DialogDescription>
-              Add a note to job #{selectedJob?.job_number}
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div>
-              <Label htmlFor="note-text">Note</Label>
-              <Textarea
-                id="note-text"
-                value={noteText}
-                onChange={(e) => setNoteText(e.target.value)}
-                placeholder="Enter note..."
-                rows={4}
-              />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setAddNotesDialogOpen(false)}
-            >
-              Cancel
-            </Button>
-            <Button onClick={handleAddNote} disabled={!noteText.trim()}>
-              Add Note
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    </div>
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </PageContainer>
   );
 }

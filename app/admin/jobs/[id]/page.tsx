@@ -1,27 +1,24 @@
 'use client';
 
-import { useState, useEffect, Suspense } from 'react';
+import * as React from 'react';
 import { useParams, useRouter } from 'next/navigation';
+import Link from 'next/link';
 import dynamic from 'next/dynamic';
-import { RecordPaymentDialog } from '../components/RecordPaymentDialog';
-import { PhotoUpload } from '../components/PhotoUpload';
-const PhotoGallery = dynamic(
-  () =>
-    import('../components/PhotoGallery').then((mod) => ({
-      default: mod.PhotoGallery,
-    })),
-  {
-    loading: () => (
-      <div className="animate-pulse bg-gray-200 h-64 rounded-lg"></div>
-    ),
-  }
-);
-import type { JobStatus, JobWithDetails, LineItemInsert } from '@/types/job';
-import type { Payment } from '@/types/payment';
-import type { PaymentFormData } from '@/lib/validations/payment';
-import type { JobPhoto } from '@/types/job-photo';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  PageHeader,
+  PageContainer,
+  ContentSection,
+  ActionPanel,
+  EmptyState,
+  Spinner,
+  StatusBadge,
+  Button,
+  ButtonLoader,
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui';
 import {
   Table,
   TableBody,
@@ -37,44 +34,165 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import Link from 'next/link';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import type { JobStatus, JobWithDetails, LineItemInsert } from '@/types/job';
+import type { Payment } from '@/types/payment';
+import type { PaymentFormData } from '@/lib/validations/payment';
+import type { JobPhoto } from '@/types/job-photo';
+import {
+  ArrowLeft,
+  Edit,
+  DollarSign,
+  Calendar,
+  Clock,
+  User,
+  FileText,
+  Camera,
+  MessageSquare,
+  CreditCard,
+  CheckCircle,
+  PlayCircle,
+  FileCheck,
+  XCircle,
+  AlertCircle,
+  RefreshCw,
+  ChevronRight,
+} from 'lucide-react';
+import { format } from 'date-fns';
+import { useToast } from '@/components/ui/toast';
+import { cn } from '@/lib/utils';
+import { RecordPaymentDialog } from '../components/RecordPaymentDialog';
+import { PhotoUpload } from '../components/PhotoUpload';
+
+const PhotoGallery = dynamic(
+  () =>
+    import('../components/PhotoGallery').then((mod) => ({
+      default: mod.PhotoGallery,
+    })),
+  { loading: () => <div className="animate-pulse bg-muted h-64 rounded-lg" /> }
+);
+
+const statusVariantMap: Record<
+  JobStatus,
+  | 'draft'
+  | 'quote'
+  | 'scheduled'
+  | 'in_progress'
+  | 'completed'
+  | 'invoiced'
+  | 'cancelled'
+> = {
+  draft: 'draft',
+  quote: 'quote',
+  scheduled: 'scheduled',
+  in_progress: 'in_progress',
+  completed: 'completed',
+  invoiced: 'invoiced',
+  cancelled: 'cancelled',
+};
+
+const statusTransitions: Record<
+  JobStatus,
+  Array<{ to: JobStatus; label: string; icon: React.ReactNode }>
+> = {
+  draft: [
+    {
+      to: 'quote',
+      label: 'Create Quote',
+      icon: <FileText className="h-4 w-4" />,
+    },
+  ],
+  quote: [
+    {
+      to: 'scheduled',
+      label: 'Schedule Job',
+      icon: <Calendar className="h-4 w-4" />,
+    },
+  ],
+  scheduled: [
+    {
+      to: 'in_progress',
+      label: 'Start Job',
+      icon: <PlayCircle className="h-4 w-4" />,
+    },
+  ],
+  in_progress: [
+    {
+      to: 'completed',
+      label: 'Mark Complete',
+      icon: <CheckCircle className="h-4 w-4" />,
+    },
+  ],
+  completed: [
+    {
+      to: 'invoiced',
+      label: 'Create Invoice',
+      icon: <FileCheck className="h-4 w-4" />,
+    },
+  ],
+  invoiced: [],
+  cancelled: [],
+};
 
 export default function JobDetailPage() {
   const params = useParams();
   const router = useRouter();
-  const [job, setJob] = useState<JobWithDetails | null>(null);
-  const [payments, setPayments] = useState<Payment[]>([]);
-  const [paymentSummary, setPaymentSummary] = useState({
+  const { toast } = useToast();
+
+  const [job, setJob] = React.useState<JobWithDetails | null>(null);
+  const [payments, setPayments] = React.useState<Payment[]>([]);
+  const [paymentSummary, setPaymentSummary] = React.useState({
     total: 0,
     paid: 0,
     remaining: 0,
-    status: 'unpaid',
+    status: 'unpaid' as 'unpaid' | 'partial' | 'paid',
   });
-  const [photos, setPhotos] = useState<JobPhoto[]>([]);
-  const [paymentDialogOpen, setPaymentDialogOpen] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const [automationSuggestions, setAutomationSuggestions] = useState<string[]>(
-    []
-  );
-  const [techs, setTechs] = useState<any[]>([]);
-  const [notes, setNotes] = useState<any[]>([]);
+  const [photos, setPhotos] = React.useState<JobPhoto[]>([]);
+  const [notes, setNotes] = React.useState<any[]>([]);
+  const [techs, setTechs] = React.useState<any[]>([]);
+  const [loading, setLoading] = React.useState(true);
+  const [error, setError] = React.useState<string | null>(null);
 
-  useEffect(() => {
+  const [paymentDialogOpen, setPaymentDialogOpen] = React.useState(false);
+  const [statusDialogOpen, setStatusDialogOpen] = React.useState(false);
+  const [pendingStatus, setPendingStatus] = React.useState<JobStatus | null>(
+    null
+  );
+  const [statusUpdating, setStatusUpdating] = React.useState(false);
+
+  React.useEffect(() => {
     loadJob();
   }, [params.id]);
 
   const loadJob = async () => {
     try {
       setLoading(true);
+      setError(null);
 
-      // Fetch job details
-      const jobRes = await fetch(`/api/jobs/${params.id}`);
+      const [jobRes, paymentsRes, photosRes, notesRes, techsRes] =
+        await Promise.all([
+          fetch(`/api/jobs/${params.id}`),
+          fetch(`/api/jobs/${params.id}/payments`),
+          fetch(`/api/jobs/${params.id}/photos`),
+          fetch(`/api/jobs/${params.id}/notes`),
+          fetch('/api/admin/users?role=TECH'),
+        ]);
+
       if (!jobRes.ok) throw new Error('Failed to fetch job');
+
       const jobData = await jobRes.json();
       setJob(jobData);
 
-      // Fetch payments
-      const paymentsRes = await fetch(`/api/jobs/${params.id}/payments`);
       if (paymentsRes.ok) {
         const paymentsData = await paymentsRes.json();
         setPayments(paymentsData.payments || []);
@@ -88,32 +206,23 @@ export default function JobDetailPage() {
         );
       }
 
-      // Fetch photos
-      const photosRes = await fetch(`/api/jobs/${params.id}/photos`);
       if (photosRes.ok) {
         const photosData = await photosRes.json();
         setPhotos(photosData || []);
       }
 
-      // Load techs
-      const techsRes = await fetch('/api/admin/users?role=TECH');
-      if (techsRes.ok) {
-        const techsData = await techsRes.json();
-        setTechs(techsData || []);
-      }
-
-      // Load notes
-      const notesRes = await fetch(`/api/jobs/${params.id}/notes`);
       if (notesRes.ok) {
         const notesData = await notesRes.json();
         setNotes(notesData || []);
       }
 
-      // For now, skip automation suggestions as it requires backend implementation
-      setAutomationSuggestions([]);
-    } catch (error) {
-      console.error('Failed to load job:', error);
-      alert('Failed to load job');
+      if (techsRes.ok) {
+        const techsData = await techsRes.json();
+        setTechs(techsData || []);
+      }
+    } catch (err) {
+      console.error('Failed to load job:', err);
+      setError(err instanceof Error ? err.message : 'Failed to load job');
     } finally {
       setLoading(false);
     }
@@ -121,19 +230,40 @@ export default function JobDetailPage() {
 
   const handleStatusChange = async (newStatus: JobStatus) => {
     if (!job) return;
+    setPendingStatus(newStatus);
+    setStatusDialogOpen(true);
+  };
+
+  const confirmStatusChange = async () => {
+    if (!job || !pendingStatus) return;
 
     try {
+      setStatusUpdating(true);
       const response = await fetch(`/api/jobs/${job.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: newStatus }),
+        body: JSON.stringify({ status: pendingStatus }),
       });
 
       if (!response.ok) throw new Error('Failed to update status');
+
+      toast({
+        title: 'Status Updated',
+        description: `Job moved to ${pendingStatus.replace('_', ' ')}`,
+      });
+
       await loadJob();
-    } catch (error) {
-      console.error('Failed to update status:', error);
-      alert('Failed to update status');
+    } catch (err) {
+      console.error('Failed to update status:', err);
+      toast({
+        title: 'Error',
+        description: 'Failed to update status',
+        variant: 'destructive',
+      });
+    } finally {
+      setStatusUpdating(false);
+      setStatusDialogOpen(false);
+      setPendingStatus(null);
     }
   };
 
@@ -144,44 +274,32 @@ export default function JobDetailPage() {
       const response = await fetch(`/api/jobs/${job.id}/invoice`, {
         method: 'POST',
       });
-
       const result = await response.json();
 
       if (result.exists) {
-        // Invoice already exists
-        alert('An invoice already exists for this job.');
+        toast({
+          title: 'Invoice exists',
+          description: 'Redirecting to invoice...',
+        });
         router.push(`/invoices/${result.invoice_id}`);
         return;
       }
 
-      if (!response.ok) {
+      if (!response.ok)
         throw new Error(result.error || 'Failed to create invoice');
-      }
 
-      alert(`Invoice ${result.invoice_number} created successfully!`);
-      router.push(`/invoices/${result.id}`);
-    } catch (error) {
-      console.error('Failed to create invoice:', error);
-      alert(
-        'Failed to create invoice: ' +
-          (error instanceof Error ? error.message : 'Unknown error')
-      );
-    }
-  };
-
-  const handleDeleteLineItem = async (itemId: string) => {
-    if (!job || !confirm('Delete this line item?')) return;
-
-    try {
-      const response = await fetch(`/api/jobs/${job.id}/line-items/${itemId}`, {
-        method: 'DELETE',
+      toast({
+        title: 'Invoice Created',
+        description: `Invoice ${result.invoice_number} created`,
       });
-
-      if (!response.ok) throw new Error('Failed to delete line item');
-      await loadJob();
-    } catch (error) {
-      console.error('Failed to delete line item:', error);
-      alert('Failed to delete line item');
+      router.push(`/invoices/${result.id}`);
+    } catch (err) {
+      console.error('Failed to create invoice:', err);
+      toast({
+        title: 'Error',
+        description: 'Failed to create invoice',
+        variant: 'destructive',
+      });
     }
   };
 
@@ -201,487 +319,592 @@ export default function JobDetailPage() {
       });
 
       if (!response.ok) throw new Error('Failed to record payment');
+
+      toast({
+        title: 'Payment Recorded',
+        description: `$${data.amount.toFixed(2)} payment recorded`,
+      });
       setPaymentDialogOpen(false);
       await loadJob();
-    } catch (error) {
-      console.error('Failed to record payment:', error);
-      alert('Failed to record payment');
-    }
-  };
-
-  const handleDeletePayment = async (paymentId: string) => {
-    if (!confirm('Are you sure you want to delete this payment?')) return;
-
-    try {
-      const response = await fetch(`/api/payments/${paymentId}`, {
-        method: 'DELETE',
+    } catch (err) {
+      console.error('Failed to record payment:', err);
+      toast({
+        title: 'Error',
+        description: 'Failed to record payment',
+        variant: 'destructive',
       });
-
-      if (!response.ok) throw new Error('Failed to delete payment');
-      await loadJob();
-    } catch (error) {
-      console.error('Failed to delete payment:', error);
-      alert('Failed to delete payment');
     }
   };
 
-  const handleGenerateInvoice = async () => {
+  const handleAssignTech = async (techId: string) => {
     if (!job) return;
 
     try {
-      // Open the invoice PDF in a new tab
-      window.open(`/api/invoices/${job.id}`, '_blank');
-    } catch (error) {
-      console.error('Failed to generate invoice:', error);
-      alert('Failed to generate invoice');
+      const response = await fetch(`/api/jobs/${job.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ assigned_tech_id: techId || null }),
+      });
+
+      if (!response.ok) throw new Error('Failed to assign tech');
+
+      toast({ title: 'Updated', description: 'Technician assigned' });
+      await loadJob();
+    } catch (err) {
+      console.error('Failed to assign tech:', err);
+      toast({
+        title: 'Error',
+        description: 'Failed to assign technician',
+        variant: 'destructive',
+      });
     }
   };
 
-  const handlePhotoUploaded = (photo: JobPhoto) => {
-    setPhotos((prev) => [...prev, photo]);
+  const handleDeleteLineItem = async (itemId: string) => {
+    if (!job || !confirm('Delete this line item?')) return;
+
+    try {
+      const response = await fetch(`/api/jobs/${job.id}/line-items/${itemId}`, {
+        method: 'DELETE',
+      });
+      if (!response.ok) throw new Error('Failed to delete line item');
+      toast({ title: 'Deleted', description: 'Line item removed' });
+      await loadJob();
+    } catch (err) {
+      console.error('Failed to delete line item:', err);
+      toast({
+        title: 'Error',
+        description: 'Failed to delete line item',
+        variant: 'destructive',
+      });
+    }
   };
 
-  const handlePhotoDeleted = (photoId: string) => {
-    setPhotos((prev) => prev.filter((photo) => photo.id !== photoId));
-  };
+  const handlePhotoUploaded = (photo: JobPhoto) =>
+    setPhotos((prev) => [...prev, photo]);
+  const handlePhotoDeleted = (photoId: string) =>
+    setPhotos((prev) => prev.filter((p) => p.id !== photoId));
 
   if (loading) {
     return (
-      <div className="container mx-auto py-8">
-        <div className="text-center">Loading job...</div>
-      </div>
-    );
-  }
-
-  if (!job) {
-    return (
-      <div className="container mx-auto py-8">
-        <div className="text-center">
-          <p className="text-red-500">Job not found</p>
-          <Link href="/jobs">
-            <Button className="mt-4">Back to Jobs</Button>
-          </Link>
+      <PageContainer maxWidth="xl">
+        <div className="flex items-center justify-center py-24">
+          <Spinner size="lg" />
         </div>
-      </div>
+      </PageContainer>
     );
   }
 
-  const statusColors: Record<JobStatus, string> = {
-    draft: 'bg-gray-100 text-gray-800',
-    quote: 'bg-gray-100 text-gray-800',
-    scheduled: 'bg-blue-100 text-blue-800',
-    in_progress: 'bg-yellow-100 text-yellow-800',
-    completed: 'bg-green-100 text-green-800',
-    invoiced: 'bg-purple-100 text-purple-800',
-    cancelled: 'bg-red-100 text-red-800',
-  };
+  if (error || !job) {
+    return (
+      <PageContainer maxWidth="xl">
+        <EmptyState
+          icon={<AlertCircle className="h-12 w-12" />}
+          title="Job not found"
+          description={error || 'The requested job could not be found.'}
+          action={{
+            label: 'Back to Jobs',
+            onClick: () => router.push('/admin/jobs'),
+          }}
+        />
+      </PageContainer>
+    );
+  }
+
+  const transitions = statusTransitions[job.status] || [];
+  const clientName = `${job.client.first_name} ${job.client.last_name}`;
 
   return (
-    <div className="container mx-auto py-8 space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">{job.job_number}</h1>
-          <p className="text-gray-500">{job.title}</p>
-        </div>
-        <div className="flex gap-2">
-          <Link href="/jobs">
-            <Button variant="outline">Back to Jobs</Button>
-          </Link>
-          <Link href={`/jobs/${job.id}/edit`}>
-            <Button>Edit Job</Button>
-          </Link>
+    <PageContainer maxWidth="xl" padding="none">
+      <div className="sticky top-0 z-20 bg-background/95 backdrop-blur border-b">
+        <div className="px-4 lg:px-6 py-4">
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex items-center gap-3 min-w-0">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => router.push('/admin/jobs')}
+              >
+                <ArrowLeft className="h-4 w-4" />
+              </Button>
+              <div className="min-w-0">
+                <div className="flex items-center gap-2">
+                  <h1 className="text-lg font-bold truncate">
+                    #{job.job_number}
+                  </h1>
+                  <StatusBadge
+                    variant={statusVariantMap[job.status]}
+                    size="sm"
+                    dot
+                  >
+                    {job.status.replace('_', ' ')}
+                  </StatusBadge>
+                </div>
+                <p className="text-sm text-muted-foreground truncate">
+                  {job.title}
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <Button variant="outline" size="sm" asChild>
+                <Link href={`/admin/jobs/${job.id}/edit`}>
+                  <Edit className="h-4 w-4 mr-2" />
+                  Edit
+                </Link>
+              </Button>
+              {transitions.map((t) => (
+                <ButtonLoader
+                  key={t.to}
+                  size="sm"
+                  onClick={() => handleStatusChange(t.to)}
+                  loading={statusUpdating && pendingStatus === t.to}
+                >
+                  {t.icon}
+                  <span className="ml-2 hidden sm:inline">{t.label}</span>
+                </ButtonLoader>
+              ))}
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* Status */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Status</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-center gap-4">
-            <span
-              className={`px-3 py-1 rounded-full text-sm font-medium ${statusColors[job.status]}`}
-            >
-              {job.status.charAt(0).toUpperCase() +
-                job.status.slice(1).replace('_', ' ')}
-            </span>
-            <div className="flex gap-2">
-              {job.status === 'quote' && (
-                <Button
-                  size="sm"
-                  onClick={() => handleStatusChange('scheduled')}
-                >
-                  Mark as Scheduled
-                </Button>
-              )}
-              {job.status === 'scheduled' && (
-                <Button
-                  size="sm"
-                  onClick={() => handleStatusChange('in_progress')}
-                >
-                  Start Job
-                </Button>
-              )}
-              {job.status === 'in_progress' && (
-                <Button
-                  size="sm"
-                  onClick={() => handleStatusChange('completed')}
-                >
-                  Mark Completed
-                </Button>
-              )}
-              {job.status === 'completed' && job.ready_for_invoice && (
-                <Button
-                  size="sm"
-                  onClick={handleCreateInvoice}
-                  className="bg-blue-600 hover:bg-blue-700"
-                >
-                  Create Invoice
-                </Button>
-              )}
-              {job.status === 'completed' && !job.ready_for_invoice && (
-                <div className="text-sm text-green-600 font-medium">
-                  ✓ Ready for Invoicing (Phase 4)
+      <div className="lg:flex lg:gap-6 px-4 lg:px-6 py-6">
+        <div className="flex-1 space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm font-medium text-muted-foreground">
+                  Client
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                <p className="font-semibold">{clientName}</p>
+                {job.client.company_name && (
+                  <p className="text-sm text-muted-foreground">
+                    {job.client.company_name}
+                  </p>
+                )}
+                {job.client.email && (
+                  <a
+                    href={`mailto:${job.client.email}`}
+                    className="text-sm text-primary hover:underline block"
+                  >
+                    {job.client.email}
+                  </a>
+                )}
+                {job.client.phone && (
+                  <a
+                    href={`tel:${job.client.phone}`}
+                    className="text-sm text-primary hover:underline block"
+                  >
+                    {job.client.phone}
+                  </a>
+                )}
+                {job.client.address_line1 && (
+                  <p className="text-sm text-muted-foreground">
+                    {job.client.address_line1}
+                    {job.client.city && `, ${job.client.city}`}
+                    {job.client.state && `, ${job.client.state}`}
+                    {job.client.zip_code && ` ${job.client.zip_code}`}
+                  </p>
+                )}
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm font-medium text-muted-foreground">
+                  Schedule
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                {job.service_date ? (
+                  <div className="flex items-center gap-2">
+                    <Calendar className="h-4 w-4 text-muted-foreground" />
+                    <span>
+                      {format(new Date(job.service_date), 'EEEE, MMMM d, yyyy')}
+                    </span>
+                  </div>
+                ) : (
+                  <p className="text-muted-foreground">Not scheduled</p>
+                )}
+                {job.scheduled_time && (
+                  <div className="flex items-center gap-2">
+                    <Clock className="h-4 w-4 text-muted-foreground" />
+                    <span>{job.scheduled_time}</span>
+                  </div>
+                )}
+                <div className="pt-2">
+                  <label className="text-xs text-muted-foreground">
+                    Assigned Tech
+                  </label>
+                  <Select
+                    value={job.assigned_tech_id || ''}
+                    onValueChange={handleAssignTech}
+                  >
+                    <SelectTrigger className="mt-1">
+                      <SelectValue placeholder="Unassigned" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="">Unassigned</SelectItem>
+                      {techs.map((tech: any) => (
+                        <SelectItem key={tech.id} value={tech.id}>
+                          {tech.full_name || tech.email}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          <Tabs defaultValue="overview" className="w-full">
+            <TabsList className="grid w-full grid-cols-4">
+              <TabsTrigger value="overview">Overview</TabsTrigger>
+              <TabsTrigger value="items">Items</TabsTrigger>
+              <TabsTrigger value="payments">Payments</TabsTrigger>
+              <TabsTrigger value="activity">Activity</TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="overview" className="mt-4 space-y-4">
+              {job.description && (
+                <Card>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm font-medium text-muted-foreground">
+                      Description
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-sm whitespace-pre-wrap">
+                      {job.description}
+                    </p>
+                  </CardContent>
+                </Card>
               )}
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+              {job.notes && (
+                <Card>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm font-medium text-muted-foreground">
+                      Notes
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-sm whitespace-pre-wrap">{job.notes}</p>
+                  </CardContent>
+                </Card>
+              )}
+              <PhotoUpload
+                jobId={params.id as string}
+                onPhotoUploaded={handlePhotoUploaded}
+              />
+              {photos.length > 0 && (
+                <PhotoGallery
+                  photos={photos}
+                  onPhotoDeleted={handlePhotoDeleted}
+                />
+              )}
+            </TabsContent>
 
-      {/* Assign Tech */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Assign Technician</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Select
-            value={job?.assigned_tech_id || ''}
-            onValueChange={async (value) => {
-              if (!job) return;
-              try {
-                const response = await fetch(`/api/jobs/${job.id}`, {
-                  method: 'PATCH',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({ assigned_tech_id: value || null }),
-                });
-                if (!response.ok) throw new Error('Failed to assign tech');
-                await loadJob();
-              } catch (error) {
-                console.error('Failed to assign tech:', error);
-                alert('Failed to assign technician');
-              }
-            }}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Select technician" />
-            </SelectTrigger>
-            <SelectContent>
-              {techs.map((tech: any) => (
-                <SelectItem key={tech.id} value={tech.id}>
-                  {tech.full_name || tech.email}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </CardContent>
-      </Card>
+            <TabsContent value="items" className="mt-4">
+              <Card>
+                <CardContent className="p-0">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Type</TableHead>
+                        <TableHead>Description</TableHead>
+                        <TableHead className="text-right">Qty</TableHead>
+                        <TableHead className="text-right">Price</TableHead>
+                        <TableHead className="text-right">Total</TableHead>
+                        <TableHead className="w-12"></TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {job.line_items.map((item) => (
+                        <TableRow key={item.id}>
+                          <TableCell className="capitalize">
+                            {item.item_type}
+                          </TableCell>
+                          <TableCell>{item.description}</TableCell>
+                          <TableCell className="text-right">
+                            {item.quantity}
+                          </TableCell>
+                          <TableCell className="text-right">
+                            ${item.unit_price.toFixed(2)}
+                          </TableCell>
+                          <TableCell className="text-right font-medium">
+                            ${item.total.toFixed(2)}
+                          </TableCell>
+                          <TableCell>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="text-destructive hover:text-destructive"
+                              onClick={() => handleDeleteLineItem(item.id)}
+                            >
+                              <XCircle className="h-4 w-4" />
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </CardContent>
+              </Card>
+              <div className="mt-4 flex justify-end">
+                <Card className="w-64">
+                  <CardContent className="p-4 space-y-2">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-muted-foreground">Subtotal</span>
+                      <span>${job.subtotal.toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-muted-foreground">Tax</span>
+                      <span>${job.tax.toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between font-bold border-t pt-2">
+                      <span>Total</span>
+                      <span>${job.total.toFixed(2)}</span>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            </TabsContent>
 
-      {/* Automation Suggestions */}
-      {automationSuggestions.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle>AI Suggestions</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              {automationSuggestions.map((suggestion, index) => (
-                <div
-                  key={index}
-                  className="flex items-center justify-between p-3 bg-blue-50 rounded-lg"
-                >
-                  <span className="text-sm text-blue-800">{suggestion}</span>
-                  <Button size="sm" variant="outline">
-                    Apply
-                  </Button>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Notes */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Notes</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {notes.map((note: any) => (
-            <div key={note.id} className="border-b pb-2 mb-2">
-              <p>{note.note}</p>
-              <p className="text-sm text-gray-500">
-                {note.user?.full_name || note.user?.email} -{' '}
-                {new Date(note.created_at).toLocaleString()}
-              </p>
-            </div>
-          ))}
-        </CardContent>
-      </Card>
-
-      {/* Client Info */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Client Information</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-2">
-          <div>
-            <span className="font-semibold">Name: </span>
-            {job.client.first_name} {job.client.last_name}
-          </div>
-          {job.client.company_name && (
-            <div>
-              <span className="font-semibold">Company: </span>
-              {job.client.company_name}
-            </div>
-          )}
-          {job.client.email && (
-            <div>
-              <span className="font-semibold">Email: </span>
-              <a href={`mailto:${job.client.email}`} className="text-blue-600">
-                {job.client.email}
-              </a>
-            </div>
-          )}
-          {job.client.phone && (
-            <div>
-              <span className="font-semibold">Phone: </span>
-              <a href={`tel:${job.client.phone}`} className="text-blue-600">
-                {job.client.phone}
-              </a>
-            </div>
-          )}
-          {job.client.address_line1 && (
-            <div>
-              <span className="font-semibold">Address: </span>
-              {job.client.address_line1}
-              {job.client.city && `, ${job.client.city}`}
-              {job.client.state && `, ${job.client.state}`}
-              {job.client.zip_code && ` ${job.client.zip_code}`}
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Job Details */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Job Details</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-2">
-          {job.description && (
-            <div>
-              <span className="font-semibold">Description: </span>
-              {job.description}
-            </div>
-          )}
-          {job.service_date && (
-            <div>
-              <span className="font-semibold">Service Date: </span>
-              {new Date(job.service_date).toLocaleDateString()}
-              {job.scheduled_time && ` at ${job.scheduled_time}`}
-            </div>
-          )}
-          {job.notes && (
-            <div>
-              <span className="font-semibold">Notes: </span>
-              {job.notes}
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Line Items */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Line Items</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Type</TableHead>
-                <TableHead>Description</TableHead>
-                <TableHead>Quantity</TableHead>
-                <TableHead>Unit Price</TableHead>
-                <TableHead>Total</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {job.line_items.map((item) => (
-                <TableRow key={item.id}>
-                  <TableCell className="capitalize">{item.item_type}</TableCell>
-                  <TableCell>{item.description}</TableCell>
-                  <TableCell>{item.quantity}</TableCell>
-                  <TableCell>${item.unit_price.toFixed(2)}</TableCell>
-                  <TableCell>${item.total.toFixed(2)}</TableCell>
-                  <TableCell className="text-right">
-                    <Button
-                      variant="destructive"
+            <TabsContent value="payments" className="mt-4 space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <Card>
+                  <CardContent className="p-4">
+                    <p className="text-sm text-muted-foreground">Total Due</p>
+                    <p className="text-2xl font-bold">
+                      ${paymentSummary.total.toFixed(2)}
+                    </p>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardContent className="p-4">
+                    <p className="text-sm text-muted-foreground">Amount Paid</p>
+                    <p className="text-2xl font-bold text-green-600">
+                      ${paymentSummary.paid.toFixed(2)}
+                    </p>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardContent className="p-4">
+                    <p className="text-sm text-muted-foreground">Remaining</p>
+                    <p className="text-2xl font-bold text-red-600">
+                      ${paymentSummary.remaining.toFixed(2)}
+                    </p>
+                    <StatusBadge
+                      variant={
+                        paymentSummary.status === 'paid'
+                          ? 'paid'
+                          : paymentSummary.status === 'partial'
+                            ? 'partial'
+                            : 'unpaid'
+                      }
                       size="sm"
-                      onClick={() => handleDeleteLineItem(item.id)}
+                      className="mt-2"
                     >
-                      Delete
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
+                      {paymentSummary.status}
+                    </StatusBadge>
+                  </CardContent>
+                </Card>
+              </div>
 
-      {/* Totals */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Total</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-2">
-            <div className="flex justify-between">
-              <span>Subtotal:</span>
-              <span>${job.subtotal.toFixed(2)}</span>
-            </div>
-            <div className="flex justify-between">
-              <span>Tax:</span>
-              <span>${job.tax.toFixed(2)}</span>
-            </div>
-            <div className="flex justify-between text-lg font-bold border-t pt-2">
-              <span>Total:</span>
-              <span>${job.total.toFixed(2)}</span>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between">
+                  <CardTitle>Payment History</CardTitle>
+                  <Button size="sm" onClick={() => setPaymentDialogOpen(true)}>
+                    <DollarSign className="h-4 w-4 mr-2" />
+                    Record Payment
+                  </Button>
+                </CardHeader>
+                <CardContent className="p-0">
+                  {payments.length === 0 ? (
+                    <div className="p-8 text-center text-muted-foreground">
+                      No payments recorded
+                    </div>
+                  ) : (
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Date</TableHead>
+                          <TableHead>Method</TableHead>
+                          <TableHead className="text-right">Amount</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {payments.map((payment) => (
+                          <TableRow key={payment.id}>
+                            <TableCell>
+                              {format(
+                                new Date(payment.payment_date),
+                                'MMM d, yyyy'
+                              )}
+                            </TableCell>
+                            <TableCell>
+                              {payment.payment_method || '-'}
+                            </TableCell>
+                            <TableCell className="text-right font-medium">
+                              ${payment.amount.toFixed(2)}
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
 
-      {/* Payments */}
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle>Payments</CardTitle>
-          <div className="flex gap-2">
-            <Button
-              variant="outline"
-              onClick={() => handleGenerateInvoice()}
-              disabled={
-                job?.status !== 'completed' && job?.status !== 'invoiced'
-              }
-            >
-              Generate Invoice
-            </Button>
-            <Button onClick={() => setPaymentDialogOpen(true)}>
-              Record Payment
-            </Button>
-          </div>
-        </CardHeader>
-        <CardContent>
-          {/* Payment Summary */}
-          <div className="mb-4 p-4 bg-gray-50 rounded-lg space-y-2">
-            <div className="flex justify-between">
-              <span>Total Due:</span>
-              <span className="font-semibold">
-                ${paymentSummary.total.toFixed(2)}
-              </span>
-            </div>
-            <div className="flex justify-between">
-              <span>Amount Paid:</span>
-              <span className="text-green-600 font-semibold">
-                ${paymentSummary.paid.toFixed(2)}
-              </span>
-            </div>
-            <div className="flex justify-between border-t pt-2">
-              <span className="font-bold">Remaining Balance:</span>
-              <span
-                className={`font-bold ${paymentSummary.remaining > 0 ? 'text-red-600' : 'text-green-600'}`}
-              >
-                ${paymentSummary.remaining.toFixed(2)}
-              </span>
-            </div>
-            <div>
-              <span
-                className={`inline-block px-3 py-1 rounded-full text-sm font-medium ${
-                  paymentSummary.status === 'paid'
-                    ? 'bg-green-100 text-green-800'
-                    : paymentSummary.status === 'partial'
-                      ? 'bg-yellow-100 text-yellow-800'
-                      : 'bg-red-100 text-red-800'
-                }`}
-              >
-                {paymentSummary.status.toUpperCase()}
-              </span>
-            </div>
-          </div>
+            <TabsContent value="activity" className="mt-4">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Activity & Notes</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {notes.length === 0 ? (
+                    <p className="text-center text-muted-foreground py-8">
+                      No activity yet
+                    </p>
+                  ) : (
+                    <div className="space-y-4">
+                      {notes.map((note: any) => (
+                        <div
+                          key={note.id}
+                          className="border-l-2 border-primary/20 pl-4 py-2"
+                        >
+                          <p className="text-sm">{note.note}</p>
+                          <p className="text-xs text-muted-foreground mt-1">
+                            {note.user?.full_name || note.user?.email} •{' '}
+                            {format(
+                              new Date(note.created_at),
+                              'MMM d, yyyy h:mm a'
+                            )}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
+          </Tabs>
+        </div>
 
-          {/* Payment History */}
-          {payments.length > 0 ? (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Date</TableHead>
-                  <TableHead>Amount</TableHead>
-                  <TableHead>Method</TableHead>
-                  <TableHead>Notes</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {payments.map((payment) => (
-                  <TableRow key={payment.id}>
-                    <TableCell>
-                      {new Date(payment.payment_date).toLocaleDateString()}
-                    </TableCell>
-                    <TableCell className="font-semibold">
-                      ${payment.amount.toFixed(2)}
-                    </TableCell>
-                    <TableCell>{payment.payment_method || '-'}</TableCell>
-                    <TableCell>{payment.notes || '-'}</TableCell>
-                    <TableCell className="text-right">
-                      <Button
-                        variant="destructive"
-                        size="sm"
-                        onClick={() => handleDeletePayment(payment.id)}
-                      >
-                        Delete
-                      </Button>
-                    </TableCell>
-                  </TableRow>
+        <div className="hidden lg:block w-72 flex-shrink-0">
+          <div className="sticky top-24 space-y-4">
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm">Job Summary</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">Job #</span>
+                  <span className="font-medium">{job.job_number}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">Status</span>
+                  <StatusBadge variant={statusVariantMap[job.status]} size="sm">
+                    {job.status.replace('_', ' ')}
+                  </StatusBadge>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">Total</span>
+                  <span className="font-bold">${job.total.toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">Payment</span>
+                  <StatusBadge
+                    variant={
+                      paymentSummary.status === 'paid'
+                        ? 'paid'
+                        : paymentSummary.status === 'partial'
+                          ? 'partial'
+                          : 'unpaid'
+                    }
+                    size="sm"
+                  >
+                    {paymentSummary.status}
+                  </StatusBadge>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm">Actions</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                <Button
+                  variant="outline"
+                  className="w-full justify-start"
+                  asChild
+                >
+                  <Link href={`/admin/jobs/${job.id}/edit`}>
+                    <Edit className="h-4 w-4 mr-2" />
+                    Edit Job
+                  </Link>
+                </Button>
+                <Button
+                  variant="outline"
+                  className="w-full justify-start"
+                  onClick={() => setPaymentDialogOpen(true)}
+                >
+                  <DollarSign className="h-4 w-4 mr-2" />
+                  Record Payment
+                </Button>
+                {(job.status === 'completed' || job.status === 'invoiced') && (
+                  <Button
+                    variant="outline"
+                    className="w-full justify-start"
+                    onClick={handleCreateInvoice}
+                  >
+                    <FileText className="h-4 w-4 mr-2" />
+                    {job.status === 'invoiced'
+                      ? 'View Invoice'
+                      : 'Create Invoice'}
+                  </Button>
+                )}
+                {transitions.map((t) => (
+                  <ButtonLoader
+                    key={t.to}
+                    variant="default"
+                    className="w-full justify-start"
+                    onClick={() => handleStatusChange(t.to)}
+                    loading={statusUpdating && pendingStatus === t.to}
+                  >
+                    {t.icon}
+                    <span className="ml-2">{t.label}</span>
+                  </ButtonLoader>
                 ))}
-              </TableBody>
-            </Table>
-          ) : (
-            <div className="text-center py-4 text-gray-500">
-              No payments recorded yet
-            </div>
-          )}
-        </CardContent>
-      </Card>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </div>
 
-      {/* Photos */}
-      <div className="space-y-6">
-        <PhotoUpload
-          jobId={params.id as string}
-          onPhotoUploaded={handlePhotoUploaded}
-        />
-
-        <Suspense
-          fallback={
-            <div className="animate-pulse bg-gray-200 h-64 rounded-lg"></div>
-          }
-        >
-          <PhotoGallery photos={photos} onPhotoDeleted={handlePhotoDeleted} />
-        </Suspense>
+      <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-background border-t p-4 z-20">
+        <div className="flex gap-2">
+          {transitions.map((t) => (
+            <ButtonLoader
+              key={t.to}
+              className="flex-1"
+              onClick={() => handleStatusChange(t.to)}
+              loading={statusUpdating && pendingStatus === t.to}
+            >
+              {t.icon}
+              <span className="ml-2">{t.label}</span>
+            </ButtonLoader>
+          ))}
+          <Button variant="outline" asChild>
+            <Link href={`/admin/jobs/${job.id}/edit`}>
+              <Edit className="h-4 w-4" />
+            </Link>
+          </Button>
+        </div>
       </div>
 
       <RecordPaymentDialog
@@ -690,6 +913,26 @@ export default function JobDetailPage() {
         onSubmit={handleRecordPayment}
         remainingBalance={paymentSummary.remaining}
       />
-    </div>
+
+      <AlertDialog open={statusDialogOpen} onOpenChange={setStatusDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirm Status Change</AlertDialogTitle>
+            <AlertDialogDescription>
+              Change job status to {pendingStatus?.replace('_', ' ')}?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmStatusChange}
+              disabled={statusUpdating}
+            >
+              Confirm
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </PageContainer>
   );
 }
